@@ -1,0 +1,32 @@
+image: hwrunner:latest
+variables:
+    GIT_SSL_NO_VERIFY: "true"
+    EXEC: hi
+    HW_DIR: hw0
+    CPU_LIMIT: 10
+    FILE_LIMIT: 1000000
+    PROC_LIMIT: 100
+before_script:
+    - make clean all -C ${HW_DIR}
+stages:
+    - build
+    - run
+    - test
+build:
+    stage: build
+    script:
+        - echo "Build done"
+run:
+    stage: run
+    script:
+        - ulimit -t ${CPU_LIMIT}
+        - ulimit -f ${FILE_LIMIT}
+        - ulimit -u ${PROC_LIMIT}
+        - cd ${HW_DIR} && bin/${EXEC} -h
+test:
+    stage: test
+    script:
+        - ulimit -t ${CPU_LIMIT}
+        - ulimit -f ${FILE_LIMIT}
+        - ulimit -u ${PROC_LIMIT}
+        - cd ${HW_DIR} && bin/${EXEC}_tests -S --verbose=0 --timeout 30
