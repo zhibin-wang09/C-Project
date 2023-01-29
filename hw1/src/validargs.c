@@ -44,18 +44,6 @@ int compareString(char *arg1, char *arg2){
     return 0;
 }
 
-int validDiff(char *filename){
-    int filenameLength = stringLength(filename);
-    if(filenameLength < 4) {
-        return -1;
-    }
-    if(*(filename + filenameLength-1) != 't') return -1;
-    if(*(filename + filenameLength-2) != 'x') return -1;
-    if(*(filename + filenameLength-3) != 't') return -1;
-    if(*(filename + filenameLength-4) != '.') return -1;
-    return 0;
-
-}
 
 int validargs(int argc, char **argv) {
     // TO BE IMPLEMENTED
@@ -90,16 +78,15 @@ int validargs(int argc, char **argv) {
                     return -1;
                 }
             }else{
-                if(validDiff(s) == 0){
-                    diff_filename =  s;
-                }else{
+                char c = *s;
+                if(c == '-'){
                     return -1;
+                }else{
+                    diff_filename = s;
                 }
             }
 
         }
-
-        printf("%s\n","done");
         return 0;
     }
 
