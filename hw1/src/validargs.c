@@ -22,7 +22,87 @@
  * containing the diffs to be used.
  */
 
-int validargs(int argc, char **argv) {
-    // TO BE IMPLEMENTED.
-    abort();
+int stringLength(char* arg1){
+    int count = 0;
+    while(*(arg1 + count) != '\0'){
+       count++;
+    }
+    return count;
 }
+
+int compareString(char *arg1, char *arg2){
+    if(stringLength(arg1) != stringLength(arg2)){
+        return -1;
+    }
+    int  count = 0;
+    while(*(arg1 + count) != '\0'){
+        if(*(arg1 + count) != *(arg2 + count)){
+            return -1;
+        }
+        count++;
+    }
+    return 0;
+}
+
+int validDiff(char *filename){
+    int filenameLength = stringLength(filename);
+    if(filenameLength < 4) {
+        return -1;
+    }
+    if(*(filename + filenameLength-1) != 't') return -1;
+    if(*(filename + filenameLength-2) != 'x') return -1;
+    if(*(filename + filenameLength-3) != 't') return -1;
+    if(*(filename + filenameLength-4) != '.') return -1;
+    return 0;
+
+}
+
+int validargs(int argc, char **argv) {
+    // TO BE IMPLEMENTED
+    //**argv is an array of strings.
+    if(argc <= 1 ){
+        return -1;
+    }
+
+    if(compareString(*(argv + 1),"-h") == 0){
+        global_options = global_options | 0x01;
+        return 0;
+    }
+
+    if(argc <= 4){
+    //If -h is provided must be first and rest is ignored
+    //Otherwise order does not matter.
+    //Check for invalid argument i.e. argument other than -n -q -h
+
+        for(int i = 1; i<argc;i++){
+            char *s = *(argv + i);
+            //Checks if -h is the first argument if it appears.
+            if(i != 1 && compareString(s,"-h") == 0){
+                return -1;
+            }
+
+            if(i!= argc-1){
+                if(compareString(s,"-q") == 0){
+                    global_options = global_options | 0x04;
+                }else if(compareString(s,"-n") == 0){
+                    global_options = global_options | 0x02;
+                }else{
+                    return -1;
+                }
+            }else{
+                if(validDiff(s) == 0){
+                    diff_filename =  s;
+                }else{
+                    return -1;
+                }
+            }
+
+        }
+
+        printf("%s\n","done");
+        return 0;
+    }
+
+    return -1;
+}
+

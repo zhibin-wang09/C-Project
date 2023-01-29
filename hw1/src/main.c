@@ -19,12 +19,18 @@
 
 int main(int argc, char **argv)
 {
-    if(validargs(argc, argv))
+    printf("Main: argc: %d, argv: %s\n",argc,*argv);
+    if(validargs(argc, argv)){
+        printf("Invalid\n");
         USAGE(*argv, EXIT_FAILURE);
-    if(global_options == HELP_OPTION)
+    }
+    if(global_options == HELP_OPTION){
+        printf("Valid\n");
         USAGE(*argv, EXIT_SUCCESS);
+    }
     // TO BE IMPLEMENTED
-    return EXIT_FAILURE; 
+    printf("Status:%s, options: %ld\n", " Valid", global_options);
+    return EXIT_FAILURE;
 }
 
 /*
