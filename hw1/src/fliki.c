@@ -5,6 +5,11 @@
 #include "global.h"
 #include "debug.h"
 
+long current_op;
+int encountered_newline = 0; // Indicator of if we have see '\n'. Because header only exist after a '\n'. Default to 0 because start of file.
+int serial = 0; //The current number of hunk.
+int finish_hunk = 0; //Indicator of if hunk_next() is called. So hunk_getc() can not be called if hunk_next() is not called.
+
 /**
  * @brief Get the header of the next hunk in a diff file.
  * @details This function advances to the beginning of the next hunk
@@ -22,7 +27,121 @@
 
 int hunk_next(HUNK *hp, FILE *in) {
     // TO BE IMPLEMENTED
-    abort();
+    if(in == NULL || hp == NULL){
+        return EOF;
+    }
+
+    char c;
+    int oldstart;
+    int oldend;
+    int newstart;
+    int newend;
+    HUNK_TYPE op = HUNK_NO_TYPE;
+    int seen_comma = -1; //Indicator for choosing to operate on old/new start or end.
+    int comma_count = 0; //Count for duplicate commas.
+
+    //Finding the beginning of a hunk, if's not already.
+    //Requirement for a line to be the beginning of a hunk header:
+        //Beginning of line
+        //Start with number
+    // If the *in pointed to the middle of a line that looks like a header, return ERR. <- wrong
+    // *in can not possibly be pointing to the middle of line without the use of hunkgetc thus,
+    // hunknext only need to worry about getting the next hunk using the above requirements. And hunk_getc() need to worry about if hunk_next() is called before itself.
+    while((c=fgetc(in)) != EOF){
+        if(encountered_newline == 0 && (c >= '0' || c <= '9')){
+            ungetc(c,in); //Place the char back because we want the full content of header.
+            break;
+        }
+        encountered_newline = c == '\n' ? 0 : 1;
+    }
+
+    if(c == EOF) return EOF;
+    //Parse the header while checking for validity
+    while((c=fgetc(in)) != '\n'){
+        if((c <= '0' || c >= '9') && (c!= 'a' || c!='d' || c!='c' || c!=',')){
+            return ERR; //If the header contains information that is not suppose to be there.
+        }
+
+        //Seen the comma
+        if(c == ',') {
+            seen_comma = 0;
+            comma_count++;
+        }
+
+        //Check for duplicate ","
+        if(comma_count > 1){
+            return ERR;
+        }
+
+        if(op == HUNK_NO_TYPE){
+            //Set the type
+            if(c =='a'){
+                op = HUNK_APPEND_TYPE;
+                seen_comma = -1;
+                //For addition, the old start/end can not have comma.
+                if(comma_count >= 1){
+                    return ERR;
+                }
+                comma_count = 0;
+            }else if(c=='d') {
+                op = HUNK_DELETE_TYPE; seen_comma = -1; comma_count =0;}
+            else if (c=='c') {
+                op = HUNK_CHANGE_TYPE; seen_comma = -1; comma_count = 0;}
+
+            //Old line start and line end.
+            if(!seen_comma){
+                //Old line start
+                oldstart *= 10;
+                oldstart += (c - '0');
+            }else{
+                //Old line end
+                oldend *= 10;
+                oldend += (c-'0');
+            }
+
+        }else{
+            //This block means we already have set an operation type.
+
+            //Check for duplicate operations
+            if(c =='a' || c =='d' || c=='c'){
+                return ERR;
+            }
+            //For deletion the new start/end can not have comma
+            if(op == HUNK_DELETE_TYPE && comma_count >= 1) {
+                return ERR;
+            }
+
+            //New line start and line end.
+            if(!seen_comma){
+                //New line start
+                newstart *= 10;
+                newstart += (c - '0');
+            }else{
+                //New line end
+                newend *= 10;
+                newend += (c - '0');
+            }
+        }
+    }
+
+    serial++; //Finishing parsing hunk then we set it to serial++
+
+    //In case old end or new end is the same as old start or new start.
+    if(oldend == 0) oldend = oldstart;
+    if(newend == 0) newend = newstart;
+
+    //Build the HUNK
+    hp->type = op;
+    hp->serial =  serial;
+    hp->old_start = oldstart;
+    hp->old_end = oldend;
+    hp->new_start = newstart;
+    hp->new_end = newend;
+    current_op = op; //Set the current state of operation for hunk_getc() to check to according errors.
+
+    encountered_newline = -1; //Turn off encounter new line after reading the header.
+    finish_hunk = -1; //Activate calls to hunk_getc()
+    return 0;
 }
 
 /**
@@ -61,6 +180,7 @@ int hunk_next(HUNK *hp, FILE *in) {
 
 int hunk_getc(HUNK *hp, FILE *in) {
     // TO BE IMPLEMENTED
+    if(finish_hunk == 0) return ERR;
     abort();
 }
 
