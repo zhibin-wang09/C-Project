@@ -7,7 +7,10 @@
 
 static int encountered_newline = 1; // Indicator of if we have see '\n'. Because header only exist after a '\n'. Default to 0 because start of file.
 static int serial = 0; //The current number of hunk.
-static int finish_hunk = 0; //Indicator of if hunk_next() is called. So hunk_getc() can not be called if hunk_next() is not called.
+static int finish_hunk = 1; //Indicator of if hunk_next() is called. So hunk_getc() can not be called if hunk_next() is not called.
+static int global_op = -1;
+
+//******hunk_next() should parse error in data section as well. Also count for the lines to match the header.******
 
 /**
  * @brief Get the header of the next hunk in a diff file.
@@ -31,6 +34,25 @@ int hunk_next(HUNK *hp, FILE *in) {
     }
 
     char c;
+    finish_hunk = 0; //Activate calls to hunk_getc()
+    //Finding the beginning of a hunk, if's not already. Achieved by using hunk_getc() because we want to report error mid-way.
+    //Requirement for a line to be the beginning of a hunk header:
+        //Beginning of line
+        //Start with number
+    // If the *in pointed to the middle of a line that looks like a header, return ERR. <- wrong
+    // *in can not possibly be pointing to the middle of line without the use of hunkgetc thus,
+    // hunknext only need to worry about getting the next hunk using the above requirements. And hunk_getc() need to worry about if hunk_next() is called before itself.
+    while((c=hunk_getc(hp, in)) != EOF || c != EOS){
+        if(c == ERR) return ERR;
+        if(encountered_newline == 1 && (c >= '0' || c <= '9')){
+            ungetc(c,in); //Place the char back because we want the full content of header.
+            break;
+        }
+        encountered_newline = c == '\n' ? 1 : 0;
+    }
+
+    if(c == EOF) return EOF;
+
     int oldstart = 0;
     int oldend = 0;
     int newstart =0;
@@ -40,22 +62,6 @@ int hunk_next(HUNK *hp, FILE *in) {
     int comma_count = 0; //Count for duplicate commas.
     int seen_integer = 0; //Indicator if we see an inter. Used to detect errors if no integer seen before comma.
 
-    //Finding the beginning of a hunk, if's not already.
-    //Requirement for a line to be the beginning of a hunk header:
-        //Beginning of line
-        //Start with number
-    // If the *in pointed to the middle of a line that looks like a header, return ERR. <- wrong
-    // *in can not possibly be pointing to the middle of line without the use of hunkgetc thus,
-    // hunknext only need to worry about getting the next hunk using the above requirements. And hunk_getc() need to worry about if hunk_next() is called before itself.
-    while((c=fgetc(in)) != EOF){
-        if(encountered_newline == 1 && (c >= '0' || c <= '9')){
-            ungetc(c,in); //Place the char back because we want the full content of header.
-            break;
-        }
-        encountered_newline = c == '\n' ? 1 : 0;
-    }
-
-    if(c == EOF) return EOF;
     //Parse the header while checking for validity
     while((c=fgetc(in)) != '\n'){
         if(c <= '0' || c >= '9'|| c!= 'a' || c!='d' || c!='c' || c!=','){
@@ -145,9 +151,9 @@ int hunk_next(HUNK *hp, FILE *in) {
     hp->old_end = oldend;
     hp->new_start = newstart;
     hp->new_end = newend;
+    global_op = op;
 
     encountered_newline = 1; //Finished header after reading a new line
-    finish_hunk = 0; //Activate calls to hunk_getc()
     return 0;
 }
 
@@ -202,6 +208,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
         //Although there is a chance of erro where next new line start with 3a3 and 
         //the hunk is not finished but that would be header's error.
         if(encountered_newline && c >= '0' && c <='9'){
+            ungetc(c,in); //put the number back so header can parse the correct information
             finish_hunk = 1;
             return EOS;
         }
