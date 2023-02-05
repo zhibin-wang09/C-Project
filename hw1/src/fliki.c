@@ -42,9 +42,9 @@ int hunk_next(HUNK *hp, FILE *in) {
     // If the *in pointed to the middle of a line that looks like a header, return ERR. <- wrong
     // *in can not possibly be pointing to the middle of line without the use of hunkgetc thus,
     // hunknext only need to worry about getting the next hunk using the above requirements. And hunk_getc() need to worry about if hunk_next() is called before itself.
-    while((c=hunk_getc(hp, in)) != EOF || c != EOS){
-        if(c == ERR) return ERR;
-        if(encountered_newline == 1 && (c >= '0' || c <= '9')){
+    while((c=fgetc(in)) != EOF /*|| c != EOS*/){
+        //if(c == ERR) return ERR;
+        if(encountered_newline == 1 && (c >= '0' && c <= '9')){
             ungetc(c,in); //Place the char back because we want the full content of header.
             break;
         }
@@ -52,7 +52,6 @@ int hunk_next(HUNK *hp, FILE *in) {
     }
 
     if(c == EOF) return EOF;
-
     int oldstart = 0;
     int oldend = 0;
     int newstart =0;
@@ -60,11 +59,11 @@ int hunk_next(HUNK *hp, FILE *in) {
     HUNK_TYPE op = HUNK_NO_TYPE;
     int seen_comma = 0; //Indicator for choosing to operate on old/new start or end.
     int comma_count = 0; //Count for duplicate commas.
-    int seen_integer = 0; //Indicator if we see an inter. Used to detect errors if no integer seen before comma.
+    int seen_integer = 0; //Indicator if we see an interger. Used to detect errors if no integer seen before comma.
 
     //Parse the header while checking for validity
     while((c=fgetc(in)) != '\n'){
-        if(c <= '0' || c >= '9'|| c!= 'a' || c!='d' || c!='c' || c!=','){
+        if(c <= '0' && c >= '9' && c!= 'a' && c!='d' && c!='c' && c!=','){
             return ERR; //If the header contains information that is not suppose to be there.
         }
 
@@ -94,9 +93,9 @@ int hunk_next(HUNK *hp, FILE *in) {
                 comma_count = 0;
                 continue;
             }else if(c=='d') {
-                op = HUNK_DELETE_TYPE; seen_comma = -1; comma_count =0; continue;}
+                op = HUNK_DELETE_TYPE; seen_comma = 0; comma_count =0; continue;}
             else if (c=='c') {
-                op = HUNK_CHANGE_TYPE; seen_comma = -1; comma_count = 0; continue;}
+                op = HUNK_CHANGE_TYPE; seen_comma = 0; comma_count = 0; continue;}
 
             //Old line start and line end.
             if(!seen_comma){
