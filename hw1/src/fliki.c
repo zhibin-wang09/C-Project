@@ -63,7 +63,7 @@ int hunk_next(HUNK *hp, FILE *in) {
 
     //Parse the header while checking for validity
     while((c=fgetc(in)) != '\n'){
-        if(c <= '0' && c >= '9' && c!= 'a' && c!='d' && c!='c' && c!=','){
+        if((c < '0' || c > '9') && c!= 'a' && c!='d' && c!='c' && c!=','){
             encountered_newline = 0; //Set to 0 so next run to hunk_next() will start at next new line.
             return ERR; //If the header contains information that is not suppose to be there.
         }
@@ -161,6 +161,7 @@ int hunk_next(HUNK *hp, FILE *in) {
     global_op = op;
 
     encountered_newline = 1; //Finished header after reading a new line
+    finish_hunk = 0;
     return 0;
 }
 
@@ -217,30 +218,77 @@ int hunk_getc(HUNK *hp, FILE *in) {
         if(encountered_newline && c >= '0' && c <='9'){
             ungetc(c,in); //put the number back so header can parse the correct information
             finish_hunk = 1;
+            //Reset all the counting information
+            greaterthan_count = 0;
+            lessthan_count = 0 ;
+            newline_count = 0;
+            threedash = 0;
             return EOS;
         }
-        //If we see ">" or "<" after encounter_newline we know it's beginning of line
-        //Store data into hunk_deletion buffer and hunk_addition buffer depends on what oepration.
-        //A single line can not contain more than one '\n'
-        if(encountered_newline && c == '<')
-            lessthan_count++; //increment '<' count
-        else if(encountered_newline){ //"<" is deletion
-            //Match '<' with deletion hunk type or change hunk type. If not ERR
-            //Check following spe && c == '>'){ //">" is addition
-            //Match '>' with addition hunk type or change hunk type. If not ERR
-            //Check following space
-            greaterthan_count++; //increment '>' count
-        }else if(encountered_newline && ( c != '>' || c != '<')){
-            //If we see "\n" mark newline, and next one is not ">" or "<" it's error
-            return ERR;
-        }else if(!encountered_newline && (c == '>' || c =='<')){
-            //also if we haven't see '\n' and we see "> " or "< " it's an error
-            return ERR;
-        }
 
+        if((*hp).type == 1){ //It's a addition hunk
+           
+           //Check if "<" exists. -> Have 1 is error
+            if(c == '<'){
+                return ERR;
+            }
+            //Check for the number of ">" -> More than 1 in a line is error.
+            if(greaterthan_count > 1){
+                return ERR;
+            }
+
+            //Check if ">" is followed by a new line.
+            if(encountered_newline){
+                if(c == '>'){ //Found '>' after a new line
+                    //Check for ">" followed by a space.
+                    if((c = fgetc(stdin)) != ' '){
+                        return ERR;
+                    }
+                    greaterthan_count++; //Keep track of the number of '>'
+                    continue; //Move on to next char because we don't want to return a space
+                }else{ //Found something else
+                    encountered_newline = 0; //Reset encountered_newline to have next call to hunknext or getc ignore current line.
+                    return ERR;
+                }
+            }
+            return c; //Return the character read
+
+        }else if((*hp).type == 2){ //It'a deletion hunk
+            //Check if '>' exists
+            if(c == '>'){
+                return ERR;
+            }
+            //Check for the number of '<'
+            if(lessthan_count > 1){
+                return ERR;
+            }
+
+            //Check if '<' is followed by a new line
+            if(encountered_newline){
+                if(c == '<'){//Found '<'
+                    //Check if '<' is followed by a space
+                    if((c = fgetc(stdin)) != ' '){
+                        return ERR;
+                    }
+                    lessthan_count++;
+                    continue;
+                }else{ //Foudn something that's not '<'
+                    encountered_newline = 0;
+                    return ERR;
+                }
+                
+            }
+            return c; //Return the character read.
+        }else if((*hp).type == 3){ //It's a change hunk
+            
+        }
         //For change section deletion comes before addition.
         encountered_newline = c == '\n' ? 1 : 0;
-        if(encountered_newline) newline_count++; //increment newline_count
+        if(encountered_newline){
+            greaterthan_count = 0;
+            lessthan_count = 0 ; 
+            newline_count++; //increment newline_count
+        }
     }
 
     return 0;
