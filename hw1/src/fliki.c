@@ -88,6 +88,7 @@ int hunk_next(HUNK *hp, FILE *in) {
                 seen_comma = 0;
                 //For addition, the old start/end can not have comma.
                 if(comma_count >= 1){
+                    encountered_newline = 0;
                     return ERR;
                 }
                 comma_count = 0;
@@ -119,6 +120,7 @@ int hunk_next(HUNK *hp, FILE *in) {
             }
             //For deletion the new start/end can not have comma
             if(op == HUNK_DELETE_TYPE && comma_count >= 1) {
+                encountered_newline = 0;
                 return ERR;
             }
 
