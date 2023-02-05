@@ -64,13 +64,17 @@ int hunk_next(HUNK *hp, FILE *in) {
     //Parse the header while checking for validity
     while((c=fgetc(in)) != '\n'){
         if(c <= '0' && c >= '9' && c!= 'a' && c!='d' && c!='c' && c!=','){
+            encountered_newline = 0; //Set to 0 so next run to hunk_next() will start at next new line.
             return ERR; //If the header contains information that is not suppose to be there.
         }
 
         //Seen the comma
         if(c == ',') {
             //Check if we see any integer before seeing comma
-            if(!seen_integer) return ERR; //Error because we see comma before seeing integer.
+            if(!seen_integer) {
+                encountered_newline = 0;
+                return ERR;
+            } //Error because we see comma before seeing integer.
             seen_comma = 1;
             comma_count++;
             continue; //Go to next char
@@ -78,6 +82,7 @@ int hunk_next(HUNK *hp, FILE *in) {
 
         //Check for duplicate ","
         if(comma_count > 1){
+            encountered_newline = 0;
             return ERR;
         }
 
@@ -86,6 +91,7 @@ int hunk_next(HUNK *hp, FILE *in) {
             if(c =='a'){
                 op = HUNK_APPEND_TYPE;
                 seen_comma = 0;
+                seen_integer = 0;
                 //For addition, the old start/end can not have comma.
                 if(comma_count >= 1){
                     encountered_newline = 0;
@@ -94,9 +100,9 @@ int hunk_next(HUNK *hp, FILE *in) {
                 comma_count = 0;
                 continue;
             }else if(c=='d') {
-                op = HUNK_DELETE_TYPE; seen_comma = 0; comma_count =0; continue;}
+                op = HUNK_DELETE_TYPE; seen_comma = 0; comma_count =0;continue;}
             else if (c=='c') {
-                op = HUNK_CHANGE_TYPE; seen_comma = 0; comma_count = 0; continue;}
+                op = HUNK_CHANGE_TYPE; seen_comma = 0; comma_count = 0; seen_integer = 0;continue;}
 
             //Old line start and line end.
             if(!seen_comma){
@@ -196,9 +202,9 @@ int hunk_getc(HUNK *hp, FILE *in) {
     // TO BE IMPLEMENTED
     //Current state inside hp. Which is the header
     if(finish_hunk == 1 || hp == NULL || in == NULL) return ERR;
-    //Ignore "> " , "< " ,"\n" 
+    //Ignore "> " , "< " ,"\n"
 
-    char c; 
+    char c;
     int greaterthan_count = 0; //count for ">"
     int lessthan_count = 0; //count for "<"
     int newline_count = 0;
@@ -206,7 +212,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
 
     while((c = fgetc(in)) != EOF){
         //Next hunk header consist of after new line and is a number.
-        //Although there is a chance of erro where next new line start with 3a3 and 
+        //Although there is a chance of erro where next new line start with 3a3 and
         //the hunk is not finished but that would be header's error.
         if(encountered_newline && c >= '0' && c <='9'){
             ungetc(c,in); //put the number back so header can parse the correct information
@@ -216,11 +222,11 @@ int hunk_getc(HUNK *hp, FILE *in) {
         //If we see ">" or "<" after encounter_newline we know it's beginning of line
         //Store data into hunk_deletion buffer and hunk_addition buffer depends on what oepration.
         //A single line can not contain more than one '\n'
-        if(encountered_newline && c == '<'){ //"<" is deletion
-            //Match '<' with deletion hunk type or change hunk type. If not ERR
-            //Check following space
+        if(encountered_newline && c == '<')
             lessthan_count++; //increment '<' count
-        }else if(encountered_newline && c == '>'){ //">" is addition 
+        else if(encountered_newline){ //"<" is deletion
+            //Match '<' with deletion hunk type or change hunk type. If not ERR
+            //Check following spe && c == '>'){ //">" is addition
             //Match '>' with addition hunk type or change hunk type. If not ERR
             //Check following space
             greaterthan_count++; //increment '>' count
@@ -231,7 +237,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //also if we haven't see '\n' and we see "> " or "< " it's an error
             return ERR;
         }
-        
+
         //For change section deletion comes before addition.
         encountered_newline = c == '\n' ? 1 : 0;
         if(encountered_newline) newline_count++; //increment newline_count
