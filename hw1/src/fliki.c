@@ -9,7 +9,8 @@ static int encountered_newline = 1; // Indicator of if we have see '\n'. Because
 static int serial = 0; //The current number of hunk.
 static int finish_hunk = 1; //Indicator of if hunk_next() is called. So hunk_getc() can not be called if hunk_next() is not called.
 static int global_op = -1;
-
+static int deletion_buffer_pos = 0;
+static int addition_buffer_pos = 0;
 //******hunk_next() should parse error in data section as well. Also count for the lines to match the header.******
 
 /**
@@ -217,7 +218,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
     int greaterthan_count = 0; //count for ">"
     int lessthan_count = 0; //count for "<"
     int newline_count = 0;
-    int threedash = 0; //Used to indicate if we see threedash in order to determine change type hunk
+    int seen_threedash = 0; //Used to indicate if we see threedash in order to determine change type hunk
 
     while((c = fgetc(in)) != EOF){
         //Next hunk header consist of after new line and is a number.
@@ -230,7 +231,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
             greaterthan_count = 0;
             lessthan_count = 0 ;
             newline_count = 0;
-            threedash = 0;
+            seen_threedash = 0;
             return EOS;
         }
 
@@ -259,6 +260,8 @@ int hunk_getc(HUNK *hp, FILE *in) {
                     return ERR;
                 }
             }
+            // *(hunk_additions_buffer + addition_buffer_pos) = c;
+            // addition_buffer_pos++;
             return c; //Return the character read
 
         }else if((*hp).type == 2){ //It'a deletion hunk
@@ -286,11 +289,70 @@ int hunk_getc(HUNK *hp, FILE *in) {
                 }
                 
             }
-
+            // *(hunk_deletions_buffer + deletion_buffer_pos) = c;
+            // deletion_buffer_pos++;
             return c; //Return the character read.
         }else if((*hp).type == 3){ //It's a change hunk
-            threedash++;
+            //Deletion comes before addition
+            //Deletion
+            //---
+            //Addition
+
+            if(c == '-'){
+                if((c=fgetc(in)) == '-'){
+                    if((c=fgetc(in)) == '-'){
+                        continue;
+                    }else{
+                        return ERR;
+                    }
+                }else{
+                    return ERR;
+                }
+            }
+
+            if(seen_threedash){
+                //Check if '>' exists
+                if(c == '>'){
+                    return ERR;
+                }
+                //Check for the number of '<'
+                if(lessthan_count > 1){
+                    return ERR;
+                }
+                
+                if(encountered_newline){
+                    if(c == '<'){
+                        if((c=fgetc(in)) != ' '){
+                            return ERR;
+                        }
+                        lessthan_count++;
+                    }
+                }else{
+                    encountered_newline = 0;
+                    return ERR;
+                }
+            }else{
+                if(c == '<'){
+                    return ERR;
+                }
+                //Check for the number of ">" -> More than 1 in a line is error.
+                if(greaterthan_count > 1){
+                    return ERR;
+                }
+                if(encountered_newline){
+                    if(c == '>'){
+                        if((c=fgetc(in)) != ' '){
+                            return ERR;
+                        }
+                        greaterthan_count++;
+                    }
+                }else{
+                    encountered_newline = 0;
+                    return ERR;
+                }
+            }
         }
+
         //For change section deletion comes before addition.
         encountered_newline = c == '\n' ? 1 : 0;
         if(encountered_newline){
