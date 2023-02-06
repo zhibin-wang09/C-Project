@@ -75,6 +75,14 @@ int hunk_next(HUNK *hp, FILE *in) {
                 encountered_newline = 0;
                 return ERR;
             } //Error because we see comma before seeing integer.
+
+            //Check if next one is a integer
+            c = fgetc(in);
+            if(c < '0' || c > '9'){
+                encountered_newline = 0;
+                return ERR;
+            }
+            ungetc(c,in);
             seen_comma = 1;
             comma_count++;
             continue; //Go to next char
@@ -278,9 +286,10 @@ int hunk_getc(HUNK *hp, FILE *in) {
                 }
                 
             }
+
             return c; //Return the character read.
         }else if((*hp).type == 3){ //It's a change hunk
-            
+            threedash++;
         }
         //For change section deletion comes before addition.
         encountered_newline = c == '\n' ? 1 : 0;
