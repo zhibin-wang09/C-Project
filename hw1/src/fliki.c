@@ -11,6 +11,11 @@ static int finish_hunk = 1; //Indicator of if hunk_next() is called. So hunk_get
 static int global_op = -1;
 static int deletion_buffer_pos = 0;
 static int addition_buffer_pos = 0;
+static int greaterthan_count = 0; //count for ">"
+static int lessthan_count = 0; //count for "<"
+static int newline_count = 0;
+static int seen_threedash = 0; //Used to indicate if we see threedash in order to determine change type hunk
+static int seen_lessthan = 0;
 //******hunk_next() should parse error in data section as well. Also count for the lines to match the header.******
 
 /**
@@ -215,11 +220,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
     //Ignore "> " , "< " ,"\n"
 
     char c;
-    int greaterthan_count = 0; //count for ">"
-    int lessthan_count = 0; //count for "<"
-    int newline_count = 0;
-    int seen_threedash = 0; //Used to indicate if we see threedash in order to determine change type hunk
-    
 
     while((c = fgetc(in)) != EOF){
         //Next hunk header consist of after new line and is a number.
@@ -227,13 +227,16 @@ int hunk_getc(HUNK *hp, FILE *in) {
         //the hunk is not finished but that would be header's error.
         if(encountered_newline && c >= '0' && c <='9'){
             ungetc(c,in); //put the number back so header can parse the correct information
-            if((*hp).type == 3 && !seen_threedash) return ERR; //Change hunk never saw three dashes 
+            if((*hp).type == 3 && !seen_threedash) {
+                return ERR; //Change hunk never saw three dashes 
+            }
             finish_hunk = 1;
             //Reset all the counting information
             greaterthan_count = 0;
             lessthan_count = 0 ;
             newline_count = 0;
             seen_threedash = 0;
+            encountered_newline = 1;
             return EOS;
         }
 
@@ -252,11 +255,12 @@ int hunk_getc(HUNK *hp, FILE *in) {
             if(encountered_newline){
                 if(c == '>'){ //Found '>' after a new line
                     //Check for ">" followed by a space.
-                    if((c = fgetc(stdin)) != ' '){
+                    if((c = fgetc(in)) != ' '){
                         return ERR;
                     }
+                    c = fgetc(in);
                     greaterthan_count++; //Keep track of the number of '>'
-                    continue; //Move on to next char because we don't want to return a space
+                    
                 }else{ //Found something else
                     encountered_newline = 0; //Reset encountered_newline to have next call to hunknext or getc ignore current line.
                     return ERR;
@@ -264,7 +268,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
             }
             // *(hunk_additions_buffer + addition_buffer_pos) = c;
             // addition_buffer_pos++;
-            return c; //Return the character read
 
         }else if((*hp).type == 2){ //It'a deletion hunk
             //Check if '>' exists
@@ -280,11 +283,11 @@ int hunk_getc(HUNK *hp, FILE *in) {
             if(encountered_newline){
                 if(c == '<'){//Found '<'
                     //Check if '<' is followed by a space
-                    if((c = fgetc(stdin)) != ' '){
+                    if((c = fgetc(in)) != ' '){
                         return ERR;
                     }
+                    c = fgetc(in);
                     lessthan_count++;
-                    continue;
                 }else{ //Foudn something that's not '<'
                     encountered_newline = 0;
                     return ERR;
@@ -293,7 +296,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
             }
             // *(hunk_deletions_buffer + deletion_buffer_pos) = c;
             // deletion_buffer_pos++;
-            return c; //Return the character read.
         }else if((*hp).type == 3){ //It's a change hunk
             //Deletion comes before addition
             //Deletion
@@ -301,6 +303,10 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //Addition
 
             if(c == '-'){
+                if(seen_lessthan == 0) {
+                    return ERR;
+                }
+                encountered_newline = 0;
                 if((c=fgetc(in)) == '-'){
                     if((c=fgetc(in)) == '-'){
                         seen_threedash = 1;
@@ -330,49 +336,49 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         if((c=fgetc(in)) != ' '){
                             return ERR;
                         }
+                        c= fgetc(in); //Ignore space
                         lessthan_count++;
+                        seen_lessthan = 1;
+                    }else{
+                        encountered_newline = 0;
+                        return ERR;
                     }
-                }else{
-                    encountered_newline = 0;
-                    return ERR;
                 }
             }else{
-
                 if(c == '<'){
                     return ERR;
                 }
-                if(lessthan_count < 1) return ERR; //Once we are at the second section we must have seen
-                //The first section. If not return ERR;
 
                 //Check for the number of ">" -> More than 1 in a line is error.
                 if(greaterthan_count > 1){
                     return ERR;
                 }
-
                 if(encountered_newline){
                     if(c == '>'){
                         if((c=fgetc(in)) != ' '){
                             return ERR;
                         }
+                        c= fgetc(in); //Ignore space
                         greaterthan_count++;
+                    }else{
+                        encountered_newline = 0;
+                        return ERR;
                     }
-                }else{
-                    encountered_newline = 0;
-                    return ERR;
                 }
             }
         }
-
+        
         //For change section deletion comes before addition.
         encountered_newline = c == '\n' ? 1 : 0;
         if(encountered_newline){
             greaterthan_count = 0;
-            lessthan_count = 0 ; 
+            lessthan_count = 0; 
             newline_count++; //increment newline_count
         }
+        return c; //Return the character read
     }
 
-    return 0;
+    return EOS;
 }
 
 /**
