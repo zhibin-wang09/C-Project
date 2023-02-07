@@ -219,6 +219,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
     int lessthan_count = 0; //count for "<"
     int newline_count = 0;
     int seen_threedash = 0; //Used to indicate if we see threedash in order to determine change type hunk
+    
 
     while((c = fgetc(in)) != EOF){
         //Next hunk header consist of after new line and is a number.
@@ -226,6 +227,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
         //the hunk is not finished but that would be header's error.
         if(encountered_newline && c >= '0' && c <='9'){
             ungetc(c,in); //put the number back so header can parse the correct information
+            if((*hp).type == 3 && !seen_threedash) return ERR; //Change hunk never saw three dashes 
             finish_hunk = 1;
             //Reset all the counting information
             greaterthan_count = 0;
@@ -301,16 +303,19 @@ int hunk_getc(HUNK *hp, FILE *in) {
             if(c == '-'){
                 if((c=fgetc(in)) == '-'){
                     if((c=fgetc(in)) == '-'){
+                        seen_threedash = 1;
                         continue;
                     }else{
+                        if(c == EOF) return EOF;
                         return ERR;
                     }
                 }else{
+                    if(c == EOF) return EOF;
                     return ERR;
                 }
             }
 
-            if(seen_threedash){
+            if(!seen_threedash){
                 //Check if '>' exists
                 if(c == '>'){
                     return ERR;
@@ -332,13 +337,18 @@ int hunk_getc(HUNK *hp, FILE *in) {
                     return ERR;
                 }
             }else{
+
                 if(c == '<'){
                     return ERR;
                 }
+                if(lessthan_count < 1) return ERR; //Once we are at the second section we must have seen
+                //The first section. If not return ERR;
+
                 //Check for the number of ">" -> More than 1 in a line is error.
                 if(greaterthan_count > 1){
                     return ERR;
                 }
+
                 if(encountered_newline){
                     if(c == '>'){
                         if((c=fgetc(in)) != ' '){
