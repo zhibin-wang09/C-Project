@@ -16,7 +16,8 @@ static int seen_deletion = 0;
 static int seen_addition = 0;
 static int current_deletion_buffer_marker; //Marker for the size of the line before this line
 static int current_addition_buffer_marker;
-static HUNK *previous_hunk;
+static HUNK previous_hunk = {HUNK_NO_TYPE,0,0,0,0,0};
+static int change_two_eos = 0; //Indicator for if a change hunk hit the first eos.
 
 void update_deletion_buffer(char *deletion_buffer, int *size, char c,int marker);
 void update_addition_buffer(char *addition_buffer, int *size, char c,int marker);
@@ -48,162 +49,14 @@ int hunk_next(HUNK *hp, FILE *in) {
     while(i < HUNK_MAX) *(hunk_deletions_buffer+(i++)) = 0;
     i = 0;
     while(i < HUNK_MAX) *(hunk_additions_buffer+(i++)) = 0;
+    finish_hunk = 0;
 
-    while((c=fgetc(in)) != EOF){
+    while((c=hunk_getc((&previous_hunk),in)) != EOF && c != EOS){
+        if(c == ERR){return ERR;}
         if(encountered_newline == 1 && (c >= '0' && c <= '9')){
             ungetc(c,in); //Place the char back because we want the full content of header.
-            if(previous_hunk != NULL && (*previous_hunk).type == 1 && !seen_addition){
-                return ERR; //Addition hunk missing addition section.
-            }
-            if(previous_hunk != NULL &&(*previous_hunk).type == 2 && !seen_deletion){
-                return ERR; //Deletion hunk missing deletion section.
-            }
-            if(previous_hunk != NULL &&(*previous_hunk).type == 3 &&  (!seen_threedash || !seen_addition || !seen_deletion)) {
-                return ERR; //Change hunk missing either three dashes, deletion section, or addition section
-            }
-            finish_hunk = 1;
-            //Reset all the counting information
-            newline_count = 0;
-            seen_threedash = 0;
-            seen_addition = 0;
-            seen_deletion = 0;
-            encountered_newline = 1;
             break;
         }
-        if((*hp).type == 0 || (*previous_hunk).type ==0) break;
-        if((*previous_hunk).type == 1){ //It's a addition hunk
-
-            //Check if ">" is followed by a new line.
-            if(encountered_newline){
-                if(c == '>'){ //Found '>' after a new line
-                    //Store on to buffer on the fly.
-                    //Check for ">" followed by a space.
-                    if((c = fgetc(in)) != ' '){
-                        return ERR;
-                    }
-                    c = fgetc(in);
-                    seen_addition = 1;
-
-
-                }else{ //Found something else
-                    encountered_newline = 0; //Reset encountered_newline to have next call to hunknext or getc ignore current line.
-                    return ERR;
-                }
-            }
-            
-
-        }else if((*previous_hunk).type == 2){ //It'a deletion hunk
-            //Check if '<' is followed by a new line
-            if(encountered_newline){
-                if(c == '<'){//Found '<'
-                    //Check if '<' is followed by a space
-                    if((c = fgetc(in)) != ' '){
-                        return ERR;
-                    }
-                    c = fgetc(in);
-                    seen_deletion = 1;
-                }else{ //Foudn something that's not '<'
-                    encountered_newline = 0;
-                    return ERR;
-                }
-            }
-        }else if((*previous_hunk).type == 3){ //It's a change hunk
-            //Deletion comes before addition
-            //Deletion
-            //---
-            //Addition
-
-            //NEED TO CHECK FOR IF ADDITION SECTION MISSING.
-            if(encountered_newline){
-                if(c == '-'){
-                    if(seen_deletion == 0) {
-                        return ERR;
-                    }
-                    encountered_newline = 0;
-                    if((c=fgetc(in)) == '-'){
-                        if((c=fgetc(in)) == '-'){
-                            char n = fgetc(in); //ignore new line
-                            if(n != '\n'){return ERR;}
-                            encountered_newline = 1;
-                            seen_threedash = 1;
-                            continue;
-                        }else{
-                            if(c == EOF) return EOF;
-                            return ERR;
-                        }
-                    }else{
-                        if(c == EOF) return EOF;
-                        return ERR;
-                    }
-                }
-            }
-
-            if(!seen_threedash){
-                
-                if(encountered_newline){ //Deletion hunk
-                    if(c == '<'){
-                        if((c=fgetc(in)) != ' '){
-                            return ERR;
-                        }
-                        c= fgetc(in); //Ignore space
-                        seen_deletion = 1;
-                    }else{
-                        encountered_newline = 0;
-                        return ERR;
-                    }
-                    
-                }
-            }else{
-                if(encountered_newline){ //addition hunk
-                    if(c == '>'){
-                        if((c=fgetc(in)) != ' '){
-                            return ERR;
-                        }
-                        c= fgetc(in); //Ignore space
-                        seen_addition = 1;
-                    }else{
-                        encountered_newline = 0;
-                        return ERR;
-                    }
-                }
-                
-            }
-        }
-        
-        if((*previous_hunk).type == 1){
-            update_addition_buffer(hunk_additions_buffer,&addition_buffer_pos, c, current_addition_buffer_marker); //Store char into buffer
-        }else if((*previous_hunk).type == 2){
-            update_deletion_buffer(hunk_deletions_buffer,&deletion_buffer_pos, c, current_deletion_buffer_marker); //Store char into buffer
-        }else if((*previous_hunk).type == 3){
-            if(seen_deletion && !seen_threedash){
-                update_deletion_buffer(hunk_deletions_buffer,&deletion_buffer_pos, c, current_deletion_buffer_marker); //Store char into buffer
-            }
-            if(seen_addition){
-                update_addition_buffer(hunk_additions_buffer,&addition_buffer_pos, c, current_addition_buffer_marker); //Store char into buffer
-            }
-        } 
-
-        //For change section deletion comes before addition.
-        encountered_newline = c == '\n' ? 1 : 0;
-        if(encountered_newline){
-            newline_count++; //increment newline_count
-            //check which hunk_buffer we are using right now
-            if((*previous_hunk).type == 1){
-                current_addition_buffer_marker = addition_buffer_pos;
-                addition_buffer_pos+=2;
-            }else if((*previous_hunk).type == 2){              
-                current_addition_buffer_marker = addition_buffer_pos;
-            }else if((*previous_hunk).type == 3){
-                if(seen_deletion && !seen_threedash){
-                    current_addition_buffer_marker = addition_buffer_pos;
-                }
-                if(seen_addition){
-                    current_addition_buffer_marker = addition_buffer_pos;
-                }
-            } 
-        }
-        
-        encountered_newline = c == '\n' ? 1 : 0;
     }
 
     if(c == EOF) return EOF;
@@ -321,7 +174,9 @@ int hunk_next(HUNK *hp, FILE *in) {
     hp->old_end = oldend;
     hp->new_start = newstart;
     hp->new_end = newend;
-    previous_hunk = hp; //previous hunk points to hp
+    
+    previous_hunk = (HUNK){(*hp).type, (*hp).serial, (*hp).old_start, (*hp).old_end,(*hp).new_start,(*hp).new_end}; //Clone previious hp
+
     encountered_newline = 1; //Finished header after reading a new line
     finish_hunk = 0;
     return 0;
@@ -440,6 +295,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //NEED TO CHECK FOR IF ADDITION SECTION MISSING.
             if(encountered_newline){
                 if(c == '-'){
+                    
                     if(seen_deletion == 0) {
                         return ERR;
                     }
@@ -448,9 +304,10 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         if((c=fgetc(in)) == '-'){
                             char n = fgetc(in); //ignore new line
                             if(n != '\n'){return ERR;}
+                            change_two_eos = 1;
                             encountered_newline = 1;
                             seen_threedash = 1;
-                            continue;
+                            continue; //End of the deletion section in change
                         }else{
                             if(c == EOF) return EOF;
                             return ERR;
