@@ -49,6 +49,9 @@ int hunk_next(HUNK *hp, FILE *in) {
     while(i < HUNK_MAX) *(hunk_deletions_buffer+(i++)) = 0;
     i = 0;
     while(i < HUNK_MAX) *(hunk_additions_buffer+(i++)) = 0;
+    if(finish_hunk == 1){
+        previous_hunk = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
+    }
     finish_hunk = 0;
 
     while((c=hunk_getc((&previous_hunk),in)) != EOF && c != EOS){
@@ -68,9 +71,13 @@ int hunk_next(HUNK *hp, FILE *in) {
     int seen_comma = 0; //Indicator for choosing to operate on old/new start or end.
     int comma_count = 0; //Count for duplicate commas.
     int seen_integer = 0; //Indicator if we see an interger. Used to detect errors if no integer seen before comma.
-
+    
     //Parse the header while checking for validity
     while((c=fgetc(in)) != '\n'){
+        if(c == -1){ 
+            if(!encountered_newline) return ERR; //No new line at the end of the file is an error.
+            return EOF;
+        }
         if((c < '0' || c > '9') && c!= 'a' && c!='d' && c!='c' && c!=','){
             encountered_newline = 0; //Set to 0 so next run to hunk_next() will start at next new line.
             return ERR; //If the header contains information that is not suppose to be there.
@@ -160,7 +167,6 @@ int hunk_next(HUNK *hp, FILE *in) {
             }
         }
     }
-
     serial++; //Finishing parsing hunk then we set it to serial++
 
     //In case old end or new end is the same as old start or new start.
@@ -295,7 +301,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //NEED TO CHECK FOR IF ADDITION SECTION MISSING.
             if(encountered_newline){
                 if(c == '-'){
-                    
                     if(seen_deletion == 0) {
                         return ERR;
                     }
