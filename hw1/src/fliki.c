@@ -23,7 +23,7 @@ static int deletion_line_size = 0; //The current line size of deletion buffer
 static int use_previous_hp = 0;
 static int print_addition_hunk = 0;
 static int call_from_next; //To diferentiate from using hunkgetc in hunknext as a helper function vs. calling hunk get c alone.
-
+static int dead = 0;//Indicate if any error occured if it does then the program is dead.
 void update_deletion_buffer(int *size, int *pos, char c,int marker);
 void update_addition_buffer(int *size, int *pos, char c,int marker);
 
@@ -351,7 +351,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                     if(change_two_eos == 0 && !call_from_next){ 
                         ungetc(c,in);
                         change_two_eos = 1; 
-                        call_from_next=1;
+                        call_from_next=0;
                         previous_hunk = (HUNK){(*hp).type, (*hp).serial, (*hp).old_start, (*hp).old_end,(*hp).new_start,(*hp).new_end}; //Clone previious hp
                         return EOS;
                     }
@@ -408,19 +408,21 @@ int hunk_getc(HUNK *hp, FILE *in) {
                 
             }
         }
-
-        if((*hp).type == 1){
-            update_addition_buffer(&addition_buffer_pos, &addition_line_size, c, current_addition_buffer_marker); //Store char into buffer
-        }else if((*hp).type == 2){
-            update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size, c, current_deletion_buffer_marker); //Store char into buffer
-        }else if((*hp).type == 3){
-            if(seen_deletion && !seen_threedash){
-                update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size,c, current_deletion_buffer_marker); //Store char into buffer
-            }
-            if(seen_addition){
-                update_addition_buffer(&addition_buffer_pos, &addition_line_size,c, current_addition_buffer_marker); //Store char into buffer
-            }
-        } 
+        if(!call_from_next){
+            if((*hp).type == 1){
+                update_addition_buffer(&addition_buffer_pos, &addition_line_size, c, current_addition_buffer_marker); //Store char into buffer
+            }else if((*hp).type == 2){
+                update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size, c, current_deletion_buffer_marker); //Store char into buffer
+            }else if((*hp).type == 3){
+                if(seen_deletion && !seen_threedash){
+                    update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size,c, current_deletion_buffer_marker); //Store char into buffer
+                }
+                if(seen_addition){
+                    update_addition_buffer(&addition_buffer_pos, &addition_line_size,c, current_addition_buffer_marker); //Store char into buffer
+                }
+            } 
+        }
+        
         
 
         //For change section deletion comes before addition.
@@ -428,7 +430,8 @@ int hunk_getc(HUNK *hp, FILE *in) {
         if(encountered_newline){
             newline_count++; //increment newline_count
             //check which hunk_buffer we are using right now
-            if((*hp).type == 1){
+            if(!call_from_next){
+                if((*hp).type == 1){
                 addition_line_size = 0;
                 current_addition_buffer_marker = addition_buffer_pos;
                 addition_buffer_pos+=2;
@@ -448,6 +451,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                     addition_buffer_pos+=2;
                 }
             } 
+            }
         }
         return c; //Return the character read
     }
