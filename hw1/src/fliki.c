@@ -547,12 +547,12 @@ void hunk_show(HUNK *hp, FILE *out) {
             c = *(hunk_additions_buffer+i);
             if(c != '\n'){
                 if(printsymbol){
-                    printf("> ");
+                    fprintf(out, "> ");
                     printsymbol =0;
                 }
-                printf("%c",c);
+                fprintf(out, "%c",c);
             }else{
-                printf("%c",c);
+                fprintf(out,"%c",c);
                 printsymbol = 1;
                 i+=2;
             }
@@ -563,12 +563,12 @@ void hunk_show(HUNK *hp, FILE *out) {
             c = *(hunk_deletions_buffer+i);
             if(c != '\n'){
                 if(printsymbol){
-                    printf("< ");
+                    fprintf(out,"< ");
                     printsymbol = 0;
                 }
-                printf("%c",c);
+                fprintf(out,"%c",c);
             }else{
-                printf("%c",c);
+                fprintf(out,"%c",c);
                 printsymbol =1;
                 i+=2;
             }
@@ -581,12 +581,12 @@ void hunk_show(HUNK *hp, FILE *out) {
                 c = *(hunk_additions_buffer+i);
                 if(c != '\n'){
                     if(printsymbol){
-                        printf("> ");
+                        fprintf(out,"> ");
                         printsymbol =0;
                     }
-                    printf("%c",c);
+                    fprintf(out,"%c",c);
                 }else{
-                    printf("%c",c);
+                    fprintf(out,"%c",c);
                     printsymbol=1;
                     i+=2;
                 }
@@ -597,12 +597,12 @@ void hunk_show(HUNK *hp, FILE *out) {
                 c = *(hunk_deletions_buffer+i);
                 if(c != '\n'){
                     if(printsymbol){
-                        printf("< ");
+                        fprintf(out,"> ");
                         printsymbol =0;
                     }
-                    printf("%c",c);
+                    fprintf(out,"%c",c);
                 }else{
-                    printf("%c",c);
+                    fprintf(out,"%c",c);
                     printsymbol =1;
                     i+=2;
                 }
