@@ -8,8 +8,8 @@
 static int encountered_newline = 1; // Indicator of if we have see '\n'. Because header only exist after a '\n'. Default to 0 because start of file.
 static int serial = 0; //The current number of hunk.
 static int finish_hunk = 1; //Indicator of if hunk_next() is called. So hunk_getc() can not be called if hunk_next() is not called.
-static int deletion_buffer_pos = 0; //Start at the third byte as the first 2 is for counting
-static int addition_buffer_pos = 0; //Start at the third byte as the first 2 is for counting
+static int deletion_buffer_pos = 2; //Start at the third byte as the first 2 is for counting
+static int addition_buffer_pos = 2; //Start at the third byte as the first 2 is for counting
 static int newline_count = 0;
 static int seen_threedash = 0; //Used to indicate if we see threedash in order to determine change type hunk
 static int seen_deletion = 0;
@@ -18,9 +18,11 @@ static int current_deletion_buffer_marker; //Marker for the size of the line bef
 static int current_addition_buffer_marker;
 static HUNK previous_hunk = {HUNK_NO_TYPE,0,0,0,0,0};
 static int change_two_eos = 0; //Indicator for if a change hunk hit the first eos.
+static int addition_line_size = 0; //The current line size of addition buffer
+static int deletion_line_size = 0; //The current line size of deletion buffer
 
-void update_deletion_buffer(char *deletion_buffer, int *size, char c,int marker);
-void update_addition_buffer(char *addition_buffer, int *size, char c,int marker);
+void update_deletion_buffer(int *size, int *pos, char c,int marker);
+void update_addition_buffer(int *size, int *pos, char c,int marker);
 
 /**
  * @brief Get the header of the next hunk in a diff file.
@@ -355,19 +357,19 @@ int hunk_getc(HUNK *hp, FILE *in) {
                 
             }
         }
-        
         if((*hp).type == 1){
-            update_addition_buffer(hunk_additions_buffer,&addition_buffer_pos, c, current_addition_buffer_marker); //Store char into buffer
+            update_addition_buffer(&addition_buffer_pos, &addition_line_size, c, current_addition_buffer_marker); //Store char into buffer
         }else if((*hp).type == 2){
-            update_deletion_buffer(hunk_deletions_buffer,&deletion_buffer_pos, c, current_deletion_buffer_marker); //Store char into buffer
+            update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size, c, current_deletion_buffer_marker); //Store char into buffer
         }else if((*hp).type == 3){
             if(seen_deletion && !seen_threedash){
-                update_deletion_buffer(hunk_deletions_buffer,&deletion_buffer_pos, c, current_deletion_buffer_marker); //Store char into buffer
+                update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size,c, current_deletion_buffer_marker); //Store char into buffer
             }
             if(seen_addition){
-                update_addition_buffer(hunk_additions_buffer,&addition_buffer_pos, c, current_addition_buffer_marker); //Store char into buffer
+                update_addition_buffer(&addition_buffer_pos, &addition_line_size,c, current_addition_buffer_marker); //Store char into buffer
             }
         } 
+        
 
         //For change section deletion comes before addition.
         encountered_newline = c == '\n' ? 1 : 0;
@@ -375,16 +377,23 @@ int hunk_getc(HUNK *hp, FILE *in) {
             newline_count++; //increment newline_count
             //check which hunk_buffer we are using right now
             if((*hp).type == 1){
+                addition_line_size = 0;
                 current_addition_buffer_marker = addition_buffer_pos;
                 addition_buffer_pos+=2;
-            }else if((*hp).type == 2){              
-                current_addition_buffer_marker = addition_buffer_pos;
+            }else if((*hp).type == 2){        
+                deletion_line_size = 0;      
+                current_deletion_buffer_marker = deletion_buffer_pos;
+                deletion_buffer_pos+=2;
             }else if((*hp).type == 3){
                 if(seen_deletion && !seen_threedash){
+                    addition_line_size = 0;
                     current_addition_buffer_marker = addition_buffer_pos;
+                    addition_buffer_pos +=2;
                 }
                 if(seen_addition){
-                    current_addition_buffer_marker = addition_buffer_pos;
+                    deletion_line_size =0;
+                    current_deletion_buffer_marker = deletion_buffer_pos;
+                    deletion_buffer_pos+=2;
                 }
             } 
         }
@@ -440,12 +449,11 @@ void hunk_show(HUNK *hp, FILE *out) {
     int old_start = (*hp).old_start;
     int old_end = (*hp).old_end;
     //Prints header
-    printf("%d",*(hunk_additions_buffer+3));
     if((*hp).type == 1){
         if(new_start != new_end) fprintf(out, "%da%d,%d\n",old_start, new_start,new_end); //multiple line for new
         else fprintf(out, "%da%d\n",old_start, new_start); //Single line add
     }else if((*hp).type == 2){
-        if(old_start == old_end) fprintf(out, "%d,%dd%d\n",old_start, old_end,new_start); //Multiple line for new
+        if(old_start != old_end) fprintf(out, "%d,%dd%d\n",old_start, old_end,new_start); //Multiple line for new
         else fprintf(out, "%dd%d\n",(*hp).old_start, new_start); //Single line delete
     }else if((*hp).type == 3){
         if(new_start != new_end){
@@ -462,25 +470,31 @@ void hunk_show(HUNK *hp, FILE *out) {
     //if(!finish_hunk) return; //If did not finish hunk, then we will not print the body.
     //Finished hunk we completly read the hunk then we can print out.
 
-    //Print the hunk
+    //Print the hunk data section
     int i = 0;
     char c;
     if((*hp).type == 1){
-        //printf("%d\n",*(hunk_additions_buffer+3));
-        //if(*(hunk_additions_buffer)== 0 && *(hunk_additions_buffer+1) ==0) return;
-        while(i<HUNK_MAX){
+        while(i< addition_buffer_pos-2){
             c = *(hunk_additions_buffer+i);
-            if(*(hunk_additions_buffer+i) != '\n'){
+            if(c != '\n'){
                 printf("%c",c);
             }else{
                 printf("%c",c);
-                //if(*(hunk_additions_buffer + i +1)== 0 && *(hunk_additions_buffer+i+2) ==0) return;
-                //i+=3;
+                i+=2;
             }
             i++;
         }
     }else if((*hp).type ==2){
-        
+        while(i< deletion_buffer_pos-2){
+            c = *(hunk_deletions_buffer+i);
+            if(c != '\n'){
+                printf("%c",c);
+            }else{
+                printf("%c",c);
+                i+=2;
+            }
+            i++;
+        }
     }else if((*hp).type == 3){
 
     }
@@ -547,22 +561,24 @@ int patch(FILE *in, FILE *out, FILE *diff) {
 }
 
 
-void update_deletion_buffer(char* deletion_buffer, int *size, char c,int marker){
-    *(deletion_buffer + ((*size )+ 2)) = c; //Store the char
-    (*size)++;
-    unsigned int left_half = (*size) & 255; //Mask lower 8 bits = 1 byte
-    unsigned int right_half = (unsigned int) (*size) >> 8; //Shift down 8 bits
+void update_deletion_buffer(int *pos, int *length, char c,int marker){
+    *(hunk_deletions_buffer + (*pos )) = c; //Store the char
+    (*pos)++;
+    (*length)++;
+    unsigned int left_half = (*length) & 255; //Mask lower 8 bits = 1 byte
+    unsigned int right_half = (unsigned int) (*length) >> 8; //Shift down 8 bits
     right_half = right_half & 255; //Mask lower 8 bits
         
-    *(deletion_buffer + marker+2) = left_half;
-    *(deletion_buffer + marker+3) = right_half;
+    *(hunk_deletions_buffer + marker) = left_half;
+    *(hunk_deletions_buffer + marker+1) = right_half;
 }
 
-void update_addition_buffer(char* addition_buffer, int *size, char c,int marker){
-    *(hunk_additions_buffer + ((*size )+ 2)) = c; //Store the char
-    (*size)++;
-    unsigned int left_half = (*size) & 255; //Mask lower 8 bits = 1 byte
-    unsigned int right_half = (unsigned int) (*size) >> 8; //Shift down 8 bits
+void update_addition_buffer(int *pos, int *length, char c,int marker){
+    *(hunk_additions_buffer + (*pos)) = c; //Store the char
+    (*pos)++;
+    (*length)++;
+    unsigned int left_half = (*length) & 255; //Mask lower 8 bits = 1 byte
+    unsigned int right_half = (unsigned int) (*length) >> 8; //Shift down 8 bits
     right_half = right_half & 255; //Mask lower 8 bits
     *(hunk_additions_buffer + marker) = left_half;
     *(hunk_additions_buffer + marker+1) = right_half;
