@@ -48,9 +48,19 @@ int hunk_next(HUNK *hp, FILE *in) {
     char c;
     //clear both buffers
     int i;
-    while(i < HUNK_MAX) *(hunk_deletions_buffer+(i++)) = 0;
+    while(i < deletion_buffer_pos) {
+        *(hunk_deletions_buffer+(i++)) = 0;
+        deletion_buffer_pos=2; //Reset deletion buffer pointer
+        current_deletion_buffer_marker =0; //Reset marker
+        deletion_line_size = 0; //Reset line size
+    }
     i = 0;
-    while(i < HUNK_MAX) *(hunk_additions_buffer+(i++)) = 0;
+    while(i < addition_buffer_pos){ 
+        *(hunk_additions_buffer+(i++)) = 0;
+        addition_buffer_pos = 2; //Reset addition buffer pointer.
+        current_addition_buffer_marker = 0; //Reset marker
+        addition_line_size = 0; //Reset line size
+    }
     if(finish_hunk == 1){
         previous_hunk = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
     }
@@ -471,7 +481,7 @@ void hunk_show(HUNK *hp, FILE *out) {
     //Finished hunk we completly read the hunk then we can print out.
 
     //Print the hunk data section
-    int i = 0;
+    int i = 2;
     char c;
     if((*hp).type == 1){
         while(i< addition_buffer_pos-2){
@@ -496,7 +506,29 @@ void hunk_show(HUNK *hp, FILE *out) {
             i++;
         }
     }else if((*hp).type == 3){
-
+        if(seen_threedash){
+            while(i< addition_buffer_pos-2){
+                c = *(hunk_additions_buffer+i);
+                if(c != '\n'){
+                    printf("%c",c);
+                }else{
+                    printf("%c",c);
+                    i+=2;
+                }
+                i++;
+            }
+        }else{
+            while(i< deletion_buffer_pos-2){
+                c = *(hunk_deletions_buffer+i);
+                if(c != '\n'){
+                    printf("%c",c);
+                }else{
+                    printf("%c",c);
+                    i+=2;
+                }
+                i++;
+            }
+        }
     }
 }
 
