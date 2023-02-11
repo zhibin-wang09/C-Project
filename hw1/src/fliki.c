@@ -236,8 +236,8 @@ int hunk_next(HUNK *hp, FILE *in) {
 
 int hunk_getc(HUNK *hp, FILE *in) {
     // TO BE IMPLEMENTED
-    //Current state inside hp. Which is the header
-    if(finish_hunk == 1) return EOS;
+    //finished a hunk or finished a secition in change hunk
+    if(finish_hunk == 1 ) return ERR;
     if(hp == NULL || in == NULL) return ERR;
     //Ignore "> " , "< " ,"\n"
 
@@ -273,7 +273,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //Check if ">" is followed by a new line.
             if(encountered_newline){
                 if(c == '>'){ //Found '>' after a new line
-                    //Store on to buffer on the fly.
                     //Check for ">" followed by a space.
                     if((c = fgetc(in)) != ' '){
                         return ERR;
@@ -321,7 +320,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         if((c=fgetc(in)) == '-'){
                             char n = fgetc(in); //ignore new line
                             if(n != '\n'){return ERR;}
-                            change_two_eos = 1;
+                            //change_two_eos = 1;
                             encountered_newline = 1;
                             seen_threedash = 1;
                             continue; //End of the deletion section in change
@@ -343,6 +342,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         if((c=fgetc(in)) != ' '){
                             return ERR;
                         }
+                        update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size, c, current_deletion_buffer_marker); //Store char into buffer
                         c= fgetc(in); //Ignore space
                         seen_deletion = 1;
                     }else{
@@ -480,16 +480,34 @@ void hunk_show(HUNK *hp, FILE *out) {
     //if(!finish_hunk) return; //If did not finish hunk, then we will not print the body.
     //Finished hunk we completly read the hunk then we can print out.
 
+    if(*(hunk_additions_buffer+HUNK_MAX-3) != 0){
+        *(hunk_additions_buffer+HUNK_MAX-4) = '\n';
+        *(hunk_additions_buffer+HUNK_MAX-5) = '.';
+        *(hunk_additions_buffer+HUNK_MAX-6) = '.';
+        *(hunk_additions_buffer+HUNK_MAX-7) = '.';
+    }
+    if(*(hunk_deletions_buffer+HUNK_MAX-3) != 0){
+        *(hunk_deletions_buffer+HUNK_MAX-4) = '\n';
+        *(hunk_deletions_buffer+HUNK_MAX-5) = '.';
+        *(hunk_deletions_buffer+HUNK_MAX-6) = '.';
+        *(hunk_deletions_buffer+HUNK_MAX-7) = '.';
+    }
     //Print the hunk data section
     int i = 2;
     char c;
+    int printsymbol = 1;
     if((*hp).type == 1){
         while(i< addition_buffer_pos-2){
             c = *(hunk_additions_buffer+i);
             if(c != '\n'){
+                if(printsymbol){
+                    printf("> ");
+                    printsymbol =0;
+                }
                 printf("%c",c);
             }else{
                 printf("%c",c);
+                printsymbol = 1;
                 i+=2;
             }
             i++;
@@ -498,9 +516,14 @@ void hunk_show(HUNK *hp, FILE *out) {
         while(i< deletion_buffer_pos-2){
             c = *(hunk_deletions_buffer+i);
             if(c != '\n'){
+                if(printsymbol){
+                    printf("< ");
+                    printsymbol = 0;
+                }
                 printf("%c",c);
             }else{
                 printf("%c",c);
+                printsymbol =1;
                 i+=2;
             }
             i++;
@@ -510,9 +533,14 @@ void hunk_show(HUNK *hp, FILE *out) {
             while(i< addition_buffer_pos-2){
                 c = *(hunk_additions_buffer+i);
                 if(c != '\n'){
+                    if(printsymbol){
+                        printf("> ");
+                        printsymbol =0;
+                    }
                     printf("%c",c);
                 }else{
                     printf("%c",c);
+                    printsymbol=1;
                     i+=2;
                 }
                 i++;
@@ -521,9 +549,14 @@ void hunk_show(HUNK *hp, FILE *out) {
             while(i< deletion_buffer_pos-2){
                 c = *(hunk_deletions_buffer+i);
                 if(c != '\n'){
+                    if(printsymbol){
+                        printf("< ");
+                        printsymbol =0;
+                    }
                     printf("%c",c);
                 }else{
                     printf("%c",c);
+                    printsymbol =1;
                     i+=2;
                 }
                 i++;
@@ -594,6 +627,7 @@ int patch(FILE *in, FILE *out, FILE *diff) {
 
 
 void update_deletion_buffer(int *pos, int *length, char c,int marker){
+    if(*pos >= HUNK_MAX-2) return;
     *(hunk_deletions_buffer + (*pos )) = c; //Store the char
     (*pos)++;
     (*length)++;
@@ -606,12 +640,15 @@ void update_deletion_buffer(int *pos, int *length, char c,int marker){
 }
 
 void update_addition_buffer(int *pos, int *length, char c,int marker){
+    if(*pos >= HUNK_MAX-2) return;
     *(hunk_additions_buffer + (*pos)) = c; //Store the char
     (*pos)++;
     (*length)++;
     unsigned int left_half = (*length) & 255; //Mask lower 8 bits = 1 byte
     unsigned int right_half = (unsigned int) (*length) >> 8; //Shift down 8 bits
     right_half = right_half & 255; //Mask lower 8 bits
+    //printf("%d,%d, ",left_half,right_half);
     *(hunk_additions_buffer + marker) = left_half;
     *(hunk_additions_buffer + marker+1) = right_half;
+    //printf("left: %d, right: %u",*(hunk_additions_buffer+marker),*(hunk_additions_buffer+marker+1));
 }
