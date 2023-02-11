@@ -20,6 +20,8 @@ static HUNK previous_hunk = {HUNK_NO_TYPE,0,0,0,0,0};
 static int change_two_eos = 0; //Indicator for if a change hunk hit the first eos.
 static int addition_line_size = 0; //The current line size of addition buffer
 static int deletion_line_size = 0; //The current line size of deletion buffer
+static int use_previous_hp = 0;
+static int print_addition_hunk = 0;
 
 void update_deletion_buffer(int *size, int *pos, char c,int marker);
 void update_addition_buffer(int *size, int *pos, char c,int marker);
@@ -44,9 +46,6 @@ int hunk_next(HUNK *hp, FILE *in) {
     if(in == NULL || hp == NULL){
         return EOF;
     }
-
-    char c;
-    //clear both buffers
     int i;
     while(i < deletion_buffer_pos) {
         *(hunk_deletions_buffer+(i++)) = 0;
@@ -61,13 +60,45 @@ int hunk_next(HUNK *hp, FILE *in) {
         current_addition_buffer_marker = 0; //Reset marker
         addition_line_size = 0; //Reset line size
     }
+    char c;
+    if(change_two_eos){
+        if((c=fgetc(in))== '-'){
+            if(seen_deletion == 0) {
+                return ERR;
+            }
+            encountered_newline = 0;
+            if((c=fgetc(in)) == '-'){
+                if((c=fgetc(in)) == '-'){
+                    char n = fgetc(in); //ignore new line
+                    if(n != '\n'){return ERR;}
+                    encountered_newline = 1;
+                    seen_threedash = 1;  //End of the deletion section in change
+                    change_two_eos = 0; //Allow to move on to addition section of change hunk.
+                    use_previous_hp  =1; //Next call to hunk get c will use previous hp because the hunk header presists for the two sections
+                    print_addition_hunk = 1;
+                    return 0; //Passes through the three dashes
+                }else{
+                    if(c == EOF) return EOF;
+                    return ERR;
+                }
+            }else{
+                if(c == EOF) return EOF;
+                return ERR;
+            }
+        }
+        return 0;
+    }
+    //clear both buffers
+    
     if(finish_hunk == 1){
         previous_hunk = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
     }
     finish_hunk = 0;
 
     while((c=hunk_getc((&previous_hunk),in)) != EOF && c != EOS){
-        if(c == ERR){return ERR;}
+        if(c == ERR){
+            return ERR;
+        }
         if(encountered_newline == 1 && (c >= '0' && c <= '9')){
             ungetc(c,in); //Place the char back because we want the full content of header.
             break;
@@ -83,7 +114,7 @@ int hunk_next(HUNK *hp, FILE *in) {
     int seen_comma = 0; //Indicator for choosing to operate on old/new start or end.
     int comma_count = 0; //Count for duplicate commas.
     int seen_integer = 0; //Indicator if we see an interger. Used to detect errors if no integer seen before comma.
-    
+    print_addition_hunk = 0;
     //Parse the header while checking for validity
     while((c=fgetc(in)) != '\n'){
         if(c == -1){ 
@@ -237,10 +268,13 @@ int hunk_next(HUNK *hp, FILE *in) {
 int hunk_getc(HUNK *hp, FILE *in) {
     // TO BE IMPLEMENTED
     //finished a hunk or finished a secition in change hunk
-    if(finish_hunk == 1 ) return ERR;
+    if(finish_hunk == 1 || change_two_eos == 1) return ERR;
     if(hp == NULL || in == NULL) return ERR;
     //Ignore "> " , "< " ,"\n"
-
+    if(use_previous_hp){
+        *hp = previous_hunk; //hp will be using previous hunk which is a change hunk.
+        use_previous_hp =0;
+    }
     char c;
 
     while((c = fgetc(in)) != EOF){
@@ -312,6 +346,12 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //NEED TO CHECK FOR IF ADDITION SECTION MISSING.
             if(encountered_newline){
                 if(c == '-'){
+                    if(change_two_eos == 0){ 
+                        ungetc(c,in);
+                        change_two_eos = 1; 
+                        previous_hunk = (HUNK){(*hp).type, (*hp).serial, (*hp).old_start, (*hp).old_end,(*hp).new_start,(*hp).new_end}; //Clone previious hp
+                        return EOS;
+                    }
                     if(seen_deletion == 0) {
                         return ERR;
                     }
@@ -320,7 +360,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         if((c=fgetc(in)) == '-'){
                             char n = fgetc(in); //ignore new line
                             if(n != '\n'){return ERR;}
-                            //change_two_eos = 1;
                             encountered_newline = 1;
                             seen_threedash = 1;
                             continue; //End of the deletion section in change
@@ -342,7 +381,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         if((c=fgetc(in)) != ' '){
                             return ERR;
                         }
-                        update_deletion_buffer(&deletion_buffer_pos, &deletion_line_size, c, current_deletion_buffer_marker); //Store char into buffer
                         c= fgetc(in); //Ignore space
                         seen_deletion = 1;
                     }else{
@@ -367,6 +405,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                 
             }
         }
+
         if((*hp).type == 1){
             update_addition_buffer(&addition_buffer_pos, &addition_line_size, c, current_addition_buffer_marker); //Store char into buffer
         }else if((*hp).type == 2){
@@ -396,14 +435,14 @@ int hunk_getc(HUNK *hp, FILE *in) {
                 deletion_buffer_pos+=2;
             }else if((*hp).type == 3){
                 if(seen_deletion && !seen_threedash){
-                    addition_line_size = 0;
-                    current_addition_buffer_marker = addition_buffer_pos;
-                    addition_buffer_pos +=2;
+                    deletion_line_size = 0;
+                    current_deletion_buffer_marker = deletion_buffer_pos;
+                    deletion_buffer_pos +=2;
                 }
                 if(seen_addition){
-                    deletion_line_size =0;
-                    current_deletion_buffer_marker = deletion_buffer_pos;
-                    deletion_buffer_pos+=2;
+                    addition_line_size =0;
+                    current_addition_buffer_marker = addition_buffer_pos;
+                    addition_buffer_pos+=2;
                 }
             } 
         }
@@ -529,7 +568,8 @@ void hunk_show(HUNK *hp, FILE *out) {
             i++;
         }
     }else if((*hp).type == 3){
-        if(seen_threedash){
+        
+        if(print_addition_hunk){
             while(i< addition_buffer_pos-2){
                 c = *(hunk_additions_buffer+i);
                 if(c != '\n'){
