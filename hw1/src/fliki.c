@@ -22,6 +22,7 @@ static int addition_line_size = 0; //The current line size of addition buffer
 static int deletion_line_size = 0; //The current line size of deletion buffer
 static int use_previous_hp = 0;
 static int print_addition_hunk = 0;
+static int call_from_next; //To diferentiate from using hunkgetc in hunknext as a helper function vs. calling hunk get c alone.
 
 void update_deletion_buffer(int *size, int *pos, char c,int marker);
 void update_addition_buffer(int *size, int *pos, char c,int marker);
@@ -94,7 +95,7 @@ int hunk_next(HUNK *hp, FILE *in) {
         previous_hunk = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
     }
     finish_hunk = 0;
-
+    call_from_next = 1;
     while((c=hunk_getc((&previous_hunk),in)) != EOF && c != EOS){
         if(c == ERR){
             return ERR;
@@ -104,7 +105,7 @@ int hunk_next(HUNK *hp, FILE *in) {
             break;
         }
     }
-
+    call_from_next = 0;
     if(c == EOF) return EOF;
     int oldstart = 0;
     int oldend = 0;
@@ -268,7 +269,8 @@ int hunk_next(HUNK *hp, FILE *in) {
 int hunk_getc(HUNK *hp, FILE *in) {
     // TO BE IMPLEMENTED
     //finished a hunk or finished a secition in change hunk
-    if(finish_hunk == 1 || change_two_eos == 1) return ERR;
+    if(finish_hunk == 1) return ERR;
+    if(change_two_eos) return EOS;
     if(hp == NULL || in == NULL) return ERR;
     //Ignore "> " , "< " ,"\n"
     if(use_previous_hp){
@@ -346,9 +348,10 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //NEED TO CHECK FOR IF ADDITION SECTION MISSING.
             if(encountered_newline){
                 if(c == '-'){
-                    if(change_two_eos == 0){ 
+                    if(change_two_eos == 0 && !call_from_next){ 
                         ungetc(c,in);
                         change_two_eos = 1; 
+                        call_from_next=1;
                         previous_hunk = (HUNK){(*hp).type, (*hp).serial, (*hp).old_start, (*hp).old_end,(*hp).new_start,(*hp).new_end}; //Clone previious hp
                         return EOS;
                     }
