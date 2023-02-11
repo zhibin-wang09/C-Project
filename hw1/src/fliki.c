@@ -539,7 +539,7 @@ void hunk_show(HUNK *hp, FILE *out) {
         *(hunk_deletions_buffer+HUNK_MAX-7) = '.';
     }
     //Print the hunk data section
-    int i = 0;
+    int i = 2;
     char c;
     int printsymbol = 1;
     if((*hp).type == 1){
@@ -566,7 +566,7 @@ void hunk_show(HUNK *hp, FILE *out) {
                     printf("< ");
                     printsymbol = 0;
                 }
-                printf("%d",c);
+                printf("%c",c);
             }else{
                 printf("%c",c);
                 printsymbol =1;
