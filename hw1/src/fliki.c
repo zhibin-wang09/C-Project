@@ -432,25 +432,25 @@ int hunk_getc(HUNK *hp, FILE *in) {
             //check which hunk_buffer we are using right now
             if(!call_from_next){
                 if((*hp).type == 1){
-                addition_line_size = 0;
-                current_addition_buffer_marker = addition_buffer_pos;
-                addition_buffer_pos+=2;
-            }else if((*hp).type == 2){        
-                deletion_line_size = 0;      
-                current_deletion_buffer_marker = deletion_buffer_pos;
-                deletion_buffer_pos+=2;
-            }else if((*hp).type == 3){
-                if(seen_deletion && !seen_threedash){
-                    deletion_line_size = 0;
-                    current_deletion_buffer_marker = deletion_buffer_pos;
-                    deletion_buffer_pos +=2;
-                }
-                if(seen_addition){
-                    addition_line_size =0;
+                    addition_line_size = 0;
                     current_addition_buffer_marker = addition_buffer_pos;
                     addition_buffer_pos+=2;
-                }
-            } 
+                }else if((*hp).type == 2){        
+                    deletion_line_size = 0;      
+                    current_deletion_buffer_marker = deletion_buffer_pos;
+                    deletion_buffer_pos+=2;
+                }else if((*hp).type == 3){
+                    if(seen_deletion && !seen_threedash){
+                        deletion_line_size = 0;
+                        current_deletion_buffer_marker = deletion_buffer_pos;
+                        deletion_buffer_pos +=2;
+                    }
+                    if(seen_addition){
+                        addition_line_size =0;
+                        current_addition_buffer_marker = addition_buffer_pos;
+                        addition_buffer_pos+=2;
+                    }
+                } 
             }
         }
         return c; //Return the character read
@@ -539,7 +539,7 @@ void hunk_show(HUNK *hp, FILE *out) {
         *(hunk_deletions_buffer+HUNK_MAX-7) = '.';
     }
     //Print the hunk data section
-    int i = 2;
+    int i = 0;
     char c;
     int printsymbol = 1;
     if((*hp).type == 1){
@@ -566,7 +566,7 @@ void hunk_show(HUNK *hp, FILE *out) {
                     printf("< ");
                     printsymbol = 0;
                 }
-                printf("%c",c);
+                printf("%d",c);
             }else{
                 printf("%c",c);
                 printsymbol =1;
