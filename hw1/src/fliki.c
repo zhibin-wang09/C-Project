@@ -464,7 +464,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
     if((*hp).type == 3 &&  (!seen_threedash || !seen_addition || !seen_deletion)) {
         return ERR; //Change hunk missing either three dashes, deletion section, or addition section
     }
-    
+    if(!encountered_newline) {return ERR;} //EOF in the middle of the hunk.
     return EOS;
 }
 
@@ -662,6 +662,7 @@ void hunk_show(HUNK *hp, FILE *out) {
 
 int patch(FILE *in, FILE *out, FILE *diff) {
     // TO BE IMPLEMENTED
+    
     if(global_options == 2){ // -n 
 
     }else if(global_options == 4){ //-q
