@@ -13,7 +13,6 @@ int stringLength(char* arg1){
 }
 
 int compareString(char *arg1, char *arg2){
-
     int  count = 0;
     int seen_dash = 0;
     int seen_h = 0;
@@ -27,6 +26,7 @@ int compareString(char *arg1, char *arg2){
        seen_dash = *(arg1 + count ) == '-' ? 1 : 0;
         count++;
     }
+    if(count <= 1) return -1; //The argument has only -
     return 0;
 }
 
