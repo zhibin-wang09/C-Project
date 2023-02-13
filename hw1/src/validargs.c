@@ -4,6 +4,32 @@
 #include "global.h"
 #include "debug.h"
 
+int stringLength(char* arg1){
+    int count = 0;
+    while(*(arg1 + count) != '\0'){
+       count++;
+    }
+    return count;
+}
+
+int compareString(char *arg1, char *arg2){
+
+    int  count = 0;
+    int seen_dash = 0;
+    int seen_h = 0;
+    while(*(arg1 + count) != '\0'){
+        if(seen_dash == 1 && *(arg1 + count) == 'h'){
+            return 0;
+        }
+        if(*(arg1 + count) != *(arg2 + count)){
+            return -1;
+        }
+       seen_dash = *(arg1 + count ) == '-' ? 1 : 0;
+        count++;
+    }
+    return 0;
+}
+
 /**
  * @brief Validates command line arguments passed to the program.
  * @details This function will validate all the arguments passed to the
@@ -21,30 +47,6 @@
  * @modifies global variable "diff_filename" to point to the name of the file
  * containing the diffs to be used.
  */
-
-int stringLength(char* arg1){
-    int count = 0;
-    while(*(arg1 + count) != '\0'){
-       count++;
-    }
-    return count;
-}
-
-int compareString(char *arg1, char *arg2){
-    if(stringLength(arg1) != stringLength(arg2)){
-        return -1;
-    }
-    int  count = 0;
-    while(*(arg1 + count) != '\0'){
-        if(*(arg1 + count) != *(arg2 + count)){
-            return -1;
-        }
-        count++;
-    }
-    return 0;
-}
-
-
 int validargs(int argc, char **argv) {
     // TO BE IMPLEMENTED
     //**argv is an array of strings.
