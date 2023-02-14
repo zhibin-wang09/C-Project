@@ -117,7 +117,10 @@ int hunk_next(HUNK *hp, FILE *in) {
     int comma_count = 0; //Count for duplicate commas.
     int seen_integer = 0; //Indicator if we see an interger. Used to detect errors if no integer seen before comma.
     print_addition_hunk = 0;
+    int switch_side = 0; //Indicator to update the old start and end once the left side of the header is finish reading.
+    seen_threedash = 0; //Instead of resseting three dashes in hunkgetc, we reset when we try to get the next hunk header. Because, we are certain that if we get next header we no longer seen threedashes.
     //Parse the header while checking for validity
+    hp->serial = ++serial; //Update the serial number before we go in.
     while((c=fgetc(in)) != '\n'){
         if(c == -1){
             if(!encountered_newline) return ERR; //No new line at the end of the file is an error.
@@ -184,10 +187,18 @@ int hunk_next(HUNK *hp, FILE *in) {
                 oldend += (c-'0');
                 seen_integer = 1;
             }
-
+            if(switch_side == 0){switch_side = 1;}
         }else{
             //This block means we already have set an operation type.
 
+            //Update hunk information on the fly.
+            if(switch_side){
+                if(oldend == 0) oldend = oldstart;
+                hp->old_start = oldstart;
+                hp->old_end = oldend;
+                hp->type = op;
+                switch_side = 0; //Turn off after we switch the side.
+            }
             //Check for duplicate operations
             if(c =='a' || c =='d' || c=='c'){
                 return ERR;
@@ -212,17 +223,17 @@ int hunk_next(HUNK *hp, FILE *in) {
             }
         }
     }
-    serial++; //Finishing parsing hunk then we set it to serial++
+    //serial++; //Finishing parsing hunk then we set it to serial++
 
     //In case old end or new end is the same as old start or new start.
-    if(oldend == 0) oldend = oldstart;
+    //if(oldend == 0) oldend = oldstart;
     if(newend == 0) newend = newstart;
 
     //Build the HUNK
-    hp->type = op;
-    hp->serial =  serial;
-    hp->old_start = oldstart;
-    hp->old_end = oldend;
+    //hp->type = op;
+    //hp->serial =  serial;
+    //hp->old_start = oldstart;
+    //hp->old_end = oldend;
     hp->new_start = newstart;
     hp->new_end = newend;
 
@@ -296,7 +307,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
             }
             finish_hunk = 1;
             //Reset all the counting information
-            seen_threedash = 0;
+            //seen_threedash = 0; delete this because for change hunk, at the end of the addition section we don't want to reset seen three dashes because we could have other tasks
             seen_addition = 0;
             seen_deletion = 0;
             encountered_newline = 1;
@@ -707,23 +718,19 @@ int patch(FILE *in, FILE *out, FILE *diff) {
                 if(!seen_threedash){
                     //Still in deletion section
                     int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
-                    printf("---before three dashes--- old_start%d, old_end:%d\n",  (header).old_start,(header).old_end);
-                    printf("---new line count---: %d\n",newline_count);
-                    hunk_show(&header,stderr);
-                    // if(lines_in_hunk != newline_count) {
-                    //     fprintf(stderr,"Error, lines don't match\n");
-                    //     hunk_show(&header,stderr);
-                    //     return -1;
-                    //}
+                    if(lines_in_hunk != newline_count) {
+                        fprintf(stderr,"Error, lines don't match\n");
+                        hunk_show(&header,stderr);
+                        return -1;
+                    }
                 }else{
                     //In the addition section
                     int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
-                    printf("---after three dashes--- new_start:%d, new_end:%d\n", (header).new_start,(header).new_end);
-                    // if(lines_in_hunk != newline_count) {
-                    //     fprintf(stderr,"Error, lines don't match\n");
-                    //     hunk_show(&header,stderr);
-                    //     return -1;
-                    // }
+                    if(lines_in_hunk != newline_count) {
+                        fprintf(stderr,"Error, lines don't match\n");
+                        hunk_show(&header,stderr);
+                        return -1;
+                    }
                 }
             }
             //Remeber to check if the change sections, if we just passed deletion, we should not refresh.
