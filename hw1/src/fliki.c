@@ -816,6 +816,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
         while(in_line_count < header.old_start || out_line_count < header.new_end){
             //Write lines in between to out.
             in_c = fgetc(in); //get char in file in
+            if(in_c == EOF) break;
             fputc(in_c,out); //write the char to file out
             if(in_c == '\n'){in_line_count++;out_line_count++;} // We reached a new line.
         }
