@@ -19,19 +19,26 @@
 
 int main(int argc, char **argv)
 {
-    printf("Main: argc: %d, argv: %s\n",argc,*argv);
+    //printf("Main: argc: %d, argv: %s\n",argc,*argv);
     if(validargs(argc, argv)){
-        printf("Invalid\n");
+        //printf("Invalid\n");
         USAGE(*argv, EXIT_FAILURE);
     }
     if(global_options == HELP_OPTION){
-        printf("Valid\n");
+        //printf("Valid\n");
         USAGE(*argv, EXIT_SUCCESS);
     }
     // TO BE IMPLEMENTED
-    printf("Status:%s, options: %ld\n", " Valid", global_options);
-    return EXIT_FAILURE;
+    //printf("Status:%s, options: %ld\n", " Valid", global_options);
+    FILE *diff = fopen(diff_filename,"r");
+    int res = patch(stdin, stdout, diff);
+    if(res == 0){
+        return EXIT_SUCCESS;
+    }else{
+        return EXIT_FAILURE;
+    }
 }
+
 
 /*
  * Just a reminder: All non-main functions should
