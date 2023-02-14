@@ -24,8 +24,8 @@ static int use_previous_hp = 0;
 static int print_addition_hunk = 0;
 static int call_from_next; //To diferentiate from using hunkgetc in hunknext as a helper function vs. calling hunk get c alone.
 static int dead = 0;//Indicate if any error occured if it does then the program is dead.
-static void update_deletion_buffer(int *size, int *pos, char c,int marker);
-static void update_addition_buffer(int *size, int *pos, char c,int marker);
+static void update_deletion_buffer(int *size, int *pos, int c,int marker);
+static void update_addition_buffer(int *size, int *pos, int c,int marker);
 static int patch_qn(FILE *in, FILE *out, FILE *diff,long op);
 static int patch_helper(FILE *in, FILE *out, FILE *diff, long global_options);
 
@@ -63,7 +63,7 @@ int hunk_next(HUNK *hp, FILE *in) {
         current_addition_buffer_marker = 0; //Reset marker
         addition_line_size = 0; //Reset line size
     }
-    char c;
+    int c;
     newline_count = 0; //If we move on to the next hunk, we will need to reset the newline count.
     if(change_two_eos){
         if((c=fgetc(in))== '-'){
@@ -73,7 +73,7 @@ int hunk_next(HUNK *hp, FILE *in) {
             encountered_newline = 0;
             if((c=fgetc(in)) == '-'){
                 if((c=fgetc(in)) == '-'){
-                    char n = fgetc(in); //ignore new line
+                    int n = fgetc(in); //ignore new line
                     if(n != '\n'){return ERR;}
                     encountered_newline = 1;
                     seen_threedash = 1;  //End of the deletion section in change
@@ -122,7 +122,6 @@ int hunk_next(HUNK *hp, FILE *in) {
     //int switch_side = 0; //Indicator to update the old start and end once the left side of the header is finish reading.
     seen_threedash = 0; //Instead of resseting three dashes in hunkgetc, we reset when we try to get the next hunk header. Because, we are certain that if we get next header we no longer seen threedashes.
     //Parse the header while checking for validity
-    hp->serial = ++serial; //Update the serial number before we go in.
     while((c=fgetc(in)) != '\n'){
         if(c == -1){
             if(!encountered_newline) return ERR; //No new line at the end of the file is an error.
@@ -221,7 +220,8 @@ int hunk_next(HUNK *hp, FILE *in) {
     //In case old end or new end is the same as old start or new start.
     if(oldend == 0) oldend = oldstart;
     if(newend == 0) newend = newstart;
-
+    if(oldstart > oldend) return ERR;
+    if(newstart > newend) return ERR; //The start can not be greater than the end.
     //Build the HUNK
     hp->type = op;
     hp->serial =  serial;
@@ -282,7 +282,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
         *hp = previous_hunk; //hp will be using previous hunk which is a change hunk.
         use_previous_hp =0;
     }
-    char c;
+    int c;
     while((c = fgetc(in)) != EOF){
         //Next hunk header consist of after new line and is a number.
         //Although there is a chance of erro where next new line start with 3a3 and
@@ -363,7 +363,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                     encountered_newline = 0;
                     if((c=fgetc(in)) == '-'){
                         if((c=fgetc(in)) == '-'){
-                            char n = fgetc(in); //ignore new line
+                            int n = fgetc(in); //ignore new line
                             if(n != '\n'){return ERR;}
                             encountered_newline = 1;
                             seen_threedash = 1;
@@ -541,7 +541,7 @@ void hunk_show(HUNK *hp, FILE *out) {
     }
     //Print the hunk data section
     int i = 2;
-    char c;
+    int c;
     int printsymbol = 1;
     if((*hp).type == 1){
         while(i< addition_buffer_pos-2){
@@ -667,7 +667,7 @@ int patch(FILE *in, FILE *out, FILE *diff) {
     //Step 4: Read the char in in file write it to out
     // TO BE IMPLEMENTED
     if(in==NULL || out==NULL || diff==NULL) return -1;
-    char c; //return value for hunkgetc
+    int c; //return value for hunkgetc
     if((c=fgetc(diff)) == EOF){ //diff file is enpty
         while((c= fgetc(in)) != EOF){ //Write the in file to out file unchanged.
             fprintf(out,"%c",c); //Write to out
@@ -695,7 +695,7 @@ int patch(FILE *in, FILE *out, FILE *diff) {
 }
 
 
-void update_deletion_buffer(int *pos, int *length, char c,int marker){
+void update_deletion_buffer(int *pos, int *length, int c,int marker){
     if(*pos >= HUNK_MAX-2) return;
     *(hunk_deletions_buffer + (*pos )) = c; //Store the char
     (*pos)++;
@@ -707,7 +707,7 @@ void update_deletion_buffer(int *pos, int *length, char c,int marker){
     *(hunk_deletions_buffer + marker+1) = right_half;
 }
 
-void update_addition_buffer(int *pos, int *length, char c,int marker){
+void update_addition_buffer(int *pos, int *length, int c,int marker){
     if(*pos >= HUNK_MAX-2) return;
     *(hunk_additions_buffer + (*pos)) = c; //Store the char
     (*pos)++;
@@ -725,9 +725,9 @@ void update_addition_buffer(int *pos, int *length, char c,int marker){
 int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
     int status; //status of hunknext
     HUNK header = {HUNK_NO_TYPE,0,0,0,0,0};
-    char c;
+    int c;
     int in_line_count = 1;
-    char in_c;
+    int in_c;
     while((status=hunk_next(&header,diff)) != EOF){ //parse the header.
         if(status == ERR){
             if(op == 2){fprintf(stderr, "Error, hunk header is invalid\n");hunk_show(&header, stderr);} //produce the error result
@@ -800,8 +800,8 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
 int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
     int status;
     HUNK header = {HUNK_NO_TYPE,0,0,0,0,0};
-    char diff_c;
-    char in_c;
+    int diff_c;
+    int in_c;
     int in_line_count = 1; //We are always in the first line in file in
 
     while((status = hunk_next(&header, diff)) != EOF){
