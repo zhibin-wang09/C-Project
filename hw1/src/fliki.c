@@ -804,7 +804,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
     char in_c;
     int in_line_count = 1; //We are always in the first line in file in
 
-    while((status = hunk_next(&header, diff))){
+    while((status = hunk_next(&header, diff)) != EOF){
         if(status == ERR){
             if(status == ERR) return -1;
             fprintf(stderr, "Error, hunk header is invalid\n");
@@ -825,29 +825,30 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
             //-> changehunk, read through the right side, and write these to the output.
             if(diff_c == ERR){return -1;}
             if(header.type == 3){
-
-                //Compare the content and check if it matches
+                //Compare the content and check if it matches while we ignore it(do not write into file)
                 if(seen_deletion && !seen_threedash){
                     in_c = fgetc(in);
-                    if(c != in_c){
-                        if(op == 2){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                    if(diff_c != in_c){
+                        if(op == 0){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
                         return -1;
                     } //deletion sections don't match
                     if(in_c == '\n'){in_line_count++;}
+                }
+                if(seen_addition && seen_threedash){ //Instead write the addition sectin into file.
+                    fputc(diff_c, out);
                 }
             }else if(header.type == 2){
                 //Deletion hunk -> Ignore the lines that are inside deletion hunk. (i.e. do not write to out)
                 //Compare the content and check if it matches
                 in_c = fgetc(in);
-                if(c != in_c){
-                    if(op == 2){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                if(diff_c != in_c){
+                    if(op == 0){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
                     return -1;
                 } //deletion sections don't match
                 if(in_c == '\n'){in_line_count++;}
             }else if(header.type == 1){
                  //Additoin hunk -> read the body and write it to the out. At the line of left side of middle of the header.
                 fputc(diff_c , out); //Write the chars read to out.
-                if(diff_c == '\n'){in_line_count++;} //increment the inlinecount as we have finished writing a line.
             }
         }
 
