@@ -24,9 +24,10 @@ static int use_previous_hp = 0;
 static int print_addition_hunk = 0;
 static int call_from_next; //To diferentiate from using hunkgetc in hunknext as a helper function vs. calling hunk get c alone.
 static int dead = 0;//Indicate if any error occured if it does then the program is dead.
-void update_deletion_buffer(int *size, int *pos, char c,int marker);
-void update_addition_buffer(int *size, int *pos, char c,int marker);
-int patch_qn(FILE *in, FILE *out, FILE *diff,long op);
+static void update_deletion_buffer(int *size, int *pos, char c,int marker);
+static void update_addition_buffer(int *size, int *pos, char c,int marker);
+static int patch_qn(FILE *in, FILE *out, FILE *diff,long op);
+static int patch_helper(FILE *in, FILE *out, FILE *diff, long global_options);
 
 /**
  * @brief Get the header of the next hunk in a diff file.
@@ -680,12 +681,14 @@ int patch(FILE *in, FILE *out, FILE *diff) {
         int status = patch_qn(in, out, diff, global_options);
         return status;
     }else if(global_options == QUIET_OPTION){ //-q
-
+        int status = patch_helper(in,out,diff,global_options);
+        return status;
     }else if(global_options == 6){ // -n -q
         int status = patch_qn(in, out, diff, global_options);
         return status;
     }else{ //No other options means print to out
-
+        int status = patch_helper(in,out,diff,global_options);
+        return status;
     }
 
     return 0;
@@ -718,37 +721,56 @@ void update_addition_buffer(int *pos, int *length, char c,int marker){
     //printf("left: %d, right: %u",*(hunk_additions_buffer+marker),*(hunk_additions_buffer+marker+1));
 }
 
+/*A helper function that factors the similiar operation for no_patch_mode and no_patch_mode & quiet_mode*/
 int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
     int status; //status of hunknext
     HUNK header = {HUNK_NO_TYPE,0,0,0,0,0};
     char c;
+    int in_line_count = 1;
+    char in_c;
     while((status=hunk_next(&header,diff)) != EOF){ //parse the header.
         if(status == ERR){
-            fprintf(stderr, "Error, hunk header is invalid\n");
-            if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+            if(op == 2){fprintf(stderr, "Error, hunk header is invalid\n");hunk_show(&header, stderr);} //produce the error result
             return -1;
         }
-        while((c = hunk_getc(&header,diff)) != EOS && c != EOF){ // get the char
+        //Also move along the in file because we want to check if the deletion sections match.
+        //NOTE: If there is a gap between current line in in file and current hunk start line. Write all the line
+        //in between the in file to out file.
+        while(in_line_count < header.old_start){
+            //Write lines in between to out.
+            in_c = fgetc(in); //get char in file in
+            if(in_c == '\n'){in_line_count++;} //We reached a new line.
+        }
+
+        while((c = hunk_getc(&header,diff)) != EOS){ // get the char
             if(c == ERR){ //If some err occured return.
-                fprintf(stderr, "Error, hunk data section format is wrong\n");
-                if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                if(op == 2){fprintf(stderr, "Error, hunk data section format is wrong\n");hunk_show(&header, stderr);} //produce the error result
                 return -1;
+            }
+            /*if this section is a deletion hunk or deletion section of a change hunk,
+            we need to check if the sections match by looking at file in and diff at the same time.*/
+            if(header.type == 2 || (header.type == 3 && seen_deletion == 1 && !seen_threedash)){
+                in_c = fgetc(in);
+                if(c != in_c){
+                    if(op == 2){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                    return -1;
+                } //deletion sections don't match
+                if(in_c == '\n'){in_line_count++;}
             }
         }
         //printf("hunk type: %d, serial: %d, old start: %d, old end: %d,new start: %d, new end: %d\n", header.type, header.serial, header.old_start, header.old_end, header.new_start, header.new_end);
-        //Compare if the lines are correct
+        //Compare if the lines are correct in the data section match the header section.
         if((header).type == 1){
             int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
             if(lines_in_hunk != newline_count) {
-                fprintf(out,"Error, lines don't match\n");
-                if(op == 2){hunk_show(&header, stderr);}//produce the error result}
+
+                if(op == 2){fprintf(out,"Error, lines don't match\n");hunk_show(&header, stderr);}//produce the error result
                 return -1;
             }
         }else if((header).type == 2){
             int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
             if(lines_in_hunk != newline_count) {
-                fprintf(stderr,"Error, lines don't match\n");
-                if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                if(op == 2){fprintf(stderr,"Error, lines don't match\n");hunk_show(&header, stderr);} //produce the error result
                 return -1;
             }
         }else if((header).type == 3){
@@ -756,22 +778,109 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
                 //Still in deletion section
                 int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
                 if(lines_in_hunk != newline_count) {
-                    fprintf(stderr,"Error, lines don't match\n");
-                    if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                    if(op == 2){fprintf(stderr,"Error, lines don't match\n");hunk_show(&header, stderr);} //produce the error result
                     return -1;
                 }
             }else{
                 //In the addition section
                 int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
                 if(lines_in_hunk != newline_count) {
-                    fprintf(stderr,"Error, lines don't match\n");
-                    if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                    if(op == 2){fprintf(stderr,"Error, lines don't match\n");hunk_show(&header, stderr);} //produce the error result}
                     return -1;
                 }
             }
         }
         //Remeber to check if the change sections, if we just passed deletion, we should not refresh.
         header = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
+    }
+    return 0;
+}
+
+/*A function that factors similiar operation for patch mode and patch mode & quiet_mode*/
+int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
+    int status;
+    HUNK header = {HUNK_NO_TYPE,0,0,0,0,0};
+    char diff_c;
+    char in_c;
+    int in_line_count = 1; //We are always in the first line in file in
+
+    while((status = hunk_next(&header, diff))){
+        if(status == ERR){
+            if(status == ERR) return -1;
+            fprintf(stderr, "Error, hunk header is invalid\n");
+            return -1;
+        }
+        //Valid hunk header
+        //NOTE: If there is a gap between current line in in file and current hunk start line. Write all the line
+        //in between the in file to out file.
+        while(in_line_count < header.old_start){
+            //Write lines in between to out.
+            in_c = fgetc(in); //get char in file in
+            fputc(in_c,out); //write the char to file out
+            if(in_c == '\n'){in_line_count++;} // We reached a new line.
+        }
+
+        while((diff_c = hunk_getc(&header, diff)) != EOS){
+            //Change hunk -> For change hunk, read through left side X,X and check against in file.(Do not write this to output)
+            //-> changehunk, read through the right side, and write these to the output.
+            if(diff_c == ERR){return -1;}
+            if(header.type == 3){
+
+                //Compare the content and check if it matches
+                if(seen_deletion && !seen_threedash){
+                    in_c = fgetc(in);
+                    if(c != in_c){
+                        if(op == 2){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                        return -1;
+                    } //deletion sections don't match
+                    if(in_c == '\n'){in_line_count++;}
+                }
+            }else if(header.type == 2){
+                //Deletion hunk -> Ignore the lines that are inside deletion hunk. (i.e. do not write to out)
+                //Compare the content and check if it matches
+                in_c = fgetc(in);
+                if(c != in_c){
+                    if(op == 2){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                    return -1;
+                } //deletion sections don't match
+                if(in_c == '\n'){in_line_count++;}
+            }else if(header.type == 1){
+                 //Additoin hunk -> read the body and write it to the out. At the line of left side of middle of the header.
+                fputc(diff_c , out); //Write the chars read to out.
+                if(diff_c == '\n'){in_line_count++;} //increment the inlinecount as we have finished writing a line.
+            }
+        }
+
+        //Check if the lines in the diff file is valid. (Semantic errors)
+        if((header).type == 1){
+            int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
+            if(lines_in_hunk != newline_count) {
+                if(op == 0){fprintf(out,"Error, lines don't match\n");hunk_show(&header, stderr);}//produce the error result
+                return -1;
+            }
+        }else if((header).type == 2){
+            int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
+            if(lines_in_hunk != newline_count) {
+                if(op == 0){fprintf(stderr,"Error, lines don't match\n");hunk_show(&header, stderr);} //produce the error result
+                return -1;
+            }
+        }else if((header).type == 3){
+            if(!seen_threedash){
+                //Still in deletion section
+                int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
+                if(lines_in_hunk != newline_count) {
+                    if(op == 0){fprintf(stderr,"Error, lines don't match\n");hunk_show(&header, stderr);} //produce the error result
+                    return -1;
+                }
+            }else{
+                //In the addition section
+                int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
+                if(lines_in_hunk != newline_count) {
+                    if(op == 0){fprintf(stderr,"Error, lines don't match\n");hunk_show(&header, stderr);} //produce the error result}
+                    return -1;
+                }
+            }
+        }
     }
     return 0;
 }
