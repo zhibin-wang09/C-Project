@@ -26,6 +26,7 @@ static int call_from_next; //To diferentiate from using hunkgetc in hunknext as 
 static int dead = 0;//Indicate if any error occured if it does then the program is dead.
 void update_deletion_buffer(int *size, int *pos, char c,int marker);
 void update_addition_buffer(int *size, int *pos, char c,int marker);
+int patch_qn(FILE *in, FILE *out, FILE *diff,long op);
 
 /**
  * @brief Get the header of the next hunk in a diff file.
@@ -117,7 +118,7 @@ int hunk_next(HUNK *hp, FILE *in) {
     int comma_count = 0; //Count for duplicate commas.
     int seen_integer = 0; //Indicator if we see an interger. Used to detect errors if no integer seen before comma.
     print_addition_hunk = 0;
-    int switch_side = 0; //Indicator to update the old start and end once the left side of the header is finish reading.
+    //int switch_side = 0; //Indicator to update the old start and end once the left side of the header is finish reading.
     seen_threedash = 0; //Instead of resseting three dashes in hunkgetc, we reset when we try to get the next hunk header. Because, we are certain that if we get next header we no longer seen threedashes.
     //Parse the header while checking for validity
     hp->serial = ++serial; //Update the serial number before we go in.
@@ -187,18 +188,9 @@ int hunk_next(HUNK *hp, FILE *in) {
                 oldend += (c-'0');
                 seen_integer = 1;
             }
-            if(switch_side == 0){switch_side = 1;}
         }else{
             //This block means we already have set an operation type.
 
-            //Update hunk information on the fly.
-            if(switch_side){
-                if(oldend == 0) oldend = oldstart;
-                hp->old_start = oldstart;
-                hp->old_end = oldend;
-                hp->type = op;
-                switch_side = 0; //Turn off after we switch the side.
-            }
             //Check for duplicate operations
             if(c =='a' || c =='d' || c=='c'){
                 return ERR;
@@ -223,17 +215,17 @@ int hunk_next(HUNK *hp, FILE *in) {
             }
         }
     }
-    //serial++; //Finishing parsing hunk then we set it to serial++
+    serial++; //Finishing parsing hunk then we set it to serial++
 
     //In case old end or new end is the same as old start or new start.
-    //if(oldend == 0) oldend = oldstart;
+    if(oldend == 0) oldend = oldstart;
     if(newend == 0) newend = newstart;
 
     //Build the HUNK
-    //hp->type = op;
-    //hp->serial =  serial;
-    //hp->old_start = oldstart;
-    //hp->old_end = oldend;
+    hp->type = op;
+    hp->serial =  serial;
+    hp->old_start = oldstart;
+    hp->old_end = oldend;
     hp->new_start = newstart;
     hp->new_end = newend;
 
@@ -685,61 +677,13 @@ int patch(FILE *in, FILE *out, FILE *diff) {
     int status; //status of hunknext
     HUNK header = {HUNK_NO_TYPE,0,0,0,0,0};
     if(global_options == NO_PATCH_OPTION){ // -n -> does not write anything to out. Used for testing.
-        while((status=hunk_next(&header,diff)) != EOF){ //parse the header.
-            if(status == ERR){
-                fprintf(stderr, "Error, hunk header is invalid\n");
-                hunk_show(&header, stderr); //produce the error result
-                return -1;
-            }
-            while((c = hunk_getc(&header,diff)) != EOS && c != EOF){ // get the char
-                if(c == ERR){ //If some err occured return.
-                    fprintf(stderr, "Error, hunk data section format is wrong\n");
-                    hunk_show(&header,stderr);
-                    return -1;
-                }
-            }
-            //printf("hunk type: %d, serial: %d, old start: %d, old end: %d,new start: %d, new end: %d\n", header.type, header.serial, header.old_start, header.old_end, header.new_start, header.new_end);
-            //Compare if the lines are correct
-            if((header).type == 1){
-                int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
-                if(lines_in_hunk != newline_count) {
-                    fprintf(out,"Error, lines don't match\n");
-                    hunk_show(&header,stderr);
-                    return -1;
-                }
-            }else if((header).type == 2){
-                int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
-                if(lines_in_hunk != newline_count) {
-                    fprintf(stderr,"Error, lines don't match\n");
-                    hunk_show(&header,stderr);
-                    return -1;
-                }
-            }else if((header).type == 3){
-                if(!seen_threedash){
-                    //Still in deletion section
-                    int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
-                    if(lines_in_hunk != newline_count) {
-                        fprintf(stderr,"Error, lines don't match\n");
-                        hunk_show(&header,stderr);
-                        return -1;
-                    }
-                }else{
-                    //In the addition section
-                    int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
-                    if(lines_in_hunk != newline_count) {
-                        fprintf(stderr,"Error, lines don't match\n");
-                        hunk_show(&header,stderr);
-                        return -1;
-                    }
-                }
-            }
-            //Remeber to check if the change sections, if we just passed deletion, we should not refresh.
-            header = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
-        }
+        int status = patch_qn(in, out, diff, global_options);
+        return status;
     }else if(global_options == QUIET_OPTION){ //-q
 
     }else if(global_options == 6){ // -n -q
-
+        int status = patch_qn(in, out, diff, global_options);
+        return status;
     }else{ //No other options means print to out
 
     }
@@ -772,4 +716,62 @@ void update_addition_buffer(int *pos, int *length, char c,int marker){
     *(hunk_additions_buffer + marker) = left_half;
     *(hunk_additions_buffer + marker+1) = right_half;
     //printf("left: %d, right: %u",*(hunk_additions_buffer+marker),*(hunk_additions_buffer+marker+1));
+}
+
+int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
+    int status; //status of hunknext
+    HUNK header = {HUNK_NO_TYPE,0,0,0,0,0};
+    char c;
+    while((status=hunk_next(&header,diff)) != EOF){ //parse the header.
+        if(status == ERR){
+            fprintf(stderr, "Error, hunk header is invalid\n");
+            if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+            return -1;
+        }
+        while((c = hunk_getc(&header,diff)) != EOS && c != EOF){ // get the char
+            if(c == ERR){ //If some err occured return.
+                fprintf(stderr, "Error, hunk data section format is wrong\n");
+                if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                return -1;
+            }
+        }
+        //printf("hunk type: %d, serial: %d, old start: %d, old end: %d,new start: %d, new end: %d\n", header.type, header.serial, header.old_start, header.old_end, header.new_start, header.new_end);
+        //Compare if the lines are correct
+        if((header).type == 1){
+            int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
+            if(lines_in_hunk != newline_count) {
+                fprintf(out,"Error, lines don't match\n");
+                if(op == 2){hunk_show(&header, stderr);}//produce the error result}
+                return -1;
+            }
+        }else if((header).type == 2){
+            int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
+            if(lines_in_hunk != newline_count) {
+                fprintf(stderr,"Error, lines don't match\n");
+                if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                return -1;
+            }
+        }else if((header).type == 3){
+            if(!seen_threedash){
+                //Still in deletion section
+                int lines_in_hunk = (header).old_end - (header).old_start + 1; //Inclusive so + 1
+                if(lines_in_hunk != newline_count) {
+                    fprintf(stderr,"Error, lines don't match\n");
+                    if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                    return -1;
+                }
+            }else{
+                //In the addition section
+                int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
+                if(lines_in_hunk != newline_count) {
+                    fprintf(stderr,"Error, lines don't match\n");
+                    if(op == 2){hunk_show(&header, stderr);} //produce the error result}
+                    return -1;
+                }
+            }
+        }
+        //Remeber to check if the change sections, if we just passed deletion, we should not refresh.
+        header = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
+    }
+    return 0;
 }
