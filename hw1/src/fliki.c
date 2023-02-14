@@ -48,7 +48,7 @@ int hunk_next(HUNK *hp, FILE *in) {
     if(in == NULL || hp == NULL){
         return EOF;
     }
-    int i;
+    int i=0;
     while(i < deletion_buffer_pos) {
         *(hunk_deletions_buffer+(i++)) = 0;
         deletion_buffer_pos=2; //Reset deletion buffer pointer
