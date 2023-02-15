@@ -530,18 +530,6 @@ void hunk_show(HUNK *hp, FILE *out) {
     if(!finish_hunk){return; }//If did not finish hunk, then we will not print the body.
     if((*hp).type == 3 && change_two_eos){finish_hunk = 0;}
     //Finished hunk we completly read the hunk then we can print out.
-    if(*(hunk_additions_buffer+HUNK_MAX-3) != 0){
-        *(hunk_additions_buffer+HUNK_MAX-4) = '\n';
-        *(hunk_additions_buffer+HUNK_MAX-5) = '.';
-        *(hunk_additions_buffer+HUNK_MAX-6) = '.';
-        *(hunk_additions_buffer+HUNK_MAX-7) = '.';
-    }
-    if(*(hunk_deletions_buffer+HUNK_MAX-3) != 0){
-        *(hunk_deletions_buffer+HUNK_MAX-4) = '\n';
-        *(hunk_deletions_buffer+HUNK_MAX-5) = '.';
-        *(hunk_deletions_buffer+HUNK_MAX-6) = '.';
-        *(hunk_deletions_buffer+HUNK_MAX-7) = '.';
-    }
     //Print the hunk data section
     int i = 2;
     int c;
@@ -612,6 +600,12 @@ void hunk_show(HUNK *hp, FILE *out) {
                 i++;
             }
         }
+    }
+    if(*(hunk_additions_buffer+HUNK_MAX-3) != 0){
+        printf("...\n");
+    }
+    if(*(hunk_deletions_buffer+HUNK_MAX-3) != 0){
+        printf("...\n");
     }
 }
 
