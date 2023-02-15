@@ -830,7 +830,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
                 if(seen_deletion && !seen_threedash){
                     in_c = fgetc(in);
                     if(diff_c != in_c){
-                        if(op == 0){fprintf(stderr,"%d, %d\n",diff_c,in_c);fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                        if(op == 0){fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
                         return -1;
                     } //deletion sections don't match
                     if(in_c == '\n'){in_line_count++;}
