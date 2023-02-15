@@ -813,7 +813,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
         //NOTE: If there is a gap between current line in in file and current hunk start line. Write all the line
         //in between the in file to out file. Or if the output file current line and hunk insertion line doesn't match up
         //we also know there is a gap.
-        while(in_line_count < header.old_start || out_line_count < header.new_end){
+        while(in_line_count < header.old_start || (out_line_count < header.new_start && header.type != 3) ){
             //Write lines in between to out.
             in_c = fgetc(in); //get char in file in
             if(in_c == EOF) break;
@@ -830,7 +830,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
                 if(seen_deletion && !seen_threedash){
                     in_c = fgetc(in);
                     if(diff_c != in_c){
-                        if(op == 0){fprintf(stderr,"change hunk\n");fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
+                        if(op == 0){fprintf(stderr,"%d, %d\n",diff_c,in_c);fprintf(stderr,"Error, hunk deletion section don't match with input file\n");hunk_show(&header,stderr);}
                         return -1;
                     } //deletion sections don't match
                     if(in_c == '\n'){in_line_count++;}
@@ -884,6 +884,10 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
                 }
             }
         }
+    }
+    //If the in file have left overs move them over to out.
+    while((in_c = fgetc(in)) != EOF){
+        fputc(in_c,out);
     }
     return 0;
 }
