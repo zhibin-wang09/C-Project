@@ -81,6 +81,7 @@ int hunk_next(HUNK *hp, FILE *in) {
                     use_previous_hp  =1; //Next call to hunk get c will use previous hp because the hunk header presists for the two sections
                     print_addition_hunk = 1;
                     newline_count = 0;
+                    finish_hunk = 0;//Activate calls to hunk getc
                     return 0; //Passes through the three dashes
                 }else{
                     if(c == EOF) return EOF;
@@ -354,6 +355,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         ungetc(c,in);
                         change_two_eos = 1;
                         call_from_next=0;
+                        finish_hunk = 1; //Make next call to hunkgetc from calling hunkgetc return ERR;
                         previous_hunk = (HUNK){(*hp).type, (*hp).serial, (*hp).old_start, (*hp).old_end,(*hp).new_start,(*hp).new_end}; //Clone previious hp
                         return EOS;
                     }
@@ -455,6 +457,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
         }
         return c; //Return the character read
     }
+    if(c == EOF){ungetc(c,in); }//If hunkgetc reach EOF put it back because we don't want hunk get c to process it
     // if((*hp).type == 1 && !seen_addition){
     //     return ERR; //Addition hunk missing addition section.
     // }
