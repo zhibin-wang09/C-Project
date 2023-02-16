@@ -23,7 +23,7 @@ static int deletion_line_size = 0; //The current line size of deletion buffer
 static int use_previous_hp = 0;
 static int print_addition_hunk = 0;
 static int call_from_next; //To diferentiate from using hunkgetc in hunknext as a helper function vs. calling hunk get c alone.
-static int dead = 0;//Indicate if any error occured if it does then the program is dead.
+static int in_header_or_section = 1;//Indicate if any error occured if it does then the program is dead.
 static void update_deletion_buffer(int *size, int *pos, int c,int marker);
 static void update_addition_buffer(int *size, int *pos, int c,int marker);
 static int patch_qn(FILE *in, FILE *out, FILE *diff,long op);
@@ -107,6 +107,11 @@ int hunk_next(HUNK *hp, FILE *in) {
         if(encountered_newline == 1 && (c >= '0' && c <= '9')){
             ungetc(c,in); //Place the char back because we want the full content of header.
             break;
+        }
+
+        if(in_header_or_section == 1 && encountered_newline && (c < '0' || c > '9')){
+            //The header starts with non-number.
+            return ERR;
         }
     }
     call_from_next = 0;
@@ -216,13 +221,13 @@ int hunk_next(HUNK *hp, FILE *in) {
             }
         }
     }
-    serial++; //Finishing parsing hunk then we set it to serial++
-
-    //In case old end or new end is the same as old start or new start.
+    if(op == 0) return ERR; //Did not see an opeation type
     if(oldend == 0) oldend = oldstart;
     if(newend == 0) newend = newstart;
     if(oldstart > oldend) return ERR;
     if(newstart > newend) return ERR; //The start can not be greater than the end.
+    serial++; //Finishing parsing hunk then we set it to serial++
+    //In case old end or new end is the same as old start or new start.
     //Build the HUNK
     hp->type = op;
     hp->serial =  serial;
@@ -235,6 +240,7 @@ int hunk_next(HUNK *hp, FILE *in) {
 
     encountered_newline = 1; //Finished header after reading a new line
     finish_hunk = 0;
+    in_header_or_section = 0; //Finish the header
     return 0;
 }
 
@@ -290,12 +296,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
         //the hunk is not finished but that would be header's error.
         if(encountered_newline && c >= '0' && c <='9'){
             ungetc(c,in); //put the number back so header can parse the correct information
-            // if((*hp).type == 1 && !seen_addition){
-            //     return ERR; //Addition hunk missing addition section.
-            // }
-            // if((*hp).type == 2 && !seen_deletion){
-            //     return ERR; //Deletion hunk missing deletion section.
-            // }
             if((*hp).type == 3 &&  (!seen_threedash /*|| !seen_addition || !seen_deletion*/)) {
                 return ERR; //Change hunk missing either three dashes, deletion section, or addition section
             }
@@ -305,6 +305,7 @@ int hunk_getc(HUNK *hp, FILE *in) {
             seen_addition = 0;
             seen_deletion = 0;
             encountered_newline = 1;
+            in_header_or_section = 1; //In header;
             return EOS;
         }
 
@@ -359,9 +360,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
                         previous_hunk = (HUNK){(*hp).type, (*hp).serial, (*hp).old_start, (*hp).old_end,(*hp).new_start,(*hp).new_end}; //Clone previious hp
                         return EOS;
                     }
-                    // if(seen_deletion == 0) {
-                    //     return ERR;
-                    // }
                     encountered_newline = 0;
                     if((c=fgetc(in)) == '-'){
                         if((c=fgetc(in)) == '-'){
@@ -458,15 +456,6 @@ int hunk_getc(HUNK *hp, FILE *in) {
         return c; //Return the character read
     }
     if(c == EOF){ungetc(c,in); }//If hunkgetc reach EOF put it back because we don't want hunk get c to process it
-    // if((*hp).type == 1 && !seen_addition){
-    //     return ERR; //Addition hunk missing addition section.
-    // }
-    // if((*hp).type == 2 && !seen_deletion){
-    //     return ERR; //Deletion hunk missing deletion section
-    // }
-    // if((*hp).type == 3 &&  (!seen_threedash || !seen_addition || !seen_deletion)) {
-    //     return ERR; //Change hunk missing either three dashes, deletion section, or addition section
-    // }
     if(!encountered_newline) {return ERR;} //EOF in the middle of the hunk.
     finish_hunk =1 ;
     return EOS;
@@ -712,10 +701,8 @@ void update_addition_buffer(int *pos, int *length, int c,int marker){
     unsigned int left_half = (*length) & 255; //Mask lower 8 bits = 1 byte
     unsigned int right_half = (unsigned int) (*length) >> 8; //Shift down 8 bits
     right_half = right_half & 255; //Mask lower 8 bits
-    //printf("%d,%d, ",left_half,right_half);
     *(hunk_additions_buffer + marker) = left_half;
     *(hunk_additions_buffer + marker+1) = right_half;
-    //printf("left: %d, right: %u",*(hunk_additions_buffer+marker),*(hunk_additions_buffer+marker+1));
 }
 
 /*A helper function that factors the similiar operation for no_patch_mode and no_patch_mode & quiet_mode*/
@@ -755,7 +742,6 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
                 if(in_c == '\n'){in_line_count++;}
             }
         }
-        //printf("hunk type: %d, serial: %d, old start: %d, old end: %d,new start: %d, new end: %d\n", header.type, header.serial, header.old_start, header.old_end, header.new_start, header.new_end);
         //Compare if the lines are correct in the data section match the header section.
         if((header).type == 1){
             int lines_in_hunk = (header).new_end - (header).new_start + 1; //Inclusive so + 1
