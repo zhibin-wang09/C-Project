@@ -1,11 +1,10 @@
 image: hwrunner:latest
 variables:
     GIT_SSL_NO_VERIFY: "true"
-    EXEC: hi
-    HW_DIR: hw0
-    CPU_LIMIT: 10
+    EXEC: fliki
+    HW_DIR: hw1
+    CPU_LIMIT: 60
     FILE_LIMIT: 1000000
-    PROC_LIMIT: 100
 before_script:
     - make clean all -C ${HW_DIR}
 stages:
@@ -21,12 +20,10 @@ run:
     script:
         - ulimit -t ${CPU_LIMIT}
         - ulimit -f ${FILE_LIMIT}
-        - ulimit -u ${PROC_LIMIT}
         - cd ${HW_DIR} && bin/${EXEC} -h
 test:
     stage: test
     script:
         - ulimit -t ${CPU_LIMIT}
         - ulimit -f ${FILE_LIMIT}
-        - ulimit -u ${PROC_LIMIT}
         - cd ${HW_DIR} && bin/${EXEC}_tests -S --verbose=0 --timeout 30
