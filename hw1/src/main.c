@@ -32,6 +32,7 @@ int main(int argc, char **argv)
     //printf("Status:%s, options: %ld\n", " Valid", global_options);
     FILE *diff = fopen(diff_filename,"r");
     int res = patch(stdin, stdout, diff);
+    fclose(diff);
     if(res == 0){
         return EXIT_SUCCESS;
     }else{
