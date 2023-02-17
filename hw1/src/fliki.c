@@ -24,6 +24,7 @@ static int use_previous_hp = 0;
 static int print_addition_hunk = 0;
 static int call_from_next; //To diferentiate from using hunkgetc in hunknext as a helper function vs. calling hunk get c alone.
 static int in_header_or_section = 1;//Indicate if any error occured if it does then the program is dead.
+static int previous_line_end = 0;
 static void update_deletion_buffer(int *size, int *pos, int c,int marker);
 static void update_addition_buffer(int *size, int *pos, int c,int marker);
 static int patch_qn(FILE *in, FILE *out, FILE *diff,long op);
@@ -792,6 +793,10 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
             if(op == 0){fprintf(stderr,"Error, hunk header is invalid\n");hunk_show(&header, stderr);}//produce the error result
             return -1;
         }
+        if(previous_line_end > header.new_start){
+            if(op == 0){ fprintf(stderr,"Hunks are out of order\n"); hunk_show(&header,stderr);}
+            return -1; //If the header number is not in ascending order.
+        }
         //Valid hunk header
         //NOTE: If there is a gap between current line in in file and current hunk start line. Write all the line
         //in between the in file to out file. Or if the output file current line and hunk insertion line doesn't match up
@@ -867,6 +872,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
                 }
             }
         }
+        previous_line_end = header.new_end;
     }
     //If the in file have left overs move them over to out.
     while((in_c = fgetc(in)) != EOF){
