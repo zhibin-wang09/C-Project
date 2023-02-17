@@ -718,6 +718,10 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
             if(op == 2){fprintf(stderr, "Error, hunk header is invalid\n");hunk_show(&header, stderr);} //produce the error result
             return -1;
         }
+        if(previous_line_end > header.new_start && header.type != 3){
+            if(op == 2){ fprintf(stderr,"Hunks are out of order\n"); hunk_show(&header,stderr);}
+            return -1; //If the header number is not in ascending order.
+        }
         //Also move along the in file because we want to check if the deletion sections match.
         //NOTE: If there is a gap between current line in in file and current hunk start line. Write all the line
         //in between the in file to out file.
@@ -775,7 +779,7 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
             }
         }
         //Remeber to check if the change sections, if we just passed deletion, we should not refresh.
-        header = (HUNK){HUNK_NO_TYPE,0,0,0,0,0};
+        previous_line_end = header.new_end;
     }
     return 0;
 }
@@ -793,7 +797,7 @@ int patch_helper(FILE *in, FILE *out, FILE *diff, long op){
             if(op == 0){fprintf(stderr,"Error, hunk header is invalid\n");hunk_show(&header, stderr);}//produce the error result
             return -1;
         }
-        if(previous_line_end > header.new_start){
+        if(previous_line_end > header.new_start && header.type != 3){
             if(op == 0){ fprintf(stderr,"Hunks are out of order\n"); hunk_show(&header,stderr);}
             return -1; //If the header number is not in ascending order.
         }
