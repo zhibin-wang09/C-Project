@@ -713,6 +713,7 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
     int c;
     int in_line_count = 1;
     int in_c;
+    int out_line_count = 1;
     while((status=hunk_next(&header,diff)) != EOF){ //parse the header.
         if(status == ERR){
             if(op == 2){fprintf(stderr, "Error, hunk header is invalid\n");hunk_show(&header, stderr);} //produce the error result
@@ -725,10 +726,10 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
         //Also move along the in file because we want to check if the deletion sections match.
         //NOTE: If there is a gap between current line in in file and current hunk start line. Write all the line
         //in between the in file to out file.
-        while(in_line_count < header.old_start){
+        while(in_line_count < header.old_start || (out_line_count < header.new_start && header.type != 3) ){
             //Write lines in between to out.
             in_c = fgetc(in); //get char in file in
-            if(in_c == '\n'){in_line_count++;} //We reached a new line.
+            if(in_c == '\n'){in_line_count++;out_line_count++;} //We reached a new line.
         }
 
         while((c = hunk_getc(&header,diff)) != EOS){ // get the char
@@ -745,6 +746,8 @@ int patch_qn(FILE *in, FILE *out, FILE *diff,long op){
                     return -1;
                 } //deletion sections don't match
                 if(in_c == '\n'){in_line_count++;}
+            }else if(header.type == 1 || (header.type == 3 && seen_addition && seen_threedash)){
+                if(c == '\n') out_line_count++;
             }
         }
         //Compare if the lines are correct in the data section match the header section.
