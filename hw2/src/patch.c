@@ -30,6 +30,9 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <signal.h>
+#include <string.h> /* include this header file for strmp()*/
+#include <stdlib.h> /* include this header file for malloc() */
+#include <unistd.h> /* include this header file for chdir() */
 
 /* constants */
 
@@ -71,7 +74,7 @@ char **Argv;
 
 struct stat filestat;                   /* file statistics area */
 
-char serrbuf[BUFSIZ];                   /* buffer for stderr */
+char serrbuf[BUFFERSIZE];                   /* buffer for stderr */ /*Change BUFSIZ => BUFFERSIZE*/
 char buf[MAXLINELEN];                   /* general purpose buffer */
 FILE *pfp = Nullfp;                     /* patch file pointer */
 FILE *ofp = Nullfp;                     /* output file pointer */
@@ -119,14 +122,14 @@ char *revision = Nullch;                /* prerequisite revision, if any */
 
 /* procedures */
 
-LINENUM locate_hunk();
+LINENUM locate_hunk(); /*A function returns long */
 bool patch_match();
 bool similar();
-char *malloc();
+//char *malloc();  /* should not declare our own malloc, use <stdlib.h> */
 char *savestr();
 char *strcpy();
 char *strcat();
-char *sprintf();                /* usually */
+//char *sprintf();         /*A re-declaration */       /* usually */
 int my_exit();
 bool rev_in_string();
 char *fetchname();
@@ -156,9 +159,33 @@ char *pgets();
 
 char *ifetch();
 
+/* function declaration */
+void get_some_switches();
+void set_signals();
+void ignore_signals();
+void open_patch_file(char *filename);
+void reinitialize_almost_everything();
+void init_output(char *name);
+void do_ed_script();
+void init_reject(char *name);
+void scan_input(char *filename);
+void pch_swap();
+void abort_hunk();
+void apply_hunk(LINENUM where);
+void spew_output();
+void move_file(char *from,char *to);
+void re_patch();
+void re_input();
+void dump_line(LINENUM line);
+void copy_till(register LINENUM line);
+void copy_file(char *from, char *to);
+int intuit_diff_type();
+void next_intuit_at(long file_pos);
+void plan_b(char *filename);
+void skip_to(long file_pos);
 /* apply a context patch to a named file */
 
-orig_main(argc,argv)
+int orig_main(argc,argv) /*Add a return type of int explicitly*/
 int argc;
 char **argv;
 {
@@ -179,7 +206,7 @@ char **argv;
     Argc = argc;
     Argv = argv;
     get_some_switches();
-    
+
     /* make sure we clean up /tmp in case of disaster */
     set_signals();
 
@@ -200,16 +227,16 @@ char **argv;
             do_ed_script();
             continue;
         }
-    
+
         /* initialize reject file */
         init_reject(TMPREJNAME);
-    
+
         /* find out where all the lines are */
         scan_input(filearg[0]);
-    
+
         /* from here on, open no standard i/o files, because malloc */
         /* might misfire */
-    
+
         /* apply each hunk of patch */
         hunk = 0;
         failed = 0;
@@ -247,12 +274,12 @@ char **argv;
                         say("Hunk #%d succeeded.\n", hunk);
             }
         }
-    
+
         assert(hunk);
-    
+
         /* finish spewing out the new file */
         spew_output();
-        
+
         /* and put the output where desired */
         ignore_signals();
         move_file(TMPOUTNAME,outname);
@@ -272,7 +299,7 @@ char **argv;
     my_exit(0);
 }
 
-reinitialize_almost_everything()
+void reinitialize_almost_everything()
 {
     re_patch();
     re_input();
@@ -308,7 +335,7 @@ reinitialize_almost_everything()
         fatal("You may not change to a different patch file.\n");
 }
 
-get_some_switches()
+void get_some_switches() /* explicitly state the return type */
 {
     register char *s;
 
@@ -407,7 +434,7 @@ locate_hunk()
         if (check_after && patch_match(first_guess,offset)) {
 #ifdef DEBUGGING
             if (debug & 1)
-                printf("Offset changing from %d to %d\n",last_offset,offset);
+                printf("Offset changing from %ld to %ld\n",last_offset,offset); /* change %d to %ld */
 #endif
             last_offset = offset;
             return first_guess+offset;
@@ -415,7 +442,7 @@ locate_hunk()
         else if (check_before && patch_match(first_guess,-offset)) {
 #ifdef DEBUGGING
             if (debug & 1)
-                printf("Offset changing from %d to %d\n",last_offset,-offset);
+                printf("Offset changing from %ld to %ld\n",last_offset,-offset);
 #endif
             last_offset = -offset;
             return first_guess-offset;
@@ -427,7 +454,7 @@ locate_hunk()
 
 /* we did not find the pattern, dump out the hunk so they can handle it */
 
-abort_hunk()
+void abort_hunk()
 {
     register LINENUM i;
     register LINENUM pat_end = pch_end();
@@ -461,7 +488,7 @@ abort_hunk()
 
 /* we found where to apply it (we hope), so do it */
 
-apply_hunk(where)
+void apply_hunk(where)
 LINENUM where;
 {
     register LINENUM old = 1;
@@ -472,7 +499,7 @@ LINENUM where;
     where--;
     while (pch_char(new) == '=' || pch_char(new) == '\n')
         new++;
-    
+
     while (old <= lastline) {
         if (pch_char(old) == '-') {
             copy_till(where + old - 1);
@@ -571,7 +598,7 @@ LINENUM where;
     }
 }
 
-do_ed_script()
+void do_ed_script()
 {
     FILE *pipefp, *popen();
     bool this_line_is_command = FALSE;
@@ -618,7 +645,7 @@ do_ed_script()
     set_signals();
 }
 
-init_output(name)
+void init_output(name)
 char *name;
 {
     ofp = fopen(name,"w");
@@ -626,7 +653,7 @@ char *name;
         fatal("patch: can't create %s.\n",name);
 }
 
-init_reject(name)
+void init_reject(name)
 char *name;
 {
     rejfp = fopen(name,"w");
@@ -634,7 +661,7 @@ char *name;
         fatal("patch: can't create %s.\n",name);
 }
 
-move_file(from,to)
+void move_file(from,to)
 char *from, *to;
 {
     char bakname[512];
@@ -716,7 +743,7 @@ char *from, *to;
     Unlink(from);
 }
 
-copy_file(from,to)
+void copy_file(from,to)
 char *from, *to;
 {
     int tofd;
@@ -736,7 +763,7 @@ char *from, *to;
     Close(tofd);
 }
 
-copy_till(lastline)
+void copy_till(lastline)
 register LINENUM lastline;
 {
     if (last_frozen_line > lastline)
@@ -746,14 +773,14 @@ register LINENUM lastline;
     }
 }
 
-spew_output()
+void spew_output()
 {
     copy_till(input_lines);             /* dump remainder of file */
     Fclose(ofp);
     ofp = Nullfp;
 }
 
-dump_line(line)
+void dump_line(line)
 LINENUM line;
 {
     register char *s;
@@ -827,7 +854,7 @@ static LINENUM tiline[2] = {-1,-1};     /* 1st line in each buffer */
 static LINENUM lines_per_buf;           /* how many lines per buffer */
 static int tireclen;                    /* length of records in tmp file */
 
-re_input()
+void re_input()
 {
     if (using_plan_a) {
         i_size = 0;
@@ -849,7 +876,7 @@ re_input()
     }
 }
 
-scan_input(filename)
+void scan_input(filename)
 char *filename;
 {
     bool plan_a();
@@ -954,7 +981,7 @@ char *filename;
 
 /* keep (virtually) nothing in memory */
 
-plan_b(filename)
+void plan_b(filename)
 char *filename;
 {
     FILE *ifp;
@@ -1057,7 +1084,7 @@ static int p_indent;                    /* indent to patch */
 static long p_base;                     /* where to intuit this time */
 static long p_start;                    /* where intuit found a patch */
 
-re_patch()
+void re_patch()
 {
     p_first = (LINENUM)0;
     p_newfirst = (LINENUM)0;
@@ -1068,7 +1095,7 @@ re_patch()
     p_indent = 0;
 }
 
-open_patch_file(filename)
+void open_patch_file(filename)
 char *filename;
 {
     if (filename == Nullch || !*filename || strEQ(filename,"-")) {
@@ -1131,7 +1158,7 @@ there_is_another_patch()
     return TRUE;
 }
 
-intuit_diff_type()
+int intuit_diff_type()
 {
     long this_line = 0;
     long previous_line;
@@ -1261,13 +1288,13 @@ char *at;
     return name;
 }
 
-next_intuit_at(file_pos)
+void next_intuit_at(file_pos)
 long file_pos;
 {
     p_base = file_pos;
 }
 
-skip_to(file_pos)
+void skip_to(file_pos)
 long file_pos;
 {
     char *ret;
@@ -1500,7 +1527,7 @@ FILE *fp;
     return ret;
 }
 
-pch_swap()
+void pch_swap()
 {
     char *tp_line[MAXHUNKSIZE];         /* the text of the hunk */
     char tp_char[MAXHUNKSIZE];          /* +, -, and ! */
@@ -1512,7 +1539,7 @@ pch_swap()
     i = p_first;
     p_first = p_newfirst;
     p_newfirst = i;
-    
+
     /* make a scratch copy */
 
     for (i=0; i<=p_end; i++) {
@@ -1610,7 +1637,7 @@ pch_context()
     return p_context;
 }
 
-pch_line_len(line)
+int pch_line_len(line)
 LINENUM line;
 {
     return p_len[line];
@@ -1676,7 +1703,7 @@ ask(pat) char *pat; { ; }
 
 #else lint
 
-say(pat,arg1,arg2,arg3)
+void say(pat,arg1,arg2,arg3)
 char *pat;
 int arg1,arg2,arg3;
 {
@@ -1730,7 +1757,7 @@ char *string;
     return FALSE;
 }
 
-set_signals()
+void set_signals()
 {
     /*NOSTRICT*/
     if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
@@ -1740,7 +1767,7 @@ set_signals()
         Signal(SIGINT, my_exit);
 }
 
-ignore_signals()
+void ignore_signals()
 {
     /*NOSTRICT*/
     Signal(SIGHUP, SIG_IGN);
