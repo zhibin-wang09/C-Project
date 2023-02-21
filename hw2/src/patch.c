@@ -33,6 +33,7 @@
 #include <string.h> /* include this header file for strmp()*/
 #include <stdlib.h> /* include this header file for malloc() */
 #include <unistd.h> /* include this header file for chdir() */
+#include <fcntl.h>  /* include file descriptor library for creat() and open() */
 
 /* constants */
 
@@ -130,7 +131,7 @@ char *savestr();
 char *strcpy();
 char *strcat();
 //char *sprintf();         /*A re-declaration */       /* usually */
-int my_exit();
+void my_exit(); /* Change to return type void because __attribute__((noreturn)) means no return and also signal needs a void function as second argument*/
 bool rev_in_string();
 char *fetchname();
 long atol();
@@ -1681,8 +1682,8 @@ register char *s;
 }
 
 __attribute__((noreturn))
-int
-my_exit(status)
+void
+my_exit(status) /* Change to return type void because __attribute__((noreturn)) means no return and also signal needs a void function as second argument*/
 int status;
 {
     Unlink(TMPINNAME);
@@ -1701,7 +1702,7 @@ fatal(pat) char *pat; { ; }
 /*VARARGS ARGSUSED*/
 ask(pat) char *pat; { ; }
 
-#else lint
+#else //lint
 
 void say(pat,arg1,arg2,arg3)
 char *pat;
@@ -1736,7 +1737,7 @@ int arg1,arg2,arg3;
     if (r <= 0)
         buf[0] = 0;
 }
-#endif lint
+#endif //lint
 
 bool
 rev_in_string(string)
@@ -1749,7 +1750,7 @@ char *string;
         return TRUE;
     patlen = strlen(revision);
     for (s = string; *s; s++) {
-        if (isspace(*s) && strnEQ(s+1,revision,patlen) && 
+        if (isspace(*s) && strnEQ(s+1,revision,patlen) &&
                 isspace(s[patlen+1] )) {
             return TRUE;
         }
