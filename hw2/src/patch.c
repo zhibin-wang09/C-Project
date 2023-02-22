@@ -338,7 +338,7 @@ void reinitialize_almost_everything()
     get_some_switches();
 
     if (filec >= 2)
-        fatal("You may not change to a different patch file.\n");
+        fatal("You may not change to a different patch file.\n",NULL);
 }
 
 void get_some_switches() /* explicitly state the return type */
@@ -355,7 +355,7 @@ void get_some_switches() /* explicitly state the return type */
         }
         if (*s != '-' || !s[1]) {
             if (filec == MAXFILEC)
-                fatal("Too many file arguments.\n");
+                fatal("Too many file arguments.\n",NULL);
             filearg[filec++] = savestr(s);
         }
         else {
@@ -369,7 +369,7 @@ void get_some_switches() /* explicitly state the return type */
                 break;
             case 'd':
                 if (chdir(Argv[1]) < 0)
-                    fatal("Can't cd to %s.\n",Argv[1]);
+                    fatal("Can't cd to %s.\n",Argv[1],NULL);
                 Argc--,Argv++;
                 break;
             case 'D':
@@ -410,7 +410,7 @@ void get_some_switches() /* explicitly state the return type */
                 debug = atoi(s+1);
 #endif
             default:
-                fatal("Unrecognized switch: %s\n",Argv[0]);
+                fatal("Unrecognized switch: %s\n",Argv[0],NULL);
             }
         }
     }
@@ -656,7 +656,7 @@ char *name;
 {
     ofp = fopen(name,"w");
     if (ofp == Nullfp)
-        fatal("patch: can't create %s.\n",name);
+        fatal("patch: can't create %s.\n",name,NULL);
 }
 
 void init_reject(name)
@@ -664,7 +664,7 @@ char *name;
 {
     rejfp = fopen(name,"w");
     if (rejfp == Nullfp)
-        fatal("patch: can't create %s.\n",name);
+        fatal("patch: can't create %s.\n",name,NULL);
 }
 
 void move_file(from,to)
@@ -684,10 +684,10 @@ char *from, *to;
 #endif
         fromfd = open(from,0);
         if (fromfd < 0)
-            fatal("patch: internal error, can't reopen %s\n",from);
+            fatal("patch: internal error, can't reopen %s\n",from,NULL);
         while ((i=read(fromfd,buf,sizeof buf)) > 0)
             if (write(1,buf,i) != 1)
-                fatal("patch: write failed\n");
+                fatal("patch: write failed\n",NULL);
         Close(fromfd);
         return;
     }
@@ -739,10 +739,10 @@ char *from, *to;
         }
         fromfd = open(from,0);
         if (fromfd < 0)
-            fatal("patch: internal error, can't reopen %s\n",from);
+            fatal("patch: internal error, can't reopen %s\n",from,NULL);
         while ((i=read(fromfd,buf,sizeof buf)) > 0)
             if (write(tofd,buf,i) != i)
-                fatal("patch: write failed\n");
+                fatal("patch: write failed\n",NULL);
         Close(fromfd);
         Close(tofd);
     }
@@ -758,13 +758,13 @@ char *from, *to;
     
     tofd = creat(to,0666);
     if (tofd < 0)
-        fatal("patch: can't create %s.\n", to);
+        fatal("patch: can't create %s.\n", to,NULL);
     fromfd = open(from,0);
     if (fromfd < 0)
-        fatal("patch: internal error, can't reopen %s\n",from);
+        fatal("patch: internal error, can't reopen %s\n",from,NULL);
     while ((i=read(fromfd,buf,sizeof buf)) > 0)
         if (write(tofd,buf,i) != i)
-            fatal("patch: write (%s) failed\n", to);
+            fatal("patch: write (%s) failed\n", to,NULL);
     Close(fromfd);
     Close(tofd);
 }
@@ -909,7 +909,7 @@ char *filename;
                 say("Can't find %s--attempting to check it out from RCS.\n",
                     filename,NULL);
             if (system(buf) || stat(filename,&filestat))
-                fatal("Can't check out %s.\n",filename);
+                fatal("Can't check out %s.\n",filename,NULL);
         }
         else {
             Sprintf(buf,"SCCS/%s%s",SCCSPREFIX,filename);
@@ -919,21 +919,21 @@ char *filename;
                     say("Can't find %s--attempting to get it from SCCS.\n",
                         filename,NULL);
                 if (system(buf) || stat(filename,&filestat))
-                    fatal("Can't get %s.\n",filename);
+                    fatal("Can't get %s.\n",filename,NULL);
             }
             else
-                fatal("Can't find %s.\n",filename);
+                fatal("Can't find %s.\n",filename,NULL);
         }
     }
     if ((filestat.st_mode & S_IFMT) & ~S_IFREG)
-        fatal("%s is not a normal file--can't patch.\n",filename);
+        fatal("%s is not a normal file--can't patch.\n",filename,NULL);
     i_size = filestat.st_size;
     /*NOSTRICT*/
     i_womp = malloc((MEM)(i_size+2));
     if (i_womp == Nullch)
         return FALSE;
     if ((ifd = open(filename,0)) < 0)
-        fatal("Can't open file %s\n",filename);
+        fatal("Can't open file %s\n",filename,NULL);
     /*NOSTRICT*/
     if (read(ifd,i_womp,(int)i_size) != i_size) {
         Close(ifd);
@@ -974,9 +974,9 @@ char *filename;
     if (revision != Nullch) { 
         if (!rev_in_string(i_womp)) {
             ask("This file doesn't appear to be the %s version--patch anyway? [n] ",
-                revision);
+                revision,NULL);
             if (*buf != 'y')
-                fatal("Aborted.\n");
+                fatal("Aborted.\n",NULL);
         }
         else if (verbose)
             say("Good.  This file appears to be the %s version.\n",
@@ -997,9 +997,9 @@ char *filename;
 
     using_plan_a = FALSE;
     if ((ifp = fopen(filename,"r")) == Nullfp)
-        fatal("Can't open file %s\n",filename);
+        fatal("Can't open file %s\n",filename,NULL);
     if ((tifd = creat(TMPINNAME,0666)) < 0)
-        fatal("Can't open file %s\n",TMPINNAME);
+        fatal("Can't open file %s\n",TMPINNAME,NULL);
     while (fgets(buf,sizeof buf, ifp) != Nullch) {
         if (revision != Nullch && !found_revision && rev_in_string(buf))
             found_revision = TRUE;
@@ -1009,9 +1009,9 @@ char *filename;
     if (revision != Nullch) {
         if (!found_revision) {
             ask("This file doesn't appear to be the %s version--patch anyway? [n] ",
-                revision);
+                revision,NULL);
             if (*buf != 'y')
-                fatal("Aborted.\n");
+                fatal("Aborted.\n",NULL);
         }
         else if (verbose)
             say("Good.  This file appears to be the %s version.\n",
@@ -1023,24 +1023,24 @@ char *filename;
     tibuf[0] = malloc((MEM)(BUFFERSIZE + 1));
     tibuf[1] = malloc((MEM)(BUFFERSIZE + 1));
     if (tibuf[1] == Nullch)
-        fatal("Can't seem to get enough memory.\n");
+        fatal("Can't seem to get enough memory.\n",NULL);
     for (i=1; ; i++) {
         if (! (i % lines_per_buf))      /* new block */
             if (write(tifd,tibuf[0],BUFFERSIZE) < BUFFERSIZE)
-                fatal("patch: can't write temp file.\n");
+                fatal("patch: can't write temp file.\n",NULL);
         if (fgets(tibuf[0] + maxlen * (i%lines_per_buf), maxlen + 1, ifp)
           == Nullch) {
             input_lines = i - 1;
             if (i % lines_per_buf)
                 if (write(tifd,tibuf[0],BUFFERSIZE) < BUFFERSIZE)
-                    fatal("patch: can't write temp file.\n");
+                    fatal("patch: can't write temp file.\n",NULL);
             break;
         }
     }
     Fclose(ifp);
     Close(tifd);
     if ((tifd = open(TMPINNAME,0)) < 0) {
-        fatal("Can't reopen file %s\n",TMPINNAME);
+        fatal("Can't reopen file %s\n",TMPINNAME,NULL);
     }
 }
 
@@ -1066,7 +1066,7 @@ int whichbuf;                           /* ignored when file in memory */
             tiline[whichbuf] = baseline;
             Lseek(tifd,(long)baseline / lines_per_buf * BUFFERSIZE,0);
             if (read(tifd,tibuf[whichbuf],BUFFERSIZE) < 0)
-                fatal("Error reading tmp file %s.\n",TMPINNAME);
+                fatal("Error reading tmp file %s.\n",TMPINNAME,NULL);
         }
         return tibuf[whichbuf] + (tireclen*offline);
     }
@@ -1107,7 +1107,7 @@ char *filename;
     if (filename == Nullch || !*filename || strEQ(filename,"-")) {
         pfp = fopen(TMPPATNAME,"w");
         if (pfp == Nullfp)
-            fatal("patch: can't create %s.\n",TMPPATNAME);
+            fatal("patch: can't create %s.\n",TMPPATNAME,NULL);
         while (fgets(buf,sizeof buf,stdin) != NULL)
             fputs(buf,pfp);
         Fclose(pfp);
@@ -1115,7 +1115,7 @@ char *filename;
     }
     pfp = fopen(filename,"r");
     if (pfp == Nullfp)
-        fatal("patch file %s not found\n",filename);
+        fatal("patch file %s not found\n",filename,NULL);
     Fstat(fileno(pfp), &filestat);
     p_filesize = filestat.st_size;
     next_intuit_at(0L);                 /* start at the beginning */
@@ -1154,7 +1154,7 @@ there_is_another_patch()
     skip_to(pch_start());
     if (no_input_file) {
         if (filearg[0] == Nullch) {
-            ask("File to patch: ");
+            ask("File to patch: ",NULL);
             filearg[0] = fetchname(buf);
         }
         else if (verbose) {
@@ -1349,17 +1349,17 @@ another_hunk()
                 if (p_max - p_end < 4)
                     Strcpy(buf,"  \n"); /* assume blank lines got chopped */
                 else
-                    fatal("Unexpected end of file in patch.\n");
+                    fatal("Unexpected end of file in patch.\n",NULL);
             }
             p_input_line++;
             if (strnEQ(buf,"********",8))
-                fatal("Unexpected end of hunk at line %d.\n",
+                fatal("Unexpected end of hunk at line %d.\n",NULL,
                     p_input_line);
             p_char[++p_end] = *buf;
             switch (*buf) {
             case '*':
                 if (p_end != 0)
-                    fatal("Unexpected *** at line %d: %s", p_input_line, buf);
+                    fatal("Unexpected *** at line %d: %s", p_input_line, buf,NULL);
                 context = 0;
                 p_line[p_end] = savestr(buf);
                 for (s=buf; *s && !isdigit(*s); s++) ;
@@ -1373,7 +1373,7 @@ another_hunk()
                     if (p_end != p_ptrn_lines + 1 &&
                         p_end != p_ptrn_lines + 2)
                         fatal("Unexpected --- at line %d: %s",
-                            p_input_line,buf);
+                            p_input_line,buf,NULL);
                     repl_beginning = p_end;
                     context = 0;
                     p_line[p_end] = savestr(buf);
@@ -1406,14 +1406,14 @@ another_hunk()
                 p_line[p_end] = savestr(buf+2);
                 break;
             default:
-                fatal("Malformed patch at line %d: %s",p_input_line,buf);
+                fatal("Malformed patch at line %d: %s",p_input_line,buf,NULL);
             }
             p_len[p_end] = strlen(p_line[p_end]);
                                         /* for strncmp() so we do not have */
                                         /* to assume null termination */
         }
         if (p_end >=0 && !p_ptrn_lines)
-            fatal("No --- found in patch at line %d\n", pch_hunk_beg());
+            fatal("No --- found in patch at line %d\n", pch_hunk_beg(),NULL);
         p_repl_lines = p_end - repl_beginning;
     }
     else {                              /* normal diff--fake it up */
@@ -1459,9 +1459,9 @@ another_hunk()
             p_input_line++;
             if (ret == Nullch)
                 fatal("Unexpected end of file in patch at line %d.\n",
-                  p_input_line);
+                  p_input_line,NULL);
             if (*buf != '<')
-                fatal("< expected at line %d of patch.\n", p_input_line);
+                fatal("< expected at line %d of patch.\n", p_input_line,NULL);
             p_line[i] = savestr(buf+2);
             p_len[i] = strlen(p_line[i]);
             p_char[i] = '-';
@@ -1471,9 +1471,9 @@ another_hunk()
             p_input_line++;
             if (ret == Nullch)
                 fatal("Unexpected end of file in patch at line %d.\n",
-                    p_input_line);
+                    p_input_line,NULL);
             if (*buf != '-')
-                fatal("--- expected at line %d of patch.\n", p_input_line);
+                fatal("--- expected at line %d of patch.\n", p_input_line,NULL);
         }
         Sprintf(buf,"--- %ld,%ld\n",min,max); /* change %d to %ld because min and max is LINENUM aka long*/
         p_line[i] = savestr(buf);
@@ -1483,9 +1483,9 @@ another_hunk()
             p_input_line++;
             if (ret == Nullch)
                 fatal("Unexpected end of file in patch at line %d.\n",
-                    p_input_line);
+                    p_input_line,NULL);
             if (*buf != '>')
-                fatal("> expected at line %d of patch.\n", p_input_line);
+                fatal("> expected at line %d of patch.\n", p_input_line,NULL);
             p_line[i] = savestr(buf+2);
             p_len[i] = strlen(p_line[i]);
             p_char[i] = '+';
@@ -1680,7 +1680,7 @@ register char *s;
     while (*t++)
     rv = malloc((MEM) (t - s));
     if (rv == NULL)
-        fatal ("patch: out of memory (savestr)\n");
+        fatal ("patch: out of memory (savestr)\n",NULL);
     t = rv;
     while (*t++ = *s++);
     return rv;
