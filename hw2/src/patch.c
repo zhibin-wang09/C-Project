@@ -185,6 +185,9 @@ int intuit_diff_type();
 void next_intuit_at(long file_pos);
 void plan_b(char *filename);
 void skip_to(long file_pos);
+void say(char *pat,...);
+void fatal(char *pat, ...);
+void ask(char *pat, ...);
 
 /* apply a context patch to a named file */
 
@@ -258,23 +261,23 @@ char **argv;
                 else {
                     say("%seversed (or previously applied) patch detected!  %s -R.\n",
                         reverse ? "R" : "Unr",
-                        reverse ? "Assuming" : "Ignoring");
+                        reverse ? "Assuming" : "Ignoring",NULL);
                 }
             }
             if (where == Null(LINENUM)) {
                 abort_hunk();
                 failed++;
                 if (verbose)
-                    say("Hunk #%d failed.\n",hunk);
+                    say("Hunk #%d failed.\n",hunk,NULL);
             }
             else {
                 apply_hunk(where);
                 if (verbose)
                     if (last_offset)
                         say("Hunk #%d succeeded (offset %d line%s).\n",
-                          hunk,last_offset,last_offset==1?"":"s");
+                          hunk,last_offset,last_offset==1?"":"s",NULL);
                     else
-                        say("Hunk #%d succeeded.\n", hunk);
+                        say("Hunk #%d succeeded.\n", hunk,NULL);
             }
         }
 
@@ -294,7 +297,7 @@ char **argv;
                 Strcat(rejname, ".rej");
             }
             say("%d out of %d hunks failed--saving rejects to %s\n",
-                failed, hunk, rejname);
+                failed, hunk, rejname,NULL);
             move_file(TMPREJNAME,rejname);
         }
         set_signals();
@@ -483,7 +486,7 @@ void abort_hunk()
             fprintf(rejfp,"%c %s", pch_char(i), pfetch(i));
             break;
         default:
-            say("Fatal internal error in abort_hunk().\n"); 
+            say("Fatal internal error in abort_hunk().\n",NULL); 
             abort();
         }
     }
@@ -539,7 +542,7 @@ LINENUM where;
             if (pch_char(new) != pch_char(old)) {
                 say("Out-of-sync patch, lines %d,%d\n",
                     pch_hunk_beg() + old - 1,
-                    pch_hunk_beg() + new - 1);
+                    pch_hunk_beg() + new - 1,NULL);
 #ifdef DEBUGGING
                 printf("oldchar = '%c', newchar = '%c'\n",
                     pch_char(old), pch_char(new));
@@ -677,7 +680,7 @@ char *from, *to;
     if (strEQ(to,"-")) {
 #ifdef DEBUGGING
         if (debug & 4)
-            say("Moving %s to stdout.\n",from);
+            say("Moving %s to stdout.\n",from,NULL);
 #endif
         fromfd = open(from,0);
         if (fromfd < 0)
@@ -712,18 +715,18 @@ char *from, *to;
         while (unlink(bakname) >= 0) ;  /* while() is for benefit of Eunice */
 #ifdef DEBUGGING
         if (debug & 4)
-            say("Moving %s to %s.\n",to,bakname);
+            say("Moving %s to %s.\n",to,bakname,NULL);
 #endif
         if (link(to,bakname) < 0) {
             say("patch: can't backup %s, output is in %s\n",
-                to,from);
+                to,from,NULL);
             return;
         }
         while (unlink(to) >= 0) ;
     }
 #ifdef DEBUGGING
     if (debug & 4)
-        say("Moving %s to %s.\n",from,to);
+        say("Moving %s to %s.\n",from,to,NULL);
 #endif
     if (link(from,to) < 0) {            /* different file system? */
         int tofd;
@@ -731,7 +734,7 @@ char *from, *to;
         tofd = creat(to,0666);
         if (tofd < 0) {
             say("patch: can't create %s, output is in %s.\n",
-              to, from);
+              to, from,NULL);
             return;
         }
         fromfd = open(from,0);
@@ -770,7 +773,7 @@ void copy_till(lastline)
 register LINENUM lastline;
 {
     if (last_frozen_line > lastline)
-        say("patch: misordered hunks! output will be garbled.\n");
+        say("patch: misordered hunks! output will be garbled.\n",NULL);
     while (last_frozen_line < lastline) {
         dump_line(++last_frozen_line);
     }
@@ -904,7 +907,7 @@ char *filename;
             Sprintf(buf,CHECKOUT,filename);
             if (verbose)
                 say("Can't find %s--attempting to check it out from RCS.\n",
-                    filename);
+                    filename,NULL);
             if (system(buf) || stat(filename,&filestat))
                 fatal("Can't check out %s.\n",filename);
         }
@@ -914,7 +917,7 @@ char *filename;
                 Sprintf(buf,GET,filename);
                 if (verbose)
                     say("Can't find %s--attempting to get it from SCCS.\n",
-                        filename);
+                        filename,NULL);
                 if (system(buf) || stat(filename,&filestat))
                     fatal("Can't get %s.\n",filename);
             }
@@ -977,7 +980,7 @@ char *filename;
         }
         else if (verbose)
             say("Good.  This file appears to be the %s version.\n",
-                revision);
+                revision,NULL);
     }
     return TRUE;                        /* plan a will work */
 }
@@ -1012,7 +1015,7 @@ char *filename;
         }
         else if (verbose)
             say("Good.  This file appears to be the %s version.\n",
-                revision);
+                revision,NULL);
     }
     Fseek(ifp,0L,0);            /* rewind file */
     lines_per_buf = BUFFERSIZE / maxlen;
@@ -1125,19 +1128,19 @@ there_is_another_patch()
     
     if (p_base != 0L && p_base >= p_filesize) {
         if (verbose)
-            say("done\n");
+            say("done\n",NULL);
         return FALSE;
     }
     if (verbose)
-        say("Hmm...");
+        say("Hmm...",NULL);
     diff_type = intuit_diff_type();
     if (!diff_type) {
         if (p_base != 0L) {
             if (verbose)
-                say("  Ignoring the trailing garbage.\ndone\n");
+                say("  Ignoring the trailing garbage.\ndone\n",NULL);
         }
         else
-            say("  I can't seem to find a patch in there anywhere.\n");
+            say("  I can't seem to find a patch in there anywhere.\n",NULL);
         return FALSE;
     }
     if (verbose)
@@ -1145,9 +1148,9 @@ there_is_another_patch()
             (p_base == 0L ? "L" : "The next patch l"),
             diff_type == CONTEXT_DIFF ? "a context diff" :
             diff_type == NORMAL_DIFF ? "a normal diff" :
-            "an ed script" );
+            "an ed script" ,NULL);
     if (p_indent && verbose)
-        say("(Patch is indented %d space%s.)\n",p_indent,p_indent==1?"":"s");
+        say("(Patch is indented %d space%s.)\n",p_indent,p_indent==1?"":"s",NULL);
     skip_to(pch_start());
     if (no_input_file) {
         if (filearg[0] == Nullch) {
@@ -1155,7 +1158,7 @@ there_is_another_patch()
             filearg[0] = fetchname(buf);
         }
         else if (verbose) {
-            say("Patching file %s...\n",filearg[0]);
+            say("Patching file %s...\n",filearg[0],NULL);
         }
     }
     return TRUE;
@@ -1305,13 +1308,13 @@ long file_pos;
     assert(p_base <= file_pos);
     if (verbose && p_base < file_pos) {
         Fseek(pfp,p_base,0);
-        say("The text leading up to this was:\n--------------------------\n");
+        say("The text leading up to this was:\n--------------------------\n",NULL);
         while (ftell(pfp) < file_pos) {
             ret = fgets(buf,sizeof buf,pfp);
             assert(ret != Nullch);
-            say("|%s",buf);
+            say("|%s",buf,NULL);
         }
-        say("--------------------------\n");
+        say("--------------------------\n",NULL);
     }
     else
         Fseek(pfp,file_pos,0);
@@ -1707,30 +1710,138 @@ ask(pat) char *pat; { ; }
 
 #else //lint
 
-void say(pat,arg1,arg2,arg3)
-char *pat;
-int arg1,arg2,arg3;
+void say(char *pat,.../*arg1,arg2,arg3*/)
+//int arg1,arg2,arg3;
 {
-    fprintf(stderr,pat,arg1,arg2,arg3);
+    va_list ap;
+    int count =0 ; /* there are maximum three args we want to read */
+    char *arg1 = "";
+    char *arg2 = "";
+    char *arg3 = "";
+    char *i;
+    va_start(ap,pat); /* start the search through the list of arguments*/
+    while((i = va_arg(ap,char *)) != 0){ // The last character is NULL
+        switch(count){
+            case 0 :
+                arg1 = i;
+                break;
+            case 1:
+                arg2 = i;
+                break;
+            case 2:
+                arg3 = i;
+                break;
+        }
+        i++;
+    }
+    va_end(ap);
+    switch(count){
+        case 0:
+            fprintf(stderr,"%s",pat);
+            break;
+        case 1:
+            fprintf(stderr,pat, arg1);
+            break;
+        case 2:
+            fprintf(stderr,pat,arg1,arg2);
+            break;
+        case 3:
+            fprintf(stderr,pat,arg1,arg2,arg3);
+            break;
+    }
+    //fprintf(stderr,pat,arg1,arg2,arg3);
     Fflush(stderr);
 }
 
-fatal(pat,arg1,arg2,arg3)
-char *pat;
-int arg1,arg2,arg3;
+void fatal(char *pat, ... /*arg1,arg2,arg3*/)
+//char *pat;
+//int arg1,arg2,arg3;
 {
-    say(pat,arg1,arg2,arg3);
+    va_list ap;
+    int count =0 ; /* there are maximum three args we want to read */
+    char *arg1 = "";
+    char *arg2 = "";
+    char *arg3 = "";
+    char *i;
+    va_start(ap,pat); /* start the search through the list of arguments*/
+    while((i = va_arg(ap,char *)) != 0){ // The last character is NULL
+        switch(count){
+            case 0 :
+                arg1 = i;
+                break;
+            case 1:
+                arg2 = i;
+                break;
+            case 2:
+                arg3 = i;
+                break;
+        }
+        i++;
+    }
+    va_end(ap);
+    switch(count){
+        case 0:
+            say(pat,NULL);
+            break;
+        case 1:
+            say(pat, arg1,NULL);
+            break;
+        case 2:
+            say(pat,arg1,arg2,NULL);
+            break;
+        case 3:
+            say(pat,arg1,arg2,arg3,NULL);
+            break;
+    }
+    //say(pat,arg1,arg2,arg3,NULL);
     my_exit(1);
 }
 
-ask(pat,arg1,arg2,arg3)
-char *pat;
-int arg1,arg2,arg3;
+void ask(char *pat,... /*arg1,arg2,arg3*/)
+//char *pat;
+//int arg1,arg2,arg3;
 {
+    /* process the parameters */
+    va_list ap;
+    int count =0 ; /* there are maximum three args we want to read */
+    char *arg1 = "";
+    char *arg2 = "";
+    char *arg3 = "";
+    char *i;
+    va_start(ap,pat); /* start the search through the list of arguments*/
+    while((i = va_arg(ap,char *)) != 0){ // The last character is NULL
+        switch(count){
+            case 0 :
+                arg1 = i;
+                break;
+            case 1:
+                arg2 = i;
+                break;
+            case 2:
+                arg3 = i;
+                break;
+        }
+        i++;
+    }
+    va_end(ap);
+
     int ttyfd = open("/dev/tty",2);
     int r;
-
-    say(pat,arg1,arg2,arg3);
+    switch(count){
+        case 0:
+            say(pat,NULL);
+            break;
+        case 1:
+            say(pat, arg1,NULL);
+            break;
+        case 2:
+            say(pat,arg1,arg2,NULL);
+            break;
+        case 3:
+            say(pat,arg1,arg2,arg3,NULL);
+            break;
+    }
+    //say(pat,arg1,arg2,arg3,NULL);
     if (ttyfd >= 0) {
         r = read(ttyfd, buf, sizeof buf);
         Close(ttyfd);
