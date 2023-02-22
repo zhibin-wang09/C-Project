@@ -272,12 +272,13 @@ char **argv;
             }
             else {
                 apply_hunk(where);
-                if (verbose)
+                if (verbose){
                     if (last_offset)
                         say("Hunk #%d succeeded (offset %d line%s).\n",
                           hunk,last_offset,last_offset==1?"":"s",NULL);
                     else
                         say("Hunk #%d succeeded.\n", hunk,NULL);
+                }
             }
         }
 
@@ -1682,7 +1683,7 @@ register char *s;
     if (rv == NULL)
         fatal ("patch: out of memory (savestr)\n",NULL);
     t = rv;
-    while (*t++ = *s++);
+    while ((*t++ = *s++));
     return rv;
 }
 
