@@ -34,6 +34,7 @@
 #include <stdlib.h> /* include this header file for malloc() */
 #include <unistd.h> /* include this header file for chdir() */
 #include <fcntl.h>  /* include file descriptor library for creat() and open() */
+#include <stdarg.h> /* allow vriadic functions */
 
 /* constants */
 
@@ -124,16 +125,16 @@ char *revision = Nullch;                /* prerequisite revision, if any */
 /* procedures */
 
 LINENUM locate_hunk(); /*A function returns long */
-bool patch_match();
-bool similar();
+bool patch_match(LINENUM base,LINENUM offset); /* add explicit parameter to function declaration*/
+bool similar(register char *a, register char *b, register int len); /* add explicit parameter to function declaration*/
 //char *malloc();  /* should not declare our own malloc, use <stdlib.h> */
-char *savestr();
+char *savestr(register char *s); /* add parameter to function declaration*/
 char *strcpy();
 char *strcat();
 //char *sprintf();         /*A re-declaration */       /* usually */
-void my_exit(); /* Change to return type void because __attribute__((noreturn)) means no return and also signal needs a void function as second argument*/
-bool rev_in_string();
-char *fetchname();
+void my_exit(int status); /* Change to return type void because __attribute__((noreturn)) means no return and also signal needs a void function pointer as second argument*/
+bool rev_in_string(char *string); /* add explicit parameter to function declaration*/
+char *fetchname(char *at); /* add explicit parameter to function declaration*/
 long atol();
 long lseek();
 char *mktemp();
@@ -143,7 +144,7 @@ char *mktemp();
 bool there_is_another_patch();
 bool another_hunk();
 char *pfetch();
-int pch_line_len();
+int pch_line_len(LINENUM line); /* add explicit parameter to function declaration*/
 LINENUM pch_start();
 LINENUM pch_first();
 LINENUM pch_ptrn_lines();
@@ -152,13 +153,13 @@ LINENUM pch_repl_lines();
 LINENUM pch_end();
 LINENUM pch_context();
 LINENUM pch_hunk_beg();
-char pch_char();
-char *pfetch();
-char *pgets();
+char pch_char(LINENUM line); /* add explitcit parameter to function declaration*/
+char *pfetch(LINENUM line); /* add explicit parameter to function declaration*/
+char *pgets(char *bf,int sz,FILE *fp); /* add explicit parameter to function declaration*/
 
 /* input file type */
 
-char *ifetch();
+char *ifetch(register LINENUM line,int whichbuf); /* add explicit parameter to function declaration*/
 
 /* function declaration */
 void get_some_switches();
@@ -184,6 +185,7 @@ int intuit_diff_type();
 void next_intuit_at(long file_pos);
 void plan_b(char *filename);
 void skip_to(long file_pos);
+
 /* apply a context patch to a named file */
 
 int orig_main(argc,argv) /*Add a return type of int explicitly*/
@@ -1446,7 +1448,7 @@ another_hunk()
         p_end = p_ptrn_lines + 1 + max - min + 1;
         p_newfirst = min;
         p_repl_lines = max - min + 1;
-        Sprintf(buf,"*** %d,%d\n", p_first, p_first + p_ptrn_lines - 1);
+        Sprintf(buf,"*** %ld,%ld\n", p_first, p_first + p_ptrn_lines - 1); /* change %d to %ld because p_first is LINENUM*/
         p_line[0] = savestr(buf);
         p_char[0] = '*';
         for (i=1; i<=p_ptrn_lines; i++) {
@@ -1470,7 +1472,7 @@ another_hunk()
             if (*buf != '-')
                 fatal("--- expected at line %d of patch.\n", p_input_line);
         }
-        Sprintf(buf,"--- %d,%d\n",min,max);
+        Sprintf(buf,"--- %ld,%ld\n",min,max); /* change %d to %ld because min and max is LINENUM aka long*/
         p_line[i] = savestr(buf);
         p_char[i] = '=';
         for (i++; i<=p_end; i++) {
@@ -1694,6 +1696,7 @@ int status;
 }
 
 #ifdef lint
+/* Below is not function declaration it is definition*/
 
 /*VARARGS ARGSUSED*/
 say(pat) char *pat; { ; }
