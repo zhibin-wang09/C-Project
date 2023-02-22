@@ -272,7 +272,7 @@ char **argv;
             }
             else {
                 apply_hunk(where);
-                if (verbose){
+                if (verbose){ /* include the if else inside if(verbose) because the say() function looks like the inner if else are together*/
                     if (last_offset)
                         say("Hunk #%d succeeded (offset %d line%s).\n",
                           hunk,last_offset,last_offset==1?"":"s",NULL);
@@ -1683,7 +1683,7 @@ register char *s;
     if (rv == NULL)
         fatal ("patch: out of memory (savestr)\n",NULL);
     t = rv;
-    while ((*t++ = *s++));
+    while ((*t++ = *s++)); /* add () to be more explicit */
     return rv;
 }
 
