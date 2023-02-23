@@ -453,7 +453,7 @@ locate_hunk()
     register LINENUM offset;
     LINENUM pat_lines = pch_ptrn_lines();
     register LINENUM max_pos_offset = input_lines - first_guess
-                                - pat_lines + 1; 
+                                - pat_lines + 1;
     register LINENUM max_neg_offset = first_guess - last_frozen_line - 1
                                 - pch_context();
 
@@ -1744,43 +1744,9 @@ void say(char *pat,.../*arg1,arg2,arg3*/)
 //int arg1,arg2,arg3;
 {
     va_list ap;
-    int count =0 ; /* there are maximum three args we want to read */
-    char *arg1 = "";
-    char *arg2 = "";
-    char *arg3 = "";
-    char *i;
-    va_start(ap,pat); /* start the search through the list of arguments*/
-    while((i = va_arg(ap,char *)) != 0){ // The last character is NULL
-        switch(count){
-            case 0 :
-                arg1 = i;
-                break;
-            case 1:
-                arg2 = i;
-                break;
-            case 2:
-                arg3 = i;
-                break;
-        }
-        count++;
-    }
+    vfprintf(stderr, pat,ap);
     va_end(ap);
-    switch(count){
-        case 0:
-            fprintf(stderr,"%s",pat);
-            break;
-        case 1:
-            fprintf(stderr,pat, arg1);
-            break;
-        case 2:
-            fprintf(stderr,pat,arg1,arg2);
-            break;
-        case 3:
-            fprintf(stderr,pat,arg1,arg2,arg3);
-            break;
-    }
-    //fprintf(stderr,pat,arg1,arg2,arg3);
-    Fflush(stderr);
+    //Fflush(stderr);
 }
 
 void fatal(char *pat, ... /*arg1,arg2,arg3*/)
