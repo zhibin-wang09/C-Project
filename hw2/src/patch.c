@@ -35,6 +35,7 @@
 #include <unistd.h> /* include this header file for chdir() */
 #include <fcntl.h>  /* include file descriptor library for creat() and open() */
 #include <stdarg.h> /* allow vriadic functions */
+#include <getopt.h> /* a library to allow getopt functions for getsomeswitches */
 
 /* constants */
 
@@ -349,6 +350,34 @@ void get_some_switches() /* explicitly state the return type */
     rejname[0] = '\0';
     if (!Argc)
         return;
+
+    // /* the array with option structs */
+    // struct option long_options[] = {
+    //     {"backup-extension",no_argument,NULL,'b'},
+    //     {"context-diff",no_argument,NULL,'c'},
+    //     {"directory",no_argument,NULL,'d'},
+    //     {"do-defines",no_argument,NULL,'D'},
+    //     {"ed-script",no_argument,NULL,'e'},
+    //     {"loose-matching",no_argument,NULL,'l'},
+    //     {"normal-diff",no_argument,NULL,'n'},
+    //     {"output-file",no_argument,NULL,'o'},
+    //     {"pathnames",no_argument,NULL,'p'},
+    //     {"reject-file",no_argument,NULL,'r'},
+    //     {"silent",no_argument,NULL,'s'},
+    //     {"debug",no_argument,NULL,'x'}
+    // };
+    // char *shortstr = "+bcdDelnoprsx";
+    // int optptr = 0;
+    // int c;
+    // while((c = getopt_long(Argc,Argv,shortstr,long_options,&optptr)) != -1){
+    //     switch(c){
+    //         case '+':
+    //             return;
+    //         case'?':
+    //             fatal("Unrecognized switch: %s\n",Argv[0],NULL);
+    //     }
+    // }
+
     for (Argc--,Argv++; Argc; Argc--,Argv++) {
         s = Argv[0];
         if (strEQ(s,"+")) {
