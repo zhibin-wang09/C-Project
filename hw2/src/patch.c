@@ -224,7 +224,7 @@ char **argv;
 
         if (outname == Nullch)
             outname = savestr(filearg[0]);
-    
+
         /* initialize the patched file */
         init_output(TMPOUTNAME);
     
@@ -699,7 +699,7 @@ char *from, *to;
         dev_t to_device = filestat.st_dev;
         ino_t to_inode  = filestat.st_ino;
         char *simplename = bakname;
-        
+
         for (s=bakname; *s; s++) {
             if (*s == '/')
                 simplename = s+1;
@@ -1733,7 +1733,7 @@ void say(char *pat,.../*arg1,arg2,arg3*/)
                 arg3 = i;
                 break;
         }
-        i++;
+        count++;
     }
     va_end(ap);
     switch(count){
@@ -1777,7 +1777,7 @@ void fatal(char *pat, ... /*arg1,arg2,arg3*/)
                 arg3 = i;
                 break;
         }
-        i++;
+        count++;
     }
     va_end(ap);
     switch(count){
@@ -1822,7 +1822,7 @@ void ask(char *pat,... /*arg1,arg2,arg3*/)
                 arg3 = i;
                 break;
         }
-        i++;
+        count++;
     }
     va_end(ap);
 
