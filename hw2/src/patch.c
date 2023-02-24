@@ -438,6 +438,7 @@ void get_some_switches() /* explicitly state the return type */
 #ifdef DEBUGGING
             case 'x':
                 debug = atoi(s+1);
+                break;
 #endif
             default:
                 fatal("Unrecognized switch: %s\n",Argv[0],NULL);
@@ -1744,9 +1745,10 @@ void say(char *pat,.../*arg1,arg2,arg3*/)
 //int arg1,arg2,arg3;
 {
     va_list ap;
-    vfprintf(stderr, pat,ap);
+    va_start(ap,pat); /* start the search through the list of arguments*/
+    vfprintf(stderr,pat,ap);
     va_end(ap);
-    //Fflush(stderr);
+    Fflush(stderr);
 }
 
 void fatal(char *pat, ... /*arg1,arg2,arg3*/)
