@@ -984,19 +984,19 @@ char *filename;
             iline++;
     }
     /*NOSTRICT*/
-    i_ptr = (char **)malloc((MEM)((iline + 1) * sizeof(char *)));
+    i_ptr = (char **)malloc((MEM)((iline + 2) * sizeof(char *)));
     if (i_ptr == Null(char **)) {       /* shucks, it was a near thing */
         free((char *)i_womp);
         return FALSE;
     }
-    
     /* now scan the buffer and build pointer array */
-
     iline = 1;
     i_ptr[iline] = i_womp;
     for (s=i_womp; *s; s++) {
-        if (*s == '\n')
+        //fprintf(stdout,"%d,",*s);
+        if (*s == '\n'){
             i_ptr[++iline] = s+1;       /* these are NOT null terminated */
+        }
     }
     input_lines = iline - 1;
 
@@ -1013,6 +1013,8 @@ char *filename;
             say("Good.  This file appears to be the %s version.\n",
                 revision,NULL);
     }
+    //free(i_ptr);
+    //free(i_womp);
     return TRUE;                        /* plan a will work */
 }
 
