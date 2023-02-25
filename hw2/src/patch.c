@@ -913,10 +913,11 @@ void re_input()
     }
 }
 
+bool plan_a(char* filename);
+
 void scan_input(filename)
 char *filename;
 {
-    bool plan_a();
 
     if (!plan_a(filename))
         plan_b(filename);
@@ -1710,8 +1711,8 @@ register char *s;
                    *t;
 
     t = s;
-    while (*t++)
-    rv = malloc((MEM) (t - s));
+    while (*t++){}
+    rv = malloc((MEM) (t - s)); //Allocate t-s size of memory
     if (rv == NULL)
         fatal ("patch: out of memory (savestr)\n",NULL);
     t = rv;
