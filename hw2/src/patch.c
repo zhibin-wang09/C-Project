@@ -898,6 +898,8 @@ void re_input()
         /*NOSTRICT*/
         if (i_ptr != Null(char**))
             free((char *)i_ptr);
+        if(i_womp != Nullch)
+            free(i_womp);
         i_womp = Nullch;
         i_ptr = Null(char **);
     }
@@ -988,8 +990,10 @@ char *filename;
     i_ptr = (char **)malloc((MEM)((iline + 2) * sizeof(char *)));
     if (i_ptr == Null(char **)) {       /* shucks, it was a near thing */
         free((char *)i_womp);
+        i_womp = Nullch;
         return FALSE;
     }
+
     /* now scan the buffer and build pointer array */
     iline = 1;
     i_ptr[iline] = i_womp;
@@ -1014,8 +1018,6 @@ char *filename;
             say("Good.  This file appears to be the %s version.\n",
                 revision,NULL);
     }
-    //free(i_ptr);
-    //free(i_womp);
     return TRUE;                        /* plan a will work */
 }
 
@@ -1573,7 +1575,7 @@ void pch_swap()
     char tp_char[MAXHUNKSIZE];          /* +, -, and ! */
     int tp_len[MAXHUNKSIZE];            /* length of each line */
     register LINENUM i, n;
-    bool blankline;
+    bool blankline = FALSE;
     register char *s;
 
     i = p_first;
