@@ -334,7 +334,6 @@ void reinitialize_almost_everything()
         free(revision);
         revision = Nullch;
     }
-
     reverse = FALSE;
 
     get_some_switches();
@@ -1249,15 +1248,35 @@ int intuit_diff_type()
             newname = fetchname(s+4);
             if (no_filearg) {
                 if (oldname && newname) {
-                    if (strlen(oldname) < strlen(newname))
+                    if (strlen(oldname) < strlen(newname)){
+                        if(newname != Nullch){ /* newname was lost because filearg is oldname and function exit without freeing newname */
+                            free(newname);
+                            newname = Nullch;
+                        }
                         filearg[0] = oldname;
-                    else
+                    }
+                    else{
+                        if(oldname != Nullch){ /* newname was lost because filearg is oldname and function exit without freeing newname */
+                            free(oldname);
+                            oldname = Nullch;
+                        }
                         filearg[0] = newname;
+                    }
                 }
-                else if (oldname)
+                else if (oldname){
+                    if(newname != Nullch){ /* newname was lost because filearg is oldname and function exit without freeing newname */
+                            free(newname);
+                            newname = Nullch;
+                    }
                     filearg[0] = oldname;
-                else if (newname)
+                }
+                else if (newname){
+                    if(oldname != Nullch){ /* newname was lost because filearg is oldname and function exit without freeing newname */
+                            free(oldname);
+                            oldname = Nullch;
+                    }
                     filearg[0] = newname;
+                }
             }
         }
         else if (strnEQ(s,"Index:",6)) {
@@ -1317,6 +1336,7 @@ char *at;
     name = savestr(name);
     Sprintf(tmpbuf,"RCS/%s",name);
     free(s);
+    s= Nullch;
     if (stat(name,&filestat) < 0) {
         Strcat(tmpbuf,RCSSUFFIX);
         if (stat(tmpbuf,&filestat) < 0 && stat(tmpbuf+4,&filestat) < 0) {
@@ -1364,7 +1384,8 @@ another_hunk()
     int context = 0;
 
     while (p_end >= 0) {
-        free(p_line[p_end--]);
+        free(p_line[p_end]);
+        p_line[p_end--] = Nullch;
     }
     assert(p_end == -1);
 
@@ -1711,11 +1732,11 @@ register char *s;
 {
     register char  *rv,
                    *t;
-
+    if(!s) {s = ""; }/* to handle the case where savestr gets an null char * */
     t = s;
     while (*t++){}
     rv = malloc((MEM) (t - s)); //Allocate t-s size of memory
-    if (rv == NULL)
+    if (rv == Nullch)
         fatal ("patch: out of memory (savestr)\n",NULL);
     t = rv;
     while ((*t++ = *s++)); /* add () to be more explicit */
