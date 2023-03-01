@@ -377,58 +377,60 @@ void get_some_switches() /* explicitly state the return type */
             if (filec == MAXFILEC)
                 fatal("Too many file arguments.\n",NULL);
             filearg[filec++] = savestr(Argv[optind-1]);
+        }else{
+            switch(c){
+                case '+':
+                    return;
+                case 'b':
+                    origext = savestr(optarg);
+                    break;
+                case 'c':
+                    diff_type = CONTEXT_DIFF;
+                    break;
+                case'd':
+                    if(chdir(optarg) < 0)
+                        fatal("Can't cd to %s.\n",optarg,NULL);
+                    break;
+                case 'D':
+                    do_defines++;
+                    Sprintf(if_defined, "#ifdef %s\n", optarg);
+                    Sprintf(not_defined, "#ifndef %s\n", optarg);
+                    Sprintf(end_defined, "#endif %s\n", optarg);
+                    break;
+                case 'e':
+                    diff_type = ED_DIFF;
+                    break;
+                case 'l':
+                    canonicalize = TRUE;
+                    break;
+                case 'n':
+                    diff_type = NORMAL_DIFF;
+                    break;
+                case 'o':
+                    outname = savestr(optarg);
+                    break;
+                case 'p':
+                    usepath = TRUE; //do not strip path names
+                    break;
+                case 'r':
+                    Strcpy(rejname,optarg);
+                    break;
+                case 'R':
+                    reverse = TRUE;
+                    break;
+                case 's':
+                    verbose = FALSE;
+                    break;
+            #ifdef DEBUGGING
+                case 'x':
+                    debug = atoi(optarg);
+                    break;
+            #endif
+                case '?':
+                    fatal("Unrecognized switch: %c\n",c,NULL);
+            }
         }
-        switch(c){
-            case '+':
-                return;
-            case 'b':
-                origext = savestr(optarg);
-                break;
-            case 'c':
-                diff_type = CONTEXT_DIFF;
-                break;
-            case'd':
-                if(chdir(optarg) < 0)
-                    fatal("Can't cd to %s.\n",optarg,NULL);
-                break;
-            case 'D':
-                do_defines++;
-                Sprintf(if_defined, "#ifdef %s\n", optarg);
-                Sprintf(not_defined, "#ifndef %s\n", optarg);
-                Sprintf(end_defined, "#endif %s\n", optarg);
-                break;
-            case 'e':
-                diff_type = ED_DIFF;
-                break;
-            case 'l':
-                canonicalize = TRUE;
-                break;
-            case 'n':
-                diff_type = NORMAL_DIFF;
-                break;
-            case 'o':
-                outname = savestr(optarg);
-                break;
-            case 'p':
-                usepath = TRUE; //do not strip path names
-                break;
-            case 'r':
-                Strcpy(rejname,optarg);
-                break;
-            case 'R':
-                reverse = TRUE;
-                break;
-            case 's':
-                verbose = FALSE;
-                break;
-        #ifdef DEBUGGING
-            case 'x':
-                debug = atoi(optarg);
-                break;
-        #endif
-            case '?':
-                fatal("Unrecognized switch: %c\n",c,NULL);
-        }
+        
     }
 }
 
