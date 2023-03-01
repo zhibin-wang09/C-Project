@@ -344,8 +344,6 @@ void reinitialize_almost_everything()
 
 void get_some_switches() /* explicitly state the return type */
 {
-    register char *s;
-
     rejname[0] = '\0';
     if (!Argc)
         return;
@@ -369,10 +367,13 @@ void get_some_switches() /* explicitly state the return type */
     int c;
     while(1){
         int optptr = 0;
-        if((c = getopt_long(Argc,Argv,"-b:cd:Delno:pr:Rsx:",long_options,&optptr)) == -1){
+        if((c = getopt_long(Argc,Argv,"-+b:cd:Delno:pr:Rsx:",long_options,&optptr)) == -1){
             break;
         }
         if(c == 1){
+            if(strEQ(Argv[optind-1], "+")){
+                return;
+            }
             if (filec == MAXFILEC)
                 fatal("Too many file arguments.\n",NULL);
             filearg[filec++] = savestr(Argv[optind-1]);
@@ -429,11 +430,6 @@ void get_some_switches() /* explicitly state the return type */
                 fatal("Unrecognized switch: %c\n",c,NULL);
         }
     }
-    // while(optind < Argc){
-    //     if(filec == MAXFILEC)
-    //         fatal("Too many arguments.\n",NULL);
-    //     filearg[filec++] = savestr(Argv[optind++]);
-    // }
 
 
 //     for (Argc--,Argv++; Argc; Argc--,Argv++) {
