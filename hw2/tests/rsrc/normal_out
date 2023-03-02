@@ -1,0 +1,4 @@
+This is file2.
+This line is in common between file1 and file2.
+This line does not appear in file1.
+Here is another line that they have in common.

@@ -1,0 +1,14 @@
+*** file1	2023-01-14 15:10:02.861798599 -0500
+--- file2	2023-01-14 15:10:35.257253400 -0500
+***************
+*** 1,5 ****
+! This is file1.
+! This line does not appear in file2.
+  This line is in common between file1 and file2.
+  Here is another line that they have in common.
+- This line also does not appear in file2.
+--- 1,4 ----
+! This is file2.
+  This line is in common between file1 and file2.
++ This line does not appear in file1.
+  Here is another line that they have in common.

@@ -1,0 +1,57 @@
+*** tests/rsrc/context.in	2023-02-10 15:16:43.528839392 -0500
+--- tests/rsrc/context.out	2023-02-10 15:17:56.395624229 -0500
+***************
+*** 1,7 ****
+  Four score and seven years ago
+  our fathers brought forth on
+  this continent, a new nation,
+! conceived in Liberty, and
+  dedicated to the proposition
+  that all men are created
+  equal.
+--- 1,7 ----
+  Four score and seven years ago
+  our fathers brought forth on
+  this continent, a new nation,
+! conceived in liberty, and
+  dedicated to the proposition
+  that all men are created
+  equal.
+***************
+*** 11,17 ****
+  that nation, or any nation so
+  conceived and so dedicated,
+  can long endure. We are met on
+! a great battle-field of that
+  war. We have come to dedicate
+  a portion of that field, as a
+  final resting place for those
+--- 11,17 ----
+  that nation, or any nation so
+  conceived and so dedicated,
+  can long endure. We are met on
+! a great battlefield of that
+  war. We have come to dedicate
+  a portion of that field, as a
+  final resting place for those
+***************
+*** 20,28 ****
+  altogether fitting and proper
+  that we should do this.
+  
+! But, in a larger sense, we can
+! not dedicate -- we can not
+! consecrate -- we can not
+  hallow -- this ground. The
+  brave men, living and dead,
+  who struggled here, have
+--- 20,28 ----
+  altogether fitting and proper
+  that we should do this.
+  
+! But, in a larger sense, we
+! cannot dedicate -- we cannot
+! consecrate -- we cannot
+  hallow -- this ground. The
+  brave men, living and dead,
+  who struggled here, have

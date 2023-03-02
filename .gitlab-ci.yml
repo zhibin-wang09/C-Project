@@ -1,8 +1,8 @@
 image: hwrunner:latest
 variables:
     GIT_SSL_NO_VERIFY: "true"
-    EXEC: fliki
-    HW_DIR: hw1
+    EXEC: patch
+    HW_DIR: hw2
     CPU_LIMIT: 60
     FILE_LIMIT: 1000000
 before_script:
@@ -20,10 +20,11 @@ run:
     script:
         - ulimit -t ${CPU_LIMIT}
         - ulimit -f ${FILE_LIMIT}
-        - cd ${HW_DIR} && bin/${EXEC} -h
+        - cd ${HW_DIR} && bin/${EXEC}
+
 test:
     stage: test
     script:
         - ulimit -t ${CPU_LIMIT}
         - ulimit -f ${FILE_LIMIT}
-        - cd ${HW_DIR} && bin/${EXEC}_tests -S --verbose=0 --timeout 30
+        - cd ${HW_DIR} && bin/${EXEC}_tests -S --verbose=0 -j1 --timeout 30
