@@ -1,0 +1,46 @@
+Graded Commit:1a4911c04b86462c8472799e195b9dba50354d08
+
+TEST NAME, POINTS,OUT OF
+basecode_suite/fliki_basic_test,1,1,
+basecode_suite/help_system_test,1,1,
+basecode_suite/validargs_error_test,1,1,
+basecode_suite/validargs_help_test,1,1,
+basecode_suite/validargs_no_flags_test,1,1,
+basecode_suite/validargs_no_patch_test,1,1,
+blackbox_suite/ensure_errors_to_stderr,1,1,
+blackbox_suite/ignore_after_help_test,1,1,
+blackbox_suite/invalid_diff_separator,1,1,
+blackbox_suite/invalid_dir_diff,1,1,
+blackbox_suite/large_json_test,1,1,
+blackbox_suite/test_no_out_mode,1,1,
+blackbox_suite/test_quiet_mode,1,1,
+fliki_hunk_show_test/basic_test,0,1,1 assertion(s) failed.: tests/fliki_utils.h:67: Test Failed: basic_test_first_hunk
+fliki_hunk_show_test/elipsis_test,0,1,1 assertion(s) failed.: tests/fliki_utils.h:67: Test Failed: elipsis_test
+fliki_hunk_show_test/print_middle_test,0,1,1 assertion(s) failed.: tests/fliki_utils.h:67: Test Failed: print_middle_test_in_middle
+hunk_getc_suite/basic_change_return_test,0,1,1 assertion(s) failed.: tests/fliki_tests.c:621: Invalid char received for hunk_getc. Got: -2 | Expected: 46
+hunk_getc_suite/basic_error_test,1,1,
+hunk_getc_suite/basic_line_return_test,1,1,
+hunk_getc_suite/eof_mid_hunk_test,1,1,
+hunk_getc_suite/mismatch_brackets_test,1,1,
+hunk_getc_suite/multiple_line_return_test,1,1,
+hunk_next_suite/basic_pass_test,1,1,
+hunk_next_suite/invalid_diff_command_test,1,1,
+hunk_next_suite/leading_zero_pass_test1,1,1,
+hunk_next_suite/leading_zero_pass_test2,1,1,
+hunk_next_suite/state_agnostic_hunk_test,1,1,
+hunk_next_suite/truncated_diff_test,0,1,1 assertion(s) failed.: tests/fliki_utils.h:18: Invalid return for not returning ERR. Diff file had malformed hunk header!. Got: -1 | Expected: -2
+patch_test_suite/basic_test,1,1,
+patch_test_suite/empty_diff_test,1,1,
+patch_test_suite/invalid_diff_test,1,1,
+patch_test_suite/no_sep_test,1,1,
+patch_test_suite/wrong_delete_line_test,1,1,
+patch_test_suite/wrong_line_number_test,1,1,
+patch_test_suite/wrong_line_range_test,1,1,
+validargs_suite/diff_filename_no_flags,1,1,
+validargs_suite/first_least_significant_bit_if_h_set,1,1,
+validargs_suite/incorrect_input_flag_order,1,1,
+validargs_suite/no_diff_file_given,1,1,
+validargs_suite/no_diff_file_or_flag_given,1,1,
+validargs_suite/options_modified_on_error,0,1,1 assertion(s) failed.: tests/fliki_utils.h:40: Invalid options settings. Got: 0x2 | Expected: 0x0
+validargs_suite/too_many_flags,1,1,
+total,36,42
