@@ -1,0 +1,10 @@
+***************
+*** 1,2
+- This is file1.
+- This line does not appear in file2.
+--- 1,1 -----
++ This is file2.
+***************
+*** 5,5
+- This line also does not appear in file2.
+--- 5,4 -----
