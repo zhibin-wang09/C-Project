@@ -43,7 +43,7 @@ $(BLDD):
 	mkdir -p $(BLDD)
 
 $(BIND)/$(EXEC): $(ALL_OBJF) $(ALL_LIBF)
-	$(CC) $^ -o $@ $(LIBS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 $(BIND)/$(TEST): $(FUNC_FILES) $(TEST_SRC) $(ALL_LIBF)
 	$(CC) $(CFLAGS) $(INC) $(FUNC_FILES) $(TEST_SRC) $(ALL_LIBF) $(TEST_LIB) $(LIBS) -o $@
