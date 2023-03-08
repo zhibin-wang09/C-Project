@@ -30,13 +30,31 @@
     |                                        (N rows)                                         |
     |                                                                                         |
     |                                                                                         |
-    +------------------------------------------------------------+--------+---------+---------+ <- footer
-    |                                       block_size           | unused |prv alloc|  alloc  |
-    |                                  (3 LSB's implicitly 0)    |  (0)   |  (0/1)  |   (1)   |
-    |                                        (1 row)             | 1 bit  |  1 bit  |  1 bit  |
     +-----------------------------------------------------------------------------------------+
 
-    NOTE: Footer contents must always be identical to header contents.
+    NOTE: For an allocated block, there is no footer (it is used for payload).
+*/
+
+/*
+
+                                Format of a memory block in a quick list
+    +------------------------------------------------------------+--------+---------+---------+ <- header
+    |                                       block_size           |in qklst|prv alloc|  alloc  |
+    |                                  (3 LSB's implicitly 0)    |  (1)   |  (0/1)  |   (1)   |
+    |                                        (1 row)             | 1 bit  |  1 bit  |  1 bit  |
+    +------------------------------------------------------------+--------+---------+---------+ <- (aligned)
+    |                                                                                         |
+    |                                Pointer to next free block                               |
+    |                                        (1 row)                                          |
+    +-----------------------------------------------------------------------------------------+
+    |                                                                                         | 
+    |                                         Unused                                          | 
+    |                                        (N rows)                                         |
+    |                                                                                         |
+    |                                                                                         |
+    +-----------------------------------------------------------------------------------------+
+
+    NOTE: For a block in a quick list, there is no footer.
 */
 
 /*
