@@ -11,10 +11,11 @@
 static void *search_quick_list(size_t size);
 static void *search_main_list(size_t size);
 static void *coalesce(sf_block *block);
-static void *split(sf_block *block, size_t size);
+static void *split_and_reinsert(sf_block *block, size_t size);
 static void *grow_wrapper(size_t size); /* uses sf_mem_grow but also takes care of the epilogue and alignments */
 static void *init_free_block(sf_block* block,size_t size);
 static void *extend_heap(int init);
+static void add_to_main_list(sf_block *block);
 static int init = 1;
 
 void *sf_malloc(size_t size) {
@@ -93,7 +94,7 @@ void *search_quick_list(size_t size){
  * This function applies first-fit search on a segregated fit list. It handles all the
  * necessary splitting of blocks.
  *
- * @return the pointer to the free block.
+ * @return the pointer to the free block
  * */
 void *search_main_list(size_t size){
     int cur_list_size = 32;
@@ -104,18 +105,18 @@ void *search_main_list(size_t size){
         sentinel = &sf_free_list_heads[i]; // first block is always the sentinel
 
         if((cur_list_size < size && size <= 2 * cur_list_size) && list_ptr -> body.links.next != list_ptr){
-            sf_header cur_block_size = list_ptr -> header & 0xfffffffffffff000; //mask the upper 13 bits for the size of the block
+            sf_header cur_block_size = list_ptr -> header & 0xfffffffffffffff8;
             while(size < cur_block_size){
-                if(list_ptr == sentinel) break;
+                if(list_ptr -> body.links.next == sentinel) break;
                 list_ptr = list_ptr -> body.links.next;
             } /* search for matching block*/
 
-            if(list_ptr != sentinel) break; /* found a free block */
+            if(list_ptr -> body.links.next != sentinel) break; /* found a free block */
         } /* found a matching size class and the list is non-empty */
     }
 
     /* split the free block if needed */
-    list_ptr = split(list_ptr,size);
+    list_ptr = split_and_reinsert(list_ptr,size);
     return list_ptr;
 }
 
@@ -145,9 +146,10 @@ void *grow_wrapper(size_t size){
         extended_mem += init ? PAGE_SZ-40 : PAGE_SZ;
         init = 0;
     }
-
-    ret = (uintptr_t) block;
-    return split((sf_block*) ret,size);
+    add_to_main_list(block);
+    sf_show_heap();
+    ret = (uintptr_t) block; //ret is the pointer to the header of the block
+    return split_and_reinsert((sf_block*) ret,size);
 }
 
 
@@ -171,51 +173,84 @@ void *extend_heap(int init){
         ret += 32;
         /* epilogue */
         sf_header *epilogue = (sf_header *) epi;
-        *epilogue = 0;
+        *epilogue = 1;
         /* create free block PAGE_SZ - 40 because excluding the header and footer*/
-        init_free_block((sf_block *) ret, PAGE_SZ-40);
+
+        block = init_free_block((sf_block *) ret, PAGE_SZ-40);
+        /* 4096 - (proglogue) - (epilogue)*/
     }else{
 
         /* new epilogue */
-        *((sf_header *) epi) = 0;
+        *((sf_header *) epi) = 1;
 
+        /* old epilogue becomes the new header */
+        uintptr_t new_header_pos =( (uintptr_t) block) - 8;
         /* create free block */
-        init_free_block(block,PAGE_SZ);
+
+        block = init_free_block((sf_block *) new_header_pos,PAGE_SZ);
+        block = coalesce(block);
     }
-
-    return coalesce((sf_block *) ret);
-}
-
-/**
- * This function initialize the fields required inside a free block. And insert this free block
- * into the appropriate list in the main freelist
- *
- * @param the block with the address immediately proceeding the epilogue
- *
- * @return The block after initialization of header,footer,pointer to previous free block, and pointer
- * to next free block.
- * */
-void *init_free_block(sf_block* block, size_t size){
-
-    block -> header = size;
-    sf_header *footer = sf_mem_end(); // get the addr of end of heap
-    uintptr_t footer_addr = (uintptr_t) footer;
-    footer_addr += 16; // move up 16 to find the addr of the footer
-    footer = (sf_header *) footer_addr;
-    footer = 0; // set the footer
 
     return block;
 }
 
 /**
- * This function uses pointer to the free block and coalesce it with the
- * free block immediately preceding it. Move them to a new size class
+ * This function initialize the fields required inside a free block.
+ *
+ * @param sf_block* block: the block with the address immediately proceeding the epilogue
+ * @param size_t size: the size of the block that want to initialize.
+ *
+ * @return The block after initialization of header,footer, next pointer, previous pointer.
+ * */
+void *init_free_block(sf_block* block, size_t size){
+    uintptr_t old_epi_indicator = block -> header & 0x0000000000000008;
+    block -> header = size | old_epi_indicator; // size of payload is block size - header size
+    uintptr_t footer_addr = (uintptr_t) (block);
+    footer_addr = footer_addr + size - 8;
+    sf_header *footer = (sf_header *) footer_addr;
+    *footer = size;
+
+    return block;
+}
+
+/**
+ * This function uses pointer to the free block(starting at the header) and
+ * coalesce it with the free block immediately preceding it and/or proceeding it.
  *
  * @return the new coalesced block
  * */
 void *coalesce(sf_block *block){
-    
-    abort();
+
+    int prev_alloc = block -> header & 0x2;
+    uintptr_t footer_addr = ((uintptr_t) block) + block -> header - 8;
+    int next_alloc = ((sf_block *) (footer_addr + 8)) -> header & 0x1;
+    size_t current_size = block -> header & 0xfffffffffffffff8;
+
+    /* four cases */
+    if(!prev_alloc && !next_alloc){ //both previous and next block are free
+        size_t prev_size = (sf_header ) ((uintptr_t) block - 8);
+        sf_block *next_block = (sf_block *) ((uintptr_t) block + ((uintptr_t) block -> header));
+        sf_header *new_footer = (sf_header *) (((uintptr_t) next_block) + next_block -> header);
+        *new_footer = *new_footer | prev_size | block -> header;
+        sf_block * new_block =  (sf_block *)((uintptr_t) block - 8 - prev_size);
+        new_block -> header = *new_footer;
+        block = new_block;
+    }else if(!prev_alloc && next_alloc){ //only previous block is free
+        size_t prev_size = *((sf_header*) (((uintptr_t) block) - 8)) & 0xfffffffffffffff8;
+        uintptr_t prev_block_addr = ((uintptr_t) block) - prev_size;
+        ((sf_block *) prev_block_addr) -> header |= current_size;
+        *((sf_header *) footer_addr) = ((sf_block *) prev_block_addr) -> header;
+        block = (sf_block *) prev_block_addr;
+    }else if(prev_alloc && !next_alloc){ //only next block are free
+       sf_block *next_block = (sf_block *) (((uintptr_t) block -> header) + (uintptr_t) block);
+       block -> header |= (size_t) ((next_block -> header) & 0xfffffffffffffff8);
+       sf_header *next_footer = (sf_header*) (((uintptr_t) next_block) + ((uintptr_t) next_block -> header));
+       *next_footer = block -> header;
+    }else{
+        return block;
+    }
+
+    return block;
 }
 
 /**
@@ -225,6 +260,30 @@ void *coalesce(sf_block *block){
  *
  * @return the allocated block after splitting.
  * */
-void *split(sf_block *block, size_t size){
+void *split_and_reinsert(sf_block *block, size_t size){
     abort();
+}
+
+/**
+ * This function takes the block and insert it into the appropriate size class
+ * for the block.
+ *
+ * @param sf_block* block: the block to be inserted into the main free list
+ * */
+void add_to_main_list(sf_block *block){
+    size_t size = block -> header & 0xfffffffffffffff8; //ignore lower 3 bits
+    size_t cur_list_size = 32;
+    sf_block* list_ptr = &sf_free_list_heads[0];
+    for(int i =0; i < NUM_FREE_LISTS; i++){
+        list_ptr = &sf_free_list_heads[i];
+        if(cur_list_size < size && size <= 2 * cur_list_size){
+            sf_block *temp = list_ptr -> body.links.next;
+            list_ptr -> body.links.next = block;
+            temp -> body.links.prev = block;
+            block -> body.links.next = temp;
+            block -> body.links.prev = list_ptr;
+            break;
+        } /* found appropriate list */
+        cur_list_size *= 2;
+    } /* search through main list and to insert */
 }
