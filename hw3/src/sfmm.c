@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "debug.h"
 #include "sfmm.h"
 
@@ -16,6 +17,7 @@ static void *grow_wrapper(size_t size); /* uses sf_mem_grow but also takes care 
 static void *init_free_block(sf_block* block,size_t size);
 static void *extend_heap(int init);
 static void add_to_main_list(sf_block *block);
+static void insert_doubly(sf_block *sentinel,sf_block *block);
 static int init = 1;
 
 void *sf_malloc(size_t size) {
@@ -127,14 +129,13 @@ void *search_main_list(size_t size){
  * @param the block size after alignment
  *
  * @return On success, the function returns a memory address pointing
- * the allocated block. Otherwise, returns NULL indicating that heap is
+ * the allocated block payload area. Otherwise, returns NULL indicating that heap is
  * out of memory and sets the sf_errno to ENOMEM.
  */
 void *grow_wrapper(size_t size){
-    uintptr_t ret = 0;
     size_t extended_mem = 0;
-    sf_block* block = NULL;
-
+    sf_block *block = NULL;
+    sf_block *remeber = block;
     /* Request for a page, then init prologue and epilogue if is first time otherwise
     only move epilogue address. Then initialize the free block with all the necessary header and footer,
     then insert it into the main free list. Coalese the current block with previous block if is free, then
@@ -142,14 +143,15 @@ void *grow_wrapper(size_t size){
     */
     while(extended_mem < size){
         block = extend_heap(init);
-        if(block == NULL){return NULL;}
+        if(block == NULL){add_to_main_list(remeber);sf_errno = ENOMEM;return NULL;}
         extended_mem += init ? PAGE_SZ-40 : PAGE_SZ;
         init = 0;
+        remeber = block;
     }
-    add_to_main_list(block);
-    sf_show_heap();
-    ret = (uintptr_t) block; //ret is the pointer to the header of the block
-    return split_and_reinsert((sf_block*) ret,size);
+
+    block = split_and_reinsert(block,size);
+    uintptr_t ret = ((uintptr_t) block) + 8;
+    return (sf_block *)ret;
 }
 
 
@@ -182,7 +184,6 @@ void *extend_heap(int init){
 
         /* new epilogue */
         *((sf_header *) epi) = 1;
-
         /* old epilogue becomes the new header */
         uintptr_t new_header_pos =( (uintptr_t) block) - 8;
         /* create free block */
@@ -203,12 +204,12 @@ void *extend_heap(int init){
  * @return The block after initialization of header,footer, next pointer, previous pointer.
  * */
 void *init_free_block(sf_block* block, size_t size){
-    uintptr_t old_epi_indicator = block -> header & 0x0000000000000008;
-    block -> header = size | old_epi_indicator; // size of payload is block size - header size
+    //uintptr_t old_epi_indicator = block -> header & 0x0000000000000007;
+    block -> header = size; //| old_epi_indicator; // size of payload is block size - header size
     uintptr_t footer_addr = (uintptr_t) (block);
     footer_addr = footer_addr + size - 8;
     sf_header *footer = (sf_header *) footer_addr;
-    *footer = size;
+    *footer = block -> header;
 
     return block;
 }
@@ -231,19 +232,19 @@ void *coalesce(sf_block *block){
         size_t prev_size = (sf_header ) ((uintptr_t) block - 8);
         sf_block *next_block = (sf_block *) ((uintptr_t) block + ((uintptr_t) block -> header));
         sf_header *new_footer = (sf_header *) (((uintptr_t) next_block) + next_block -> header);
-        *new_footer = *new_footer | prev_size | block -> header;
+        *new_footer = *new_footer + prev_size + block -> header;
         sf_block * new_block =  (sf_block *)((uintptr_t) block - 8 - prev_size);
         new_block -> header = *new_footer;
         block = new_block;
     }else if(!prev_alloc && next_alloc){ //only previous block is free
         size_t prev_size = *((sf_header*) (((uintptr_t) block) - 8)) & 0xfffffffffffffff8;
         uintptr_t prev_block_addr = ((uintptr_t) block) - prev_size;
-        ((sf_block *) prev_block_addr) -> header |= current_size;
+        ((sf_block *) prev_block_addr) -> header =  (((sf_block *) prev_block_addr) -> header) + current_size;
         *((sf_header *) footer_addr) = ((sf_block *) prev_block_addr) -> header;
         block = (sf_block *) prev_block_addr;
     }else if(prev_alloc && !next_alloc){ //only next block are free
        sf_block *next_block = (sf_block *) (((uintptr_t) block -> header) + (uintptr_t) block);
-       block -> header |= (size_t) ((next_block -> header) & 0xfffffffffffffff8);
+       block -> header = block -> header  + ((size_t) ((next_block -> header) & 0xfffffffffffffff8));
        sf_header *next_footer = (sf_header*) (((uintptr_t) next_block) + ((uintptr_t) next_block -> header));
        *next_footer = block -> header;
     }else{
@@ -261,7 +262,22 @@ void *coalesce(sf_block *block){
  * @return the allocated block after splitting.
  * */
 void *split_and_reinsert(sf_block *block, size_t size){
-    abort();
+    size_t size_of_block = block -> header & 0xfffffffffffffff8;
+    sf_block *split = block;
+    sf_block *remainder =NULL;
+    /* split block */
+    if(size_of_block - size < 32) return block; // if the remainder size < 32 it is a splinter.
+    block -> header = size | ((block -> header) & 0x7);
+    sf_header *footer = (sf_header *) (((uintptr_t) block) + ((block -> header) & 0xfffffffffffffff8) - 8 );
+    *footer = block -> header;
+
+    remainder = (sf_block *) ((((uintptr_t) footer) + 8));
+    remainder -> header = size_of_block - size;
+    sf_header *remainder_footer = (sf_header *) (((uintptr_t) remainder) + ((remainder -> header) & 0xfffffffffffffff8) - 8);
+    *remainder_footer = remainder -> header;
+    /* re-insert the remainder block */
+    add_to_main_list(remainder);
+    return split;
 }
 
 /**
@@ -274,16 +290,28 @@ void add_to_main_list(sf_block *block){
     size_t size = block -> header & 0xfffffffffffffff8; //ignore lower 3 bits
     size_t cur_list_size = 32;
     sf_block* list_ptr = &sf_free_list_heads[0];
-    for(int i =0; i < NUM_FREE_LISTS; i++){
+    if(size == cur_list_size){
+        insert_doubly(list_ptr, block);
+        return;
+    }
+    for(int i =1; i < NUM_FREE_LISTS; i++){
         list_ptr = &sf_free_list_heads[i];
-        if(cur_list_size < size && size <= 2 * cur_list_size){
-            sf_block *temp = list_ptr -> body.links.next;
-            list_ptr -> body.links.next = block;
-            temp -> body.links.prev = block;
-            block -> body.links.next = temp;
-            block -> body.links.prev = list_ptr;
+        if(i == 9){
+            insert_doubly(list_ptr, block);
+            break;
+        }
+        if(cur_list_size < size && size <= (2 * cur_list_size)){
+            insert_doubly(list_ptr, block);
             break;
         } /* found appropriate list */
         cur_list_size *= 2;
     } /* search through main list and to insert */
+}
+
+void insert_doubly(sf_block *sentinel,sf_block *block){
+    sf_block *temp = sentinel -> body.links.next;
+    sentinel -> body.links.next = block;
+    temp -> body.links.prev = block;
+    block -> body.links.next = temp;
+    block -> body.links.prev = sentinel;
 }
