@@ -10,7 +10,7 @@
 #include "sfmm.h"
 
 static void *search_quick_list(size_t size);
-static void *search_main_list(size_t size);
+static void *search_main_list(sf_block *block, size_t size);
 static void *coalesce(sf_block *block);
 static void *split_and_reinsert(sf_block *block, size_t size);
 static void *grow_wrapper(size_t size); /* uses sf_mem_grow but also takes care of the epilogue and alignments */
@@ -46,7 +46,7 @@ void *sf_malloc(size_t size) {
         list_ptr = search_quick_list(size);
         if(list_ptr != NULL) return list_ptr;
     }else{
-        list_ptr = search_main_list(size);
+        list_ptr = search_main_list(NULL,size);
         if(list_ptr != NULL) return list_ptr;
     } /* search main free list */
 
@@ -55,6 +55,10 @@ void *sf_malloc(size_t size) {
 
 void sf_free(void *pp) {
     // TO BE IMPLEMENTED
+    /* check if is valid pointer */
+    /* check if size match quick list blocks*/
+    /* insert into quicklist if possible */
+    /* coalesce then insert into free list if quicklist is not possible*/
     abort();
 }
 
@@ -92,29 +96,53 @@ void *search_quick_list(size_t size){
     return NULL;
 }
 
+/***************************** modify the function that the first free list is of size 32 exactly and last free list is of size 252M or greater *************************/
 /**
  * This function applies first-fit search on a segregated fit list. It handles all the
  * necessary splitting of blocks.
  *
+ * @param block: if the block is NULL the function returns the sentinel. If the block is not NULL
+ * the function searches for a free block that is of appropriate size.
+ *
+ * @param size: the size of the block we are looking for.
+ *
  * @return the pointer to the free block
  * */
-void *search_main_list(size_t size){
+void *search_main_list(sf_block * block ,size_t size){
     int cur_list_size = 32;
-    sf_block *list_ptr = NULL;
-    sf_block *sentinel = NULL;
-    for(int i = 0; i < NUM_FREE_LISTS; i++){
+    sf_block *list_ptr = &sf_free_list_heads[0];
+    sf_block *sentinel = &sf_free_list_heads[0];
+    if(size == 32){
+        return block == NULL ? sentinel : sentinel -> body.links.next;
+    }
+
+    for(int i = 1; i < NUM_FREE_LISTS; i++){
         list_ptr = &sf_free_list_heads[i];
         sentinel = &sf_free_list_heads[i]; // first block is always the sentinel
+        sf_header cur_block_size = list_ptr -> header & 0xfffffffffffffff8;
 
-        if((cur_list_size < size && size <= 2 * cur_list_size) && list_ptr -> body.links.next != list_ptr){
-            sf_header cur_block_size = list_ptr -> header & 0xfffffffffffffff8;
+        if(i == 9){
+            if(block == NULL) return sentinel;
             while(size < cur_block_size){
                 if(list_ptr -> body.links.next == sentinel) break;
                 list_ptr = list_ptr -> body.links.next;
-            } /* search for matching block*/
+            }
+            if(list_ptr -> body.links.next != sentinel) break;
+        }
 
-            if(list_ptr -> body.links.next != sentinel) break; /* found a free block */
-        } /* found a matching size class and the list is non-empty */
+        if((cur_list_size < size && size <=( 2 * cur_list_size))){
+            if(block == NULL) return sentinel;
+            if(list_ptr -> body.links.next != list_ptr){
+                while(size < cur_block_size){
+                    if(list_ptr -> body.links.next == sentinel) break;
+                    list_ptr = list_ptr -> body.links.next;
+                } /* search for matching block*/
+
+                if(list_ptr -> body.links.next != sentinel) break; /* found a free block */
+            } /* and the list is non-empty */
+
+        } /* found a matching size class  */
+        cur_list_size *=2;
     }
 
     /* split the free block if needed */
@@ -143,7 +171,12 @@ void *grow_wrapper(size_t size){
     */
     while(extended_mem < size){
         block = extend_heap(init);
-        if(block == NULL){add_to_main_list(remeber);sf_errno = ENOMEM;return NULL;}
+        if(block == NULL){
+            block = search_main_list(NULL,size);
+            insert_doubly(block,remeber);
+            sf_errno = ENOMEM;
+            return NULL;
+        }
         extended_mem += init ? PAGE_SZ-40 : PAGE_SZ;
         init = 0;
         remeber = block;
@@ -276,37 +309,11 @@ void *split_and_reinsert(sf_block *block, size_t size){
     sf_header *remainder_footer = (sf_header *) (((uintptr_t) remainder) + ((remainder -> header) & 0xfffffffffffffff8) - 8);
     *remainder_footer = remainder -> header;
     /* re-insert the remainder block */
-    add_to_main_list(remainder);
+    sf_block *sentinel = search_main_list(NULL,size_of_block - size);
+    insert_doubly(sentinel,remainder);
     return split;
 }
 
-/**
- * This function takes the block and insert it into the appropriate size class
- * for the block.
- *
- * @param sf_block* block: the block to be inserted into the main free list
- * */
-void add_to_main_list(sf_block *block){
-    size_t size = block -> header & 0xfffffffffffffff8; //ignore lower 3 bits
-    size_t cur_list_size = 32;
-    sf_block* list_ptr = &sf_free_list_heads[0];
-    if(size == cur_list_size){
-        insert_doubly(list_ptr, block);
-        return;
-    }
-    for(int i =1; i < NUM_FREE_LISTS; i++){
-        list_ptr = &sf_free_list_heads[i];
-        if(i == 9){
-            insert_doubly(list_ptr, block);
-            break;
-        }
-        if(cur_list_size < size && size <= (2 * cur_list_size)){
-            insert_doubly(list_ptr, block);
-            break;
-        } /* found appropriate list */
-        cur_list_size *= 2;
-    } /* search through main list and to insert */
-}
 
 void insert_doubly(sf_block *sentinel,sf_block *block){
     sf_block *temp = sentinel -> body.links.next;
