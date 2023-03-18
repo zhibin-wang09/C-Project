@@ -16,8 +16,8 @@ static void *split_and_reinsert(sf_block *block, size_t size);
 static void *grow_wrapper(size_t size); /* uses sf_mem_grow but also takes care of the epilogue and alignments */
 static void *init_free_block(sf_block* block,size_t size);
 static void *extend_heap(int init);
-static void add_to_main_list(sf_block *block);
 static void insert_doubly(sf_block *sentinel,sf_block *block);
+static void set_prev_alloc(sf_block *block, size_t prev_alloc_bit);
 static int init = 1;
 
 void *sf_malloc(size_t size) {
@@ -55,11 +55,29 @@ void *sf_malloc(size_t size) {
 
 void sf_free(void *pp) {
     // TO BE IMPLEMENTED
+
     /* check if is valid pointer */
+    if(pp == NULL) abort();
+
+    uintptr_t header_addr =  ((uintptr_t) pp) -8;
+    uintptr_t footer_addr = header_addr + (((sf_block *) header_addr) -> header & 0xfffffffffffffff8);
+
+    if(((uintptr_t) pp ) & 7 || //block is not 8 byte aligned
+      (*((sf_header *) header_addr) & 0xfffffffffffffff8) & 7 || //block size is not multiple of 8
+      *((sf_header *)(header_addr)) < 32 || //block size is less than 32
+      header_addr < (uintptr_t) (sf_mem_start()) || //start of header is less than heap start
+      footer_addr > (uintptr_t) (sf_mem_end()) || //end of block is greater than heap end
+      !(*((sf_header *) header_addr) & 0x1) ||//block is not allocated
+      *((sf_header *) header_addr) & 0x4 //block is inside quick list
+      ) abort();
+
+    /* previous block and current block is not consistent with the prev_alloc bit and alloc_bit */
+
+
+
     /* check if size match quick list blocks*/
     /* insert into quicklist if possible */
     /* coalesce then insert into free list if quicklist is not possible*/
-    abort();
 }
 
 void *sf_realloc(void *pp, size_t rsize) {
@@ -183,8 +201,9 @@ void *grow_wrapper(size_t size){
     }
 
     block = split_and_reinsert(block,size);
+    block -> header |= 0x1; //return the block that the user is going to use, so set the alloc bit
     uintptr_t ret = ((uintptr_t) block) + 8;
-    return (sf_block *)ret;
+    return (sf_block *) ret;
 }
 
 
@@ -237,8 +256,9 @@ void *extend_heap(int init){
  * @return The block after initialization of header,footer, next pointer, previous pointer.
  * */
 void *init_free_block(sf_block* block, size_t size){
-    //uintptr_t old_epi_indicator = block -> header & 0x0000000000000007;
-    block -> header = size; //| old_epi_indicator; // size of payload is block size - header size
+
+    uintptr_t old_epi_indicator = (block -> header) & 0x2; // preserve the prevalloc bit from the previous epilogue
+    block -> header = size | old_epi_indicator; // size of payload is block size - header size
     uintptr_t footer_addr = (uintptr_t) (block);
     footer_addr = footer_addr + size - 8;
     sf_header *footer = (sf_header *) footer_addr;
@@ -311,14 +331,34 @@ void *split_and_reinsert(sf_block *block, size_t size){
     /* re-insert the remainder block */
     sf_block *sentinel = search_main_list(NULL,size_of_block - size);
     insert_doubly(sentinel,remainder);
+    set_prev_alloc(remainder, 0x0000000000000002);// set the prev_alloc bit true for the remainder block
     return split;
 }
 
 
+/**
+ * This function takes the sentinel node and insert the block into the list
+ *
+ * @param sentinel: the first block of the main free list of a specific size class
+ * @param block: the block that is intended to be inserted in the free list
+ *
+ * */
 void insert_doubly(sf_block *sentinel,sf_block *block){
     sf_block *temp = sentinel -> body.links.next;
     sentinel -> body.links.next = block;
     temp -> body.links.prev = block;
     block -> body.links.next = temp;
     block -> body.links.prev = sentinel;
+}
+
+/**
+ * This function that takes the block with the starting address of the header and
+ * changes the prev_alloc_bit (in the footer as well).
+ *
+ * */
+void set_prev_alloc(sf_block *block, size_t prev_alloc_bit){
+    block -> header |= prev_alloc_bit;
+    uintptr_t footer_addr = ((uintptr_t) block) + (((uintptr_t) block -> header) & 0xfffffffffffffff8) - 8;
+    sf_header *footer = (sf_header *) footer_addr;
+    *footer = block -> header;
 }
