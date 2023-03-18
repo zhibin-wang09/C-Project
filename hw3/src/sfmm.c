@@ -10,7 +10,7 @@
 #include "sfmm.h"
 
 static void *search_quick_list(size_t size);
-static void *search_main_list(sf_block *block, size_t size);
+static void *search_main_list(int flag, size_t size);
 static void *coalesce(sf_block *block);
 static void *split_and_reinsert(sf_block *block, size_t size);
 static void *grow_wrapper(size_t size); /* uses sf_mem_grow but also takes care of the epilogue and alignments */
@@ -18,6 +18,8 @@ static void *init_free_block(sf_block* block,size_t size);
 static void *extend_heap(int init);
 static void insert_doubly(sf_block *sentinel,sf_block *block);
 static void set_prev_alloc(sf_block *block, size_t prev_alloc_bit);
+static void insert_quick_list(sf_block *block);
+static void flush_quick_list(sf_block *first);
 static int init = 1;
 
 void *sf_malloc(size_t size) {
@@ -44,11 +46,13 @@ void *sf_malloc(size_t size) {
     /* check if we have enough space in quick list first then main free list */
     if(size < 32 + (NUM_QUICK_LISTS-1) * 8 ){ /* if the request size could exist in the quick list */
         list_ptr = search_quick_list(size);
-        if(list_ptr != NULL) return list_ptr;
-    }else{
-        list_ptr = search_main_list(NULL,size);
-        if(list_ptr != NULL) return list_ptr;
-    } /* search main free list */
+        uintptr_t payload_addr = ((uintptr_t) list_ptr) + 8;
+        if(list_ptr != NULL) return (sf_block *) payload_addr;
+    }
+    list_ptr = search_main_list(1,size);
+    uintptr_t payload_addr = ((uintptr_t) list_ptr) + 8;
+    if(list_ptr != NULL) return (sf_block *) payload_addr;
+     /* search main free list */
 
     return grow_wrapper(size);
 }
@@ -58,9 +62,10 @@ void sf_free(void *pp) {
 
     /* check if is valid pointer */
     if(pp == NULL) abort();
-
     uintptr_t header_addr =  ((uintptr_t) pp) -8;
+    sf_block *block = (sf_block *) header_addr;
     uintptr_t footer_addr = header_addr + (((sf_block *) header_addr) -> header & 0xfffffffffffffff8);
+    size_t block_size = (*((sf_header *) (header_addr)) & 0xfffffffffffffff8);
 
     if(((uintptr_t) pp ) & 7 || //block is not 8 byte aligned
       (*((sf_header *) header_addr) & 0xfffffffffffffff8) & 7 || //block size is not multiple of 8
@@ -72,12 +77,21 @@ void sf_free(void *pp) {
       ) abort();
 
     /* previous block and current block is not consistent with the prev_alloc bit and alloc_bit */
+    if(!(block -> header & 0x2)){
+        sf_header * prev_footer  = (sf_header *) (header_addr - 8);
+        if(*prev_footer & 0x1) abort(); // prev_alloc is true but previous block is actually allocated
+    }/* prev_alloc is false */
 
 
+    if(32 <= block_size && block_size <= 184 && !(block_size & 0x7)){
+        insert_quick_list(block);
+        return;
+    } /* block can be inserted into the quicklist */
 
-    /* check if size match quick list blocks*/
-    /* insert into quicklist if possible */
     /* coalesce then insert into free list if quicklist is not possible*/
+    block = coalesce(block);
+    sf_block *sentinel  = search_main_list(0,block_size);
+    insert_doubly(sentinel,block);
 }
 
 void *sf_realloc(void *pp, size_t rsize) {
@@ -109,14 +123,15 @@ void *search_quick_list(size_t size){
         } /* found a quick list with free blocks */
         cur_list_size += 8;
     }
-    list_ptr -> header = list_ptr -> header & 0xfffffffffffffffb; /* turn off the qklst bit */
-    if(list_ptr != NULL) return list_ptr;
-    return NULL;
+    if(list_ptr != NULL){
+        list_ptr -> header = list_ptr -> header & 0xfffffffffffffffb; /* turn off the qklst bit */
+        return list_ptr;
+    }
+        return NULL;
 }
 
-/***************************** modify the function that the first free list is of size 32 exactly and last free list is of size 252M or greater *************************/
 /**
- * This function applies first-fit search on a segregated fit list. It handles all the
+ * This function search on a segregated fit list and find the appropriate size class. It handles all the
  * necessary splitting of blocks.
  *
  * @param block: if the block is NULL the function returns the sentinel. If the block is not NULL
@@ -126,40 +141,43 @@ void *search_quick_list(size_t size){
  *
  * @return the pointer to the free block
  * */
-void *search_main_list(sf_block * block ,size_t size){
+void *search_main_list(int flag ,size_t size){
     int cur_list_size = 32;
     sf_block *list_ptr = &sf_free_list_heads[0];
     sf_block *sentinel = &sf_free_list_heads[0];
-    if(size == 32){
-        return block == NULL ? sentinel : sentinel -> body.links.next;
-    }
+    if(size == 32 && !flag){return sentinel;}
 
     for(int i = 1; i < NUM_FREE_LISTS; i++){
         list_ptr = &sf_free_list_heads[i];
         sentinel = &sf_free_list_heads[i]; // first block is always the sentinel
-        sf_header cur_block_size = list_ptr -> header & 0xfffffffffffffff8;
+        sf_header cur_block_size = (list_ptr -> body.links.next) -> header & 0xfffffffffffffff8;
 
-        if(i == 9){
-            if(block == NULL) return sentinel;
-            while(size < cur_block_size){
-                if(list_ptr -> body.links.next == sentinel) break;
-                list_ptr = list_ptr -> body.links.next;
-            }
-            if(list_ptr -> body.links.next != sentinel) break;
+        if(i == 9 && !flag){return sentinel;}
+
+        if((cur_list_size < size && size <=( 2 * cur_list_size)) && !flag){
+            if(!flag) return sentinel;
         }
 
-        if((cur_list_size < size && size <=( 2 * cur_list_size))){
-            if(block == NULL) return sentinel;
+        if((size <= cur_list_size && flag) || i == 9){
             if(list_ptr -> body.links.next != list_ptr){
                 while(size < cur_block_size){
                     if(list_ptr -> body.links.next == sentinel) break;
                     list_ptr = list_ptr -> body.links.next;
                 } /* search for matching block*/
 
-                if(list_ptr -> body.links.next != sentinel) break; /* found a free block */
+                if(list_ptr != sentinel){
+                    /* remove the block from the free list */
+                    sf_block *prev = list_ptr -> body.links.prev;
+                    sf_block *next = list_ptr -> body.links.next;
+                    prev -> body.links.next = next;
+                    next -> body.links.prev = prev;
+                    list_ptr -> header |= 0x1; //return the block that the user is going to use, so set the alloc bit
+                    break; /* found a free block */
+                }
             } /* and the list is non-empty */
 
-        } /* found a matching size class  */
+         /* found a matching size class  */
+        }
         cur_list_size *=2;
     }
 
@@ -190,7 +208,7 @@ void *grow_wrapper(size_t size){
     while(extended_mem < size){
         block = extend_heap(init);
         if(block == NULL){
-            block = search_main_list(NULL,size);
+            block = search_main_list(0,size);
             insert_doubly(block,remeber);
             sf_errno = ENOMEM;
             return NULL;
@@ -202,6 +220,8 @@ void *grow_wrapper(size_t size){
 
     block = split_and_reinsert(block,size);
     block -> header |= 0x1; //return the block that the user is going to use, so set the alloc bit
+    sf_header* epilogue = (sf_header *) (((uintptr_t) block) + (((uintptr_t) block -> header) & 0xfffffffffffffff8));
+    *epilogue |= 0x0000000000000002;
     uintptr_t ret = ((uintptr_t) block) + 8;
     return (sf_block *) ret;
 }
@@ -329,7 +349,7 @@ void *split_and_reinsert(sf_block *block, size_t size){
     sf_header *remainder_footer = (sf_header *) (((uintptr_t) remainder) + ((remainder -> header) & 0xfffffffffffffff8) - 8);
     *remainder_footer = remainder -> header;
     /* re-insert the remainder block */
-    sf_block *sentinel = search_main_list(NULL,size_of_block - size);
+    sf_block *sentinel = search_main_list(0,size_of_block - size);
     insert_doubly(sentinel,remainder);
     set_prev_alloc(remainder, 0x0000000000000002);// set the prev_alloc bit true for the remainder block
     return split;
@@ -361,4 +381,56 @@ void set_prev_alloc(sf_block *block, size_t prev_alloc_bit){
     uintptr_t footer_addr = ((uintptr_t) block) + (((uintptr_t) block -> header) & 0xfffffffffffffff8) - 8;
     sf_header *footer = (sf_header *) footer_addr;
     *footer = block -> header;
+}
+
+/**
+ * This function takes a free list head as an input and flush the blocks and insert them
+ * into the main list.
+ * */
+void flush_quick_list(sf_block *first){
+    sf_block *ptr = first;
+    size_t size = first -> header & 0xfffffffffffffff8;
+    while(ptr -> body.links.next != NULL){
+        sf_block *block = coalesce(ptr);
+        if(block == ptr){ /* the block can't be coalesced so insert into main list */
+            sf_block *sentinel = search_main_list(0,size);
+            insert_doubly(sentinel,block);
+        }else{ /* the block can be coalesced so we don't need to insert it again it is coalesced with
+                  existing block in the main free list already */
+            continue;
+        }
+    }
+}
+
+/**
+ * This function takes a block and insert the block into the free list of the appropriate class size
+ * */
+void insert_quick_list(sf_block *block){
+    size_t cur_list_size = 32; // starting size
+    size_t block_size = block -> header & 0xfffffffffffffff8;
+    sf_block* first = NULL;
+    int i = 0;
+
+    for(; i < NUM_QUICK_LISTS; i++){
+        if(block_size == cur_list_size){ first = sf_quick_lists[i].first; break;}
+        cur_list_size += 8;
+    }
+
+    if(sf_quick_lists[i].length == 5){
+        flush_quick_list(first);
+    } /* max capacity */
+
+    /* insert into quicklist */
+    sf_block *temp = first == NULL ? NULL : first -> body.links.next;
+    if(temp == NULL){
+        sf_quick_lists[i].first = &(*block);
+        block -> body.links.next = NULL;
+        sf_quick_lists[i].length += 1;
+    }else{
+        block -> body.links.next = temp;
+        first -> body.links.next = block;
+        sf_quick_lists[i].length += 1;
+    }
+
+    block -> header |= 0x0000000000000005;
 }
