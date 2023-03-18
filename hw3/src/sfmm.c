@@ -17,7 +17,7 @@ static void *grow_wrapper(size_t size); /* uses sf_mem_grow but also takes care 
 static void *init_free_block(sf_block* block,size_t size);
 static void *extend_heap(int init);
 static void insert_doubly(sf_block *sentinel,sf_block *block);
-static void set_prev_alloc(sf_block *block, size_t prev_alloc_bit);
+static void set_prev_alloc(sf_block *block, size_t prev_alloc_bit,int flag);
 static void insert_quick_list(sf_block *block);
 static void flush_quick_list(sf_block *first);
 static int init = 1;
@@ -64,7 +64,7 @@ void sf_free(void *pp) {
     if(pp == NULL) abort();
     uintptr_t header_addr =  ((uintptr_t) pp) -8;
     sf_block *block = (sf_block *) header_addr;
-    uintptr_t footer_addr = header_addr + (((sf_block *) header_addr) -> header & 0xfffffffffffffff8);
+    uintptr_t footer_addr = header_addr + (((sf_block *) header_addr) -> header & 0xfffffffffffffff8) - 8;
     size_t block_size = (*((sf_header *) (header_addr)) & 0xfffffffffffffff8);
 
     if(((uintptr_t) pp ) & 7 || //block is not 8 byte aligned
@@ -90,6 +90,10 @@ void sf_free(void *pp) {
 
     /* coalesce then insert into free list if quicklist is not possible*/
     block = coalesce(block);
+    block -> header &= 0xfffffffffffffff8;
+    footer_addr = ((uintptr_t)block) + (block -> header & 0xfffffffffffffff8) - 8;
+    *((sf_header *)footer_addr) = block->header;
+    set_prev_alloc(((sf_block *)(footer_addr + 8)), 0xfffffffffffffffd,0); //change the prev alloc bit for the next block
     sf_block *sentinel  = search_main_list(0,block_size);
     insert_doubly(sentinel,block);
 }
@@ -219,7 +223,7 @@ void *grow_wrapper(size_t size){
     }
 
     block = split_and_reinsert(block,size);
-    block -> header |= 0x1; //return the block that the user is going to use, so set the alloc bit
+    block -> header |= 0x3; //return the block that the user is going to use, so set the alloc bit and previous alloc bit because prologue
     sf_header* epilogue = (sf_header *) (((uintptr_t) block) + (((uintptr_t) block -> header) & 0xfffffffffffffff8));
     *epilogue |= 0x0000000000000002;
     uintptr_t ret = ((uintptr_t) block) + 8;
@@ -296,9 +300,9 @@ void *init_free_block(sf_block* block, size_t size){
 void *coalesce(sf_block *block){
 
     int prev_alloc = block -> header & 0x2;
-    uintptr_t footer_addr = ((uintptr_t) block) + block -> header - 8;
-    int next_alloc = ((sf_block *) (footer_addr + 8)) -> header & 0x1;
     size_t current_size = block -> header & 0xfffffffffffffff8;
+    uintptr_t footer_addr = ((uintptr_t) block) + (current_size) - 8;
+    int next_alloc = ((sf_block *) (footer_addr + 8)) -> header & 0x1;
 
     /* four cases */
     if(!prev_alloc && !next_alloc){ //both previous and next block are free
@@ -351,7 +355,7 @@ void *split_and_reinsert(sf_block *block, size_t size){
     /* re-insert the remainder block */
     sf_block *sentinel = search_main_list(0,size_of_block - size);
     insert_doubly(sentinel,remainder);
-    set_prev_alloc(remainder, 0x0000000000000002);// set the prev_alloc bit true for the remainder block
+    set_prev_alloc(remainder, 0x0000000000000002,1);// set the prev_alloc bit true for the remainder block
     return split;
 }
 
@@ -376,8 +380,8 @@ void insert_doubly(sf_block *sentinel,sf_block *block){
  * changes the prev_alloc_bit (in the footer as well).
  *
  * */
-void set_prev_alloc(sf_block *block, size_t prev_alloc_bit){
-    block -> header |= prev_alloc_bit;
+void set_prev_alloc(sf_block *block, size_t prev_alloc_bit,int flag){
+    block -> header = flag ? block -> header | prev_alloc_bit : block-> header & prev_alloc_bit;
     uintptr_t footer_addr = ((uintptr_t) block) + (((uintptr_t) block -> header) & 0xfffffffffffffff8) - 8;
     sf_header *footer = (sf_header *) footer_addr;
     *footer = block -> header;
