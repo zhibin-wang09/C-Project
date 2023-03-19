@@ -20,6 +20,8 @@ static void insert_doubly(sf_block *sentinel,sf_block *block);
 static void set_prev_alloc(sf_block *block, size_t prev_alloc_bit,int flag);
 static void insert_quick_list(sf_block *block);
 static void flush_quick_list(sf_block *first);
+static size_t check_valid_pp(void *pp);
+static sf_block *remove_doubly(sf_block *block);
 static int init = 1;
 
 void *sf_malloc(size_t size) {
@@ -61,26 +63,10 @@ void sf_free(void *pp) {
     // TO BE IMPLEMENTED
 
     /* check if is valid pointer */
-    if(pp == NULL) abort();
     uintptr_t header_addr =  ((uintptr_t) pp) -8;
     sf_block *block = (sf_block *) header_addr;
     uintptr_t footer_addr = header_addr + (((sf_block *) header_addr) -> header & 0xfffffffffffffff8) - 8;
-    size_t block_size = (*((sf_header *) (header_addr)) & 0xfffffffffffffff8);
-
-    if(((uintptr_t) pp ) & 7 || //block is not 8 byte aligned
-      (*((sf_header *) header_addr) & 0xfffffffffffffff8) & 7 || //block size is not multiple of 8
-      *((sf_header *)(header_addr)) < 32 || //block size is less than 32
-      header_addr < (uintptr_t) (sf_mem_start()) || //start of header is less than heap start
-      footer_addr > (uintptr_t) (sf_mem_end()) || //end of block is greater than heap end
-      !(*((sf_header *) header_addr) & 0x1) ||//block is not allocated
-      *((sf_header *) header_addr) & 0x4 //block is inside quick list
-      ) abort();
-
-    /* previous block and current block is not consistent with the prev_alloc bit and alloc_bit */
-    if(!(block -> header & 0x2)){
-        sf_header * prev_footer  = (sf_header *) (header_addr - 8);
-        if(*prev_footer & 0x1) abort(); // prev_alloc is true but previous block is actually allocated
-    }/* prev_alloc is false */
+    size_t block_size = check_valid_pp(pp);
 
 
     if(32 <= block_size && block_size <= 184 && !(block_size & 0x7)){
@@ -90,10 +76,11 @@ void sf_free(void *pp) {
 
     /* coalesce then insert into free list if quicklist is not possible*/
     block = coalesce(block);
-    block -> header &= 0xfffffffffffffff8;
+    block -> header &= 0xfffffffffffffffe;
     footer_addr = ((uintptr_t)block) + (block -> header & 0xfffffffffffffff8) - 8;
     *((sf_header *)footer_addr) = block->header;
     set_prev_alloc(((sf_block *)(footer_addr + 8)), 0xfffffffffffffffd,0); //change the prev alloc bit for the next block
+    block_size = block -> header & 0xfffffffffffffff8;
     sf_block *sentinel  = search_main_list(0,block_size);
     insert_doubly(sentinel,block);
 }
@@ -101,6 +88,11 @@ void sf_free(void *pp) {
 void *sf_realloc(void *pp, size_t rsize) {
     // TO BE IMPLEMENTED
     abort();
+    check_valid_pp(pp);
+    if(rsize == 0){
+        sf_free(pp);
+        return NULL;
+    }
 }
 
 void *sf_memalign(size_t size, size_t align) {
@@ -171,10 +163,7 @@ void *search_main_list(int flag ,size_t size){
 
                 if(list_ptr != sentinel){
                     /* remove the block from the free list */
-                    sf_block *prev = list_ptr -> body.links.prev;
-                    sf_block *next = list_ptr -> body.links.next;
-                    prev -> body.links.next = next;
-                    next -> body.links.prev = prev;
+                    list_ptr = remove_doubly(list_ptr);
                     list_ptr -> header |= 0x1; //return the block that the user is going to use, so set the alloc bit
                     break; /* found a free block */
                 }
@@ -303,6 +292,7 @@ void *coalesce(sf_block *block){
     size_t current_size = block -> header & 0xfffffffffffffff8;
     uintptr_t footer_addr = ((uintptr_t) block) + (current_size) - 8;
     int next_alloc = ((sf_block *) (footer_addr + 8)) -> header & 0x1;
+    int curr_alloc = block -> header & 0x1;
 
     /* four cases */
     if(!prev_alloc && !next_alloc){ //both previous and next block are free
@@ -313,17 +303,21 @@ void *coalesce(sf_block *block){
         sf_block * new_block =  (sf_block *)((uintptr_t) block - 8 - prev_size);
         new_block -> header = *new_footer;
         block = new_block;
+        if(curr_alloc) remove_doubly(new_block);
+        if(curr_alloc) remove_doubly(next_block);
     }else if(!prev_alloc && next_alloc){ //only previous block is free
         size_t prev_size = *((sf_header*) (((uintptr_t) block) - 8)) & 0xfffffffffffffff8;
         uintptr_t prev_block_addr = ((uintptr_t) block) - prev_size;
         ((sf_block *) prev_block_addr) -> header =  (((sf_block *) prev_block_addr) -> header) + current_size;
         *((sf_header *) footer_addr) = ((sf_block *) prev_block_addr) -> header;
         block = (sf_block *) prev_block_addr;
+        if(curr_alloc) remove_doubly((sf_block *) prev_block_addr);
     }else if(prev_alloc && !next_alloc){ //only next block are free
-       sf_block *next_block = (sf_block *) (((uintptr_t) block -> header) + (uintptr_t) block);
+       sf_block *next_block = (sf_block *) ((((uintptr_t) block -> header) & 0xfffffffffffffff8) + (uintptr_t) block);
        block -> header = block -> header  + ((size_t) ((next_block -> header) & 0xfffffffffffffff8));
-       sf_header *next_footer = (sf_header*) (((uintptr_t) next_block) + ((uintptr_t) next_block -> header));
+       sf_header *next_footer = (sf_header*) (((uintptr_t) block) + ((uintptr_t) next_block -> header));
        *next_footer = block -> header;
+       if(curr_alloc) remove_doubly(next_block);
     }else{
         return block;
     }
@@ -373,6 +367,15 @@ void insert_doubly(sf_block *sentinel,sf_block *block){
     temp -> body.links.prev = block;
     block -> body.links.next = temp;
     block -> body.links.prev = sentinel;
+}
+
+sf_block *remove_doubly(sf_block *block){
+    sf_block *prev = block -> body.links.prev;
+    sf_block *next = block -> body.links.next;
+    prev -> body.links.next = next;
+    next -> body.links.prev = prev;
+
+    return block;
 }
 
 /**
@@ -437,4 +440,30 @@ void insert_quick_list(sf_block *block){
     }
 
     block -> header |= 0x0000000000000005;
+}
+
+size_t check_valid_pp(void *pp){
+    /* check if is valid pointer */
+    if(pp == NULL) abort();
+    uintptr_t header_addr =  ((uintptr_t) pp) -8;
+    sf_block *block = (sf_block *) header_addr;
+    uintptr_t footer_addr = header_addr + (((sf_block *) header_addr) -> header & 0xfffffffffffffff8) - 8;
+    size_t block_size = (*((sf_header *) (header_addr)) & 0xfffffffffffffff8);
+
+    if(((uintptr_t) pp ) & 7 || //block is not 8 byte aligned
+      (*((sf_header *) header_addr) & 0xfffffffffffffff8) & 7 || //block size is not multiple of 8
+      *((sf_header *)(header_addr)) < 32 || //block size is less than 32
+      header_addr < (uintptr_t) (sf_mem_start()) || //start of header is less than heap start
+      footer_addr > (uintptr_t) (sf_mem_end()) || //end of block is greater than heap end
+      !(*((sf_header *) header_addr) & 0x1) ||//block is not allocated
+      *((sf_header *) header_addr) & 0x4 //block is inside quick list
+      ) abort();
+
+    /* previous block and current block is not consistent with the prev_alloc bit and alloc_bit */
+    if(!(block -> header & 0x2)){
+        sf_header * prev_footer  = (sf_header *) (header_addr - 8);
+        if(*prev_footer & 0x1) abort(); // prev_alloc is true but previous block is actually allocated
+    }/* prev_alloc is false */
+
+    return block_size;
 }
