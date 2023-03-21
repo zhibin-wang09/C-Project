@@ -99,7 +99,7 @@ void *sf_realloc(void *pp, size_t rsize) {
     if(og_size < rsize){ /* reallocate to a larger block */
         sf_block *new_block = sf_malloc(rsize);
         size_t size_of_old = block -> header & 0xfffffffffffffff8;
-        memcpy(new_block, block, size_of_old);
+        memcpy(new_block -> body.payload, block -> body.payload, size_of_old - 8);
         sf_free((sf_block *) pp);
         return new_block;
     }else if(og_size > rsize){
@@ -125,7 +125,39 @@ void *sf_realloc(void *pp, size_t rsize) {
 
 void *sf_memalign(size_t size, size_t align) {
     // TO BE IMPLEMENTED
-    abort();
+    if(!size)  return NULL;
+    if(!(align & (align -1)) || align < 32) {sf_errno = EINVAL; return NULL;}
+
+    /* allocate a block that is at least requested size + alignment size + minimum block size +
+    size required for a block header and footer. */
+    sf_block *larger = sf_malloc(size + align + 32 + 8);
+    if(larger == NULL) return NULL;
+
+    /* the larger block needs to be either aligned already or be offset to an alignment where
+    the offset is minimum of 32 byte */
+    if((((uintptr_t) larger) + 8)% align ==0){ /* payload address is aligned */
+        return larger;
+    }else{
+        uintptr_t addr = ((uintptr_t) larger) + 32 + 8; // need the payload to check against alignment requirement
+        while(addr % align != 0){
+            addr+=8;
+        }
+        // mem_align_block is the aligned block
+        sf_block *mem_align_block = (sf_block *) (addr - 8);
+
+        // free the difference between new aligned block and old sf_malloc addr
+        uintptr_t diff = (uintptr_t) mem_align_block - (uintptr_t) larger; // The size of the block difference
+        larger -> header = diff | 0x0000000000000001;
+        uintptr_t diff_footer = (larger -> header & 0xfffffffffffffff8) + (uintptr_t) larger - 8 ;
+        *((sf_header*) diff_footer) = larger -> header;
+        sf_free(larger);
+
+        /* set the block between addr - 8 and larger to be a separate free block */
+        mem_align_block = split_and_reinsert(mem_align_block,size,0);
+        uintptr_t payload_addr = (uintptr_t) mem_align_block + 8 ;
+        return (void *)payload_addr;
+    }
+    return NULL;
 }
 
 /**
@@ -446,13 +478,8 @@ void flush_quick_list(sf_block *first){
     size_t size = first -> header & 0xfffffffffffffff8;
     while(ptr -> body.links.next != NULL){
         sf_block *block = coalesce(ptr);
-        if(block == ptr){ /* the block can't be coalesced so insert into main list */
-            sf_block *sentinel = search_main_list(0,size);
-            insert_doubly(sentinel,block);
-        }else{ /* the block can be coalesced so we don't need to insert it again it is coalesced with
-                  existing block in the main free list already */
-            continue;
-        }
+        sf_block *sentinel = search_main_list(0,size);
+        insert_doubly(sentinel,block);
     }
 }
 
