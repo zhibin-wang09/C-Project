@@ -126,33 +126,47 @@ void *sf_realloc(void *pp, size_t rsize) {
 void *sf_memalign(size_t size, size_t align) {
     // TO BE IMPLEMENTED
     if(!size)  return NULL;
-    if(!(align & (align -1)) || align < 32) {sf_errno = EINVAL; return NULL;}
+    if((align & (align -1)) || align < 32) {sf_errno = EINVAL; return NULL;}
 
     /* allocate a block that is at least requested size + alignment size + minimum block size +
     size required for a block header and footer. */
     sf_block *larger = sf_malloc(size + align + 32 + 8);
+    size_t og_size = ((sf_block *)((uintptr_t) larger - 8) )-> header & ~(0x7);
+
+
     if(larger == NULL) return NULL;
 
     /* the larger block needs to be either aligned already or be offset to an alignment where
     the offset is minimum of 32 byte */
-    if((((uintptr_t) larger) + 8)% align ==0){ /* payload address is aligned */
+    if((((uintptr_t) larger)) % align ==0){ /* payload address is aligned */
         return larger;
     }else{
-        uintptr_t addr = ((uintptr_t) larger) + 32 + 8; // need the payload to check against alignment requirement
+        uintptr_t addr = ((uintptr_t) larger) + 32; // need the payload to check against alignment requirement
         while(addr % align != 0){
             addr+=8;
         }
-        // mem_align_block is the aligned block
+        // mem_align_block is the aligned block's header
         sf_block *mem_align_block = (sf_block *) (addr - 8);
 
         // free the difference between new aligned block and old sf_malloc addr
-        uintptr_t diff = (uintptr_t) mem_align_block - (uintptr_t) larger; // The size of the block difference
-        larger -> header = diff | 0x0000000000000001;
-        uintptr_t diff_footer = (larger -> header & 0xfffffffffffffff8) + (uintptr_t) larger - 8 ;
-        *((sf_header*) diff_footer) = larger -> header;
-        sf_free(larger);
+        uintptr_t diff = (uintptr_t) mem_align_block - (((uintptr_t) larger) - 8); // The size of the block difference
+        sf_block *front_free = (sf_block *) (((uintptr_t)larger) - 8);
+        front_free -> header = diff | 0x0000000000000001;
+        uintptr_t diff_footer = (front_free -> header & 0xfffffffffffffff8) + (uintptr_t) front_free - 8 ;
+        *((sf_header*) diff_footer) = front_free -> header;
 
+        // set the aligned block
+        mem_align_block -> header = og_size - (front_free -> header & ~(0x7));
+        *((sf_header *)( ((uintptr_t)mem_align_block) + (mem_align_block ->  header & ~(0x7)) - 8)) = mem_align_block -> header & ~(0x7);
+        sf_free((void *)(((uintptr_t) front_free)  + 8));
         /* set the block between addr - 8 and larger to be a separate free block */
+/* manipulate size so it meets the requirement */
+        size = size + 8; // include header size 8 bytes
+        while(size & 7){size++;} /* memalign */
+        if(size <= 32){
+            size += 32 - size;
+        }
+        mem_align_block -> header |= 0x0000000000000001;
         mem_align_block = split_and_reinsert(mem_align_block,size,0);
         uintptr_t payload_addr = (uintptr_t) mem_align_block + 8 ;
         return (void *)payload_addr;
