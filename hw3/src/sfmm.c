@@ -99,7 +99,7 @@ void *sf_realloc(void *pp, size_t rsize) {
     if(og_size < rsize){ /* reallocate to a larger block */
         sf_block *new_block = sf_malloc(rsize);
         size_t size_of_old = block -> header & 0xfffffffffffffff8;
-        memcpy(new_block -> body.payload, block -> body.payload, size_of_old - 8);
+        memcpy(new_block, block -> body.payload, size_of_old - 8);
         sf_free((sf_block *) pp);
         return new_block;
     }else if(og_size > rsize){
