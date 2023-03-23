@@ -19,7 +19,7 @@ static void *extend_heap(int init);
 static void insert_doubly(sf_block *sentinel,sf_block *block);
 static void set_prev_alloc(sf_block *block, size_t prev_alloc_bit,int flag);
 static void insert_quick_list(sf_block *block);
-static void flush_quick_list(sf_block *first);
+static void flush_quick_list(sf_block *first, int size_class);
 static size_t check_valid_pp(void *pp,int flag);
 static sf_block *remove_doubly(sf_block *block);
 static int init = 1;
@@ -250,6 +250,8 @@ void *search_main_list(int flag ,size_t size){
 
     /* split the free block if needed */
     list_ptr = split_and_reinsert(list_ptr,size,1);
+    sf_block *next_block = (sf_block*)((uintptr_t) list_ptr + (list_ptr -> header & ~(0x7)));
+    set_prev_alloc(next_block, 0x0000000000000002,1);// set the prev_alloc bit true for the remainder block
     return list_ptr;
 }
 
@@ -487,13 +489,33 @@ void set_prev_alloc(sf_block *block, size_t prev_alloc_bit,int flag){
  * This function takes a free list head as an input and flush the blocks and insert them
  * into the main list.
  * */
-void flush_quick_list(sf_block *first){
+void flush_quick_list(sf_block *first,int size_class){
     sf_block *ptr = first;
-    size_t size = first -> header & 0xfffffffffffffff8;
-    while(ptr -> body.links.next != NULL){
+    sf_block *next = NULL;
+    for(int i = 0 ; i < QUICK_LIST_MAX; i++){
+        // remove
+        sf_quick_lists[size_class].first = (ptr -> body.links.next);
+
+        //remeber the next block
+        next = ptr -> body.links.next;
+
+        // change the bits for the block to get ready to coalesce
+        ptr -> header &= 0xfffffffffffffffb;
+        uintptr_t ptr_footer = ((uintptr_t)ptr) + (ptr -> header & ~(0x7)) - 8 ;
+        *((sf_header *) ptr_footer) = ptr -> header;
+        set_prev_alloc((sf_block *)(ptr_footer + 8),0xfffffffffffffffd,0);
+
         sf_block *block = coalesce(ptr);
+        block -> header &= 0xfffffffffffffffa;
+        uintptr_t footer_addr = ((uintptr_t)block) + (block -> header & 0xfffffffffffffff8) - 8;
+        *((sf_header *)footer_addr) = block->header;
+
+        size_t size = block -> header & 0xfffffffffffffff8;
         sf_block *sentinel = search_main_list(0,size);
+        block -> body.links.next = 0; // clear reference to the next block in quicklist
+        block -> body.links.prev = 0; // clear previous
         insert_doubly(sentinel,block);
+        ptr = next;
     }
 }
 
@@ -511,23 +533,17 @@ void insert_quick_list(sf_block *block){
         cur_list_size += 8;
     }
 
-    if(sf_quick_lists[i].length == 5){
-        flush_quick_list(first);
+    if(sf_quick_lists[i].length == QUICK_LIST_MAX){
+        flush_quick_list(first,i);
+        first = NULL;
     } /* max capacity */
 
     /* insert into quicklist */
-    sf_block *temp = first == NULL ? NULL : first -> body.links.next;
-    if(temp == NULL){
-        sf_quick_lists[i].first = &(*block);
-        block -> body.links.next = NULL;
-        sf_quick_lists[i].length += 1;
-    }else{
-        block -> body.links.next = temp;
-        first -> body.links.next = block;
-        sf_quick_lists[i].length += 1;
-    }
-
+    sf_block *next = first == 0 ? NULL : first;
+    sf_quick_lists[i].first = block;
+    block -> body.links.next = next;
     block -> header |= 0x0000000000000005;
+    sf_quick_lists[i].length++;
 }
 
 /**
