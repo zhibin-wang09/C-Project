@@ -111,9 +111,7 @@ void *sf_realloc(void *pp, size_t rsize) {
         if(og_size - rsize < 32){ /* if result in a splinter */
             return pp;
         }else{ /* does not result in splinter */
-            og_size -= 8; /* not counting the header because we will need
-                            two blocks so the old header need to be preserved.*/
-            pp = split_and_reinsert(block,og_size - rsize,0);
+            pp = split_and_reinsert(block,rsize,0);
             pp = (void *) (((uintptr_t) pp) +8);
             return pp;
         }
