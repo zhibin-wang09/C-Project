@@ -242,5 +242,66 @@ Test(sfmm_basecode_suite, realloc_smaller_block_free_block, .timeout = TEST_TIME
 //DO NOT DELETE THESE COMMENTS
 //############################################
 
-//Test(sfmm_student_suite, student_test_1, .timeout = TEST_TIMEOUT) {
-//}
+Test(sfmm_student_suite, student_test_1, .timeout = TEST_TIMEOUT) {
+	sf_errno =0 ;
+	size_t empty = 0;
+	void *p = sf_malloc(empty);
+	cr_assert_null(p, "y is not NULL!");
+	cr_assert(sf_errno == 0, "sf is changed!!!");
+}
+
+Test(sfmm_student_suite, student_test_2, .timeout= TEST_TIMEOUT){
+	void *i = sf_malloc(8);
+	sf_free(i);
+	void *j =sf_malloc(80);
+	void *k = sf_malloc(8);
+	sf_free(k);
+	void *h = sf_malloc(60);
+	sf_free(j);
+	sf_malloc(321);
+	sf_free(h);
+	sf_malloc(3520);
+	assert_quick_list_block_count(0,3);
+	assert_free_list_size(0,0);
+	assert_free_block_count(0,0);
+}
+
+Test(sfmm_student_suite, student_test_3, .timeout = TEST_TIMEOUT){
+	void *i = sf_malloc(85);
+	sf_realloc(i,105);
+	assert_free_block_count(3840,1);
+	assert_quick_list_block_count(96,1);
+}
+
+Test(sfmm_student_suite, student_test_4, .timeout = TEST_TIMEOUT){
+	void *i = sf_malloc(32);
+	void *j = sf_malloc(32);
+	void *k = sf_malloc(32);
+	void *l = sf_malloc(32);
+	void *m = sf_malloc(32);
+	assert_free_block_count(3856,1);
+	sf_free(i);
+	sf_free(j);
+	sf_free(k);
+	sf_free(m);
+	sf_free(l);
+
+	assert_quick_list_block_count(40,5);
+	void *n =sf_malloc(32);
+	sf_free(n);
+	assert_quick_list_block_count(40,1);
+	assert_free_block_count(200,1);
+	assert_free_block_count(3816,1);
+}
+
+Test(sfmm_student_suite, student_test_5, .timeout = TEST_TIMEOUT){
+	void *i = sf_malloc(85);
+	sf_realloc(i,32);
+	assert_free_block_count(4016,1);
+}
+
+Test(sfmm_student_suite, student_test_6, .timeout = TEST_TIMEOUT){
+	void *i = sf_malloc(85);
+	sf_realloc(i,32);
+	assert_free_block_count(4016,1);
+}
