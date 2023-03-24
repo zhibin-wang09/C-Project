@@ -242,7 +242,7 @@ void *search_main_list(int flag ,size_t size){
                 while(size <= cur_block_size){
                     if(list_ptr -> body.links.next == sentinel) break;
                     list_ptr = list_ptr -> body.links.next;
-                    cur_list_size = list_ptr -> header & ~(0x7);
+                    cur_block_size = list_ptr -> header & ~(0x7);
                 } /* search for matching block*/
 
                 if(list_ptr != sentinel){
