@@ -128,7 +128,7 @@ void *sf_memalign(size_t size, size_t align) {
 
     /* allocate a block that is at least requested size + alignment size + minimum block size +
     size required for a block header and footer. */
-    sf_block *larger = sf_malloc(size + align + 32 + 8);
+    sf_block *larger = sf_malloc(size + align + 32);
     size_t og_size = ((sf_block *)((uintptr_t) larger - 8) )-> header & ~(0x7);
 
 
