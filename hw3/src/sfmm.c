@@ -23,6 +23,7 @@ static void flush_quick_list(sf_block *first, int size_class);
 static size_t check_valid_pp(void *pp,int flag);
 static sf_block *remove_doubly(sf_block *block);
 static int init = 1;
+static sf_block *remeber;
 
 void *sf_malloc(size_t size) {
     if(!size) return NULL;
@@ -54,8 +55,7 @@ void *sf_malloc(size_t size) {
     list_ptr = search_main_list(1,size);
     uintptr_t payload_addr = ((uintptr_t) list_ptr) + 8;
     if(list_ptr != NULL) return (sf_block *) payload_addr;
-     /* search main free list */
-
+    /* search main free list */
     return grow_wrapper(size);
 }
 
@@ -214,6 +214,17 @@ void *search_main_list(int flag ,size_t size){
     sf_block *list_ptr = &sf_free_list_heads[0];
     sf_block *sentinel = &sf_free_list_heads[0];
     if(size == 32 && !flag){return sentinel;}
+    if(size == 32 && flag){
+        sf_block* next = list_ptr -> body.links.next;
+        if(next != list_ptr){
+            list_ptr = next;
+            list_ptr = remove_doubly(list_ptr);
+            list_ptr -> header |= 0x1; //return the block that the user is going to use, so set the alloc bit
+            sf_block *next_block = (sf_block*)((uintptr_t) list_ptr + (list_ptr -> header & ~(0x7)));
+            set_prev_alloc(next_block, 0x0000000000000002,1);// set the prev_alloc bit true for the remainder block
+            return list_ptr;
+        }
+    }
 
     for(int i = 1; i < NUM_FREE_LISTS; i++){
         list_ptr = &sf_free_list_heads[i];
@@ -228,9 +239,10 @@ void *search_main_list(int flag ,size_t size){
 
         if((size <= 2 * cur_list_size && flag) || i == 9){
             if(list_ptr -> body.links.next != list_ptr){
-                while(size <= 2 * cur_block_size){
+                while(size <= cur_block_size){
                     if(list_ptr -> body.links.next == sentinel) break;
                     list_ptr = list_ptr -> body.links.next;
+                    cur_block_size = list_ptr -> header & ~(0x7);
                 } /* search for matching block*/
 
                 if(list_ptr != sentinel){
@@ -245,7 +257,7 @@ void *search_main_list(int flag ,size_t size){
         }
         cur_list_size *=2;
     }
-
+    if(list_ptr == sentinel) return NULL;
     /* split the free block if needed */
     list_ptr = split_and_reinsert(list_ptr,size,1);
     sf_block *next_block = (sf_block*)((uintptr_t) list_ptr + (list_ptr -> header & ~(0x7)));
@@ -266,7 +278,6 @@ void *search_main_list(int flag ,size_t size){
 void *grow_wrapper(size_t size){
     size_t extended_mem = 0;
     sf_block *block = NULL;
-    sf_block *remeber = block;
     /* Request for a page, then init prologue and epilogue if is first time otherwise
     only move epilogue address. Then initialize the free block with all the necessary header and footer,
     then insert it into the main free list. Coalese the current block with previous block if is free, then
@@ -275,14 +286,16 @@ void *grow_wrapper(size_t size){
     while(extended_mem < size){
         block = extend_heap(init);
         if(block == NULL){
-            block = search_main_list(0,size);
-            insert_doubly(block,remeber);
+            if(((remeber -> header & ~(0x7)) < size)){
+                block = search_main_list(0,remeber->header & ~(0x7));
+                insert_doubly(block,remeber);
+            }
             sf_errno = ENOMEM;
             return NULL;
         }
-        extended_mem += init ? PAGE_SZ-40 : PAGE_SZ;
-        init = 0;
         remeber = block;
+        extended_mem += init ? PAGE_SZ - 40 : PAGE_SZ;
+        init = 0;
     }
 
     block = split_and_reinsert(block,size,1);
