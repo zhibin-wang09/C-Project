@@ -149,13 +149,14 @@ void *sf_memalign(size_t size, size_t align) {
         // free the difference between new aligned block and old sf_malloc addr
         uintptr_t diff = (uintptr_t) mem_align_block - (((uintptr_t) larger) - 8); // The size of the block difference
         sf_block *front_free = (sf_block *) (((uintptr_t)larger) - 8);
-        front_free -> header = diff | 0x0000000000000001;
+        int prev_alloc = front_free -> header & 0x2;
+        front_free -> header = diff | 0x0000000000000001 | prev_alloc;
         uintptr_t diff_footer = (front_free -> header & 0xfffffffffffffff8) + (uintptr_t) front_free - 8 ;
         *((sf_header*) diff_footer) = front_free -> header;
 
         // set the aligned block
-        mem_align_block -> header = og_size - (front_free -> header & ~(0x7));
-        *((sf_header *)( ((uintptr_t)mem_align_block) + (mem_align_block ->  header & ~(0x7)) - 8)) = mem_align_block -> header & ~(0x7);
+        mem_align_block -> header = (og_size - (front_free -> header & ~(0x7))) | 0x00000000000003;
+        *((sf_header *)( ((uintptr_t)mem_align_block) + (mem_align_block ->  header & ~(0x7)) - 8)) = mem_align_block -> header;
         sf_free((void *)(((uintptr_t) front_free)  + 8));
         /* set the block between addr - 8 and larger to be a separate free block */
 /* manipulate size so it meets the requirement */
@@ -181,7 +182,8 @@ void *sf_memalign(size_t size, size_t align) {
 void *search_quick_list(size_t size){
     int cur_list_size = 32;
     struct sf_block *list_ptr = NULL;
-    for(int i = 0; i < NUM_QUICK_LISTS; i++){
+    int i;
+    for(i=0; i < NUM_QUICK_LISTS; i++){
         if(size > cur_list_size) continue; /* size does not satisfy request */
         if(sf_quick_lists[i].length != 0) {
             list_ptr = sf_quick_lists[i].first;
@@ -193,6 +195,8 @@ void *search_quick_list(size_t size){
     }
     if(list_ptr != NULL){
         list_ptr -> header = list_ptr -> header & 0xfffffffffffffffb; /* turn off the qklst bit */
+        sf_quick_lists[i].length -- ;
+        list_ptr -> body.links.next = 0;
         return list_ptr;
     }
         return NULL;
