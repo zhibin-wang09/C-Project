@@ -137,6 +137,13 @@ void *sf_memalign(size_t size, size_t align) {
     /* the larger block needs to be either aligned already or be offset to an alignment where
     the offset is minimum of 32 byte */
     if((((uintptr_t) larger)) % align ==0){ /* payload address is aligned */
+        size = size + 8; // include header size 8 bytes
+        while(size & 7){size++;} /* memalign */
+        if(size <= 32){
+            size += 32 - size;
+        }
+        larger -> header |= 0x0000000000000001;
+        larger = split_and_reinsert(larger, size,0);
         return larger;
     }else{
         uintptr_t addr = ((uintptr_t) larger) + 32; // need the payload to check against alignment requirement
