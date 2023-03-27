@@ -1,0 +1,126 @@
+--ascii is deprecated. Use LANG/LC_* variables to control encoding, and TERM/--color to control colors.
+[----] Criterion v2.4.1-13-g2f48d0f-dirty (bleeding)
+[====] Running 1 test from args_suite:
+[RUN ] args_suite::args
+[PASS] args_suite::args: (0.00s)
+[====] Running 8 tests from blackbox_suite:
+[RUN ] blackbox_suite::all_failed
+setup(rm -f test_output/all_failed.out test_output/all_failed.err test_output/all_failed.rej; rm -fr test_output/all_failed; mkdir -p test_output/all_failed)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -o test_output/all_failed_out tests/rsrc/all_failed_in tests/rsrc/all_failed_diff < /dev/null > test_output/all_failed.out 2> test_output/all_failed.err)
+[PASS] blackbox_suite::all_failed: (0.01s)
+[RUN ] blackbox_suite::askname
+setup(rm -f test_output/askname.out test_output/askname.err test_output/askname.rej; rm -fr test_output/askname; mkdir -p test_output/askname)
+run(ulimit -t 10; ulimit -f 2000; bin/patch  < tests/rsrc/askname.in > test_output/askname.out 2> test_output/askname.err)
+[PASS] blackbox_suite::askname: (0.01s)
+[RUN ] blackbox_suite::context
+setup(rm -f test_output/context.out test_output/context.err test_output/context.rej; rm -fr test_output/context; mkdir -p test_output/context)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -p -o test_output/context_out < tests/rsrc/context.in > test_output/context.out 2> test_output/context.err)
+[PASS] blackbox_suite::context: (0.01s)
+[RUN ] blackbox_suite::context_multi
+setup(rm -f test_output/context_multi.out test_output/context_multi.err test_output/context_multi.rej; rm -fr test_output/context_multi; mkdir -p test_output/context_multi)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -p -o test_output/context_multi_out < tests/rsrc/context_multi.in > test_output/context_multi.out 2> test_output/context_multi.err)
+[PASS] blackbox_suite::context_multi: (0.02s)
+[RUN ] blackbox_suite::garbage_diff
+setup(rm -f test_output/garbage_diff.out test_output/garbage_diff.err test_output/garbage_diff.rej; rm -fr test_output/garbage_diff; mkdir -p test_output/garbage_diff)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -o test_output/garbage_diff_out tests/rsrc/garbage_diff_in tests/rsrc/garbage_diff_diff < /dev/null > test_output/garbage_diff.out 2> test_output/garbage_diff.err)
+[PASS] blackbox_suite::garbage_diff: (0.01s)
+[RUN ] blackbox_suite::nonexistent_diff_file
+setup(rm -f test_output/nonexistent_diff_file.out test_output/nonexistent_diff_file.err test_output/nonexistent_diff_file.rej; rm -fr test_output/nonexistent_diff_file; mkdir -p test_output/nonexistent_diff_file)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -o test_output/nonexistent_diff_file_out tests/rsrc/nonexistent_diff_file_in tests/rsrc/nonexistent_diff_file_diff < /dev/null > test_output/nonexistent_diff_file.out 2> test_output/nonexistent_diff_file.err)
+[PASS] blackbox_suite::nonexistent_diff_file: (0.01s)
+[RUN ] blackbox_suite::nonexistent_input_file
+setup(rm -f test_output/nonexistent_input_file.out test_output/nonexistent_input_file.err test_output/nonexistent_input_file.rej; rm -fr test_output/nonexistent_input_file; mkdir -p test_output/nonexistent_input_file)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -o test_output/nonexistent_input_file_out tests/rsrc/nonexistent_input_file_in tests/rsrc/nonexistent_input_file_diff < /dev/null > test_output/nonexistent_input_file.out 2> test_output/nonexistent_input_file.err)
+[PASS] blackbox_suite::nonexistent_input_file: (0.01s)
+[RUN ] blackbox_suite::normal
+setup(rm -f test_output/normal.out test_output/normal.err test_output/normal.rej; rm -fr test_output/normal; mkdir -p test_output/normal)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -o test_output/normal_out tests/rsrc/normal_in tests/rsrc/normal_diff < /dev/null > test_output/normal.out 2> test_output/normal.err)
+[PASS] blackbox_suite::normal: (0.01s)
+[====] Running 2 tests from ifile_suite:
+[RUN ] ifile_suite::ifile_plan_a
+[PASS] ifile_suite::ifile_plan_a: (0.00s)
+[RUN ] ifile_suite::ifile_plan_b
+[PASS] ifile_suite::ifile_plan_b: (0.00s)
+[====] Running 7 tests from longopt_suite:
+[RUN ] longopt_suite::garbage_after_plus
+[PASS] longopt_suite::garbage_after_plus: (0.00s)
+[RUN ] longopt_suite::optarg_plus
+[PASS] longopt_suite::optarg_plus: (0.00s)
+[RUN ] longopt_suite::output_file_longopt
+setup(rm -f test_output/output_file_longopt.out test_output/output_file_longopt.err test_output/output_file_longopt.rej; rm -fr test_output/output_file_longopt; mkdir -p test_output/output_file_longopt)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -p --output-file test_output/output_file_longopt_out < tests/rsrc/output_file_longopt.in > test_output/output_file_longopt.out 2> test_output/output_file_longopt.err)
+[PASS] longopt_suite::output_file_longopt: (0.02s)
+[RUN ] longopt_suite::output_file_longopt_no_arg
+setup(rm -f test_output/output_file_longopt_no_arg.out test_output/output_file_longopt_no_arg.err test_output/output_file_longopt_no_arg.rej; rm -fr test_output/output_file_longopt_no_arg; mkdir -p test_output/output_file_longopt_no_arg)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -p --output-file < tests/rsrc/output_file_longopt_no_arg.in > test_output/output_file_longopt_no_arg.out 2> test_output/output_file_longopt_no_arg.err)
+[PASS] longopt_suite::output_file_longopt_no_arg: (0.01s)
+[RUN ] longopt_suite::pathname_longopt
+setup(rm -f test_output/pathnames_longopt.out test_output/pathnames_longopt.err test_output/pathnames_longopt.rej; rm -fr test_output/pathnames_longopt; mkdir -p test_output/pathnames_longopt)
+run(ulimit -t 10; ulimit -f 2000; bin/patch --pathnames -o test_output/pathnames_longopt_out < tests/rsrc/pathnames_longopt.in > test_output/pathnames_longopt.out 2> test_output/pathnames_longopt.err)
+[PASS] longopt_suite::pathname_longopt: (0.02s)
+[RUN ] longopt_suite::reject_file_longopt_no_arg
+setup(rm -f test_output/reject_file_longopt_no_arg.out test_output/reject_file_longopt_no_arg.err test_output/reject_file_longopt_no_arg.rej; rm -fr test_output/reject_file_longopt_no_arg; mkdir -p test_output/reject_file_longopt_no_arg)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -p -o test_output/reject_file_longopt_no_arg_out --reject-file < /dev/null > test_output/reject_file_longopt_no_arg.out 2> test_output/reject_file_longopt_no_arg.err)
+[PASS] longopt_suite::reject_file_longopt_no_arg: (0.01s)
+[RUN ] longopt_suite::reject_file_longopt_with_arg
+setup(rm -f test_output/reject_file_longopt_with_arg.out test_output/reject_file_longopt_with_arg.err test_output/reject_file_longopt_with_arg.rej; rm -fr test_output/reject_file_longopt_with_arg; mkdir -p test_output/reject_file_longopt_with_arg)
+run(ulimit -t 10; ulimit -f 2000; bin/patch -p -o test_output/reject_file_longopt_with_arg_out tests/rsrc/reject_file_longopt_with_arg_in tests/rsrc/reject_file_longopt_with_arg_diff --reject-file test_output/reject_file_longopt_with_arg.rej < /dev/null > test_output/reject_file_longopt_with_arg.out 2> test_output/reject_file_longopt_with_arg.err)
+[PASS] longopt_suite::reject_file_longopt_with_arg: (0.02s)
+[====] Running 1 test from patch_suite:
+[RUN ] patch_suite::locate_hunk
+[PASS] patch_suite::locate_hunk: (0.00s)
+[====] Running 2 tests from pfile_suite:
+[RUN ] pfile_suite::pfile_context
+The text leading up to this was:
+--------------------------
+|*** file1	2023-01-14 15:10:02.861798599 -0500
+|--- file2	2023-01-14 15:10:35.257253400 -0500
+--------------------------
+***************
+*** 1,5
+! This is file1.
+! This line does not appear in file2.
+  This line is in common between file1 and file2.
+  Here is another line that they have in common.
+- This line also does not appear in file2.
+--- 1,4 -----
+! This is file2.
+  This line is in common between file1 and file2.
++ This line does not appear in file1.
+  Here is another line that they have in common.
+[PASS] pfile_suite::pfile_context: (0.00s)
+[RUN ] pfile_suite::pfile_normal
+***************
+*** 1,2
+- This is file1.
+- This line does not appear in file2.
+--- 1,1 -----
++ This is file2.
+***************
+*** 4,3
+--- 3,3 -----
++ This line does not appear in file1.
+***************
+*** 5,5
+- This line also does not appear in file2.
+--- 5,4 -----
+[PASS] pfile_suite::pfile_normal: (0.00s)
+[====] Running 4 tests from valgrind_suite:
+[RUN ] valgrind_suite::valgrind_all_failed
+setup(rm -f test_output/valgrind_all_failed.out test_output/valgrind_all_failed.err test_output/valgrind_all_failed.rej; rm -fr test_output/valgrind_all_failed; mkdir -p test_output/valgrind_all_failed)
+run(ulimit -t 10; ulimit -f 2000;valgrind --leak-check=full --undef-value-errors=yes --error-exitcode=37 bin/patch -o test_output/valgrind_all_failed_out tests/rsrc/valgrind_all_failed_in tests/rsrc/valgrind_all_failed_diff < /dev/null > test_output/valgrind_all_failed.out 2> test_output/valgrind_all_failed.err)
+[PASS] valgrind_suite::valgrind_all_failed: (1.25s)
+[RUN ] valgrind_suite::valgrind_context_multi
+setup(rm -f test_output/valgrind_context_multi.out test_output/valgrind_context_multi.err test_output/valgrind_context_multi.rej; rm -fr test_output/valgrind_context_multi; mkdir -p test_output/valgrind_context_multi)
+run(ulimit -t 10; ulimit -f 2000;valgrind --leak-check=full --undef-value-errors=yes --error-exitcode=37 bin/patch -p -o test_output/valgrind_context_multi_out < tests/rsrc/valgrind_context_multi.in > test_output/valgrind_context_multi.out 2> test_output/valgrind_context_multi.err)
+[PASS] valgrind_suite::valgrind_context_multi: (1.26s)
+[RUN ] valgrind_suite::valgrind_garbage_diff
+setup(rm -f test_output/valgrind_garbage.out test_output/valgrind_garbage.err test_output/valgrind_garbage.rej; rm -fr test_output/valgrind_garbage; mkdir -p test_output/valgrind_garbage)
+run(ulimit -t 10; ulimit -f 2000;valgrind --leak-check=full --undef-value-errors=yes --error-exitcode=37 bin/patch -o test_output/valgrind_garbage_out tests/rsrc/valgrind_garbage_in tests/rsrc/valgrind_garbage_diff < /dev/null > test_output/valgrind_garbage.out 2> test_output/valgrind_garbage.err)
+[PASS] valgrind_suite::valgrind_garbage_diff: (1.16s)
+[RUN ] valgrind_suite::valgrind_normal
+setup(rm -f test_output/valgrind_normal.out test_output/valgrind_normal.err test_output/valgrind_normal.rej; rm -fr test_output/valgrind_normal; mkdir -p test_output/valgrind_normal)
+run(ulimit -t 10; ulimit -f 2000;valgrind --leak-check=full --undef-value-errors=yes --error-exitcode=37 bin/patch -o test_output/valgrind_normal_out tests/rsrc/valgrind_normal_in tests/rsrc/valgrind_normal_diff < /dev/null > test_output/valgrind_normal.out 2> test_output/valgrind_normal.err)
+[PASS] valgrind_suite::valgrind_normal: (1.24s)
+[----] Writing xml report in `crit.xml`.
+[====] Synthesis: Tested: 25 | Passing: 25 | Failing: 0 | Crashing: 0 
