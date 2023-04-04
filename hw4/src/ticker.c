@@ -26,15 +26,10 @@ void terminated(int sig, siginfo_t *info, void * ucontext);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
 void evaluate(char input[],size_t size);
-char **parse(char input[]);
+//char *dynamic_resize(char input[],int cur_size);
 
 int ticker(void) {
     sigset_t set;
-    sigfillset(&set);
-    sigdelset(&set,SIGQUIT);
-    sigdelset(&set,SIGINT);
-    sigdelset(&set,SIGCHLD);
-    sigdelset(&set,SIGIO);
     struct sigaction termination = {0}; // the signal for notifying that a watcher process has terminated
     termination.sa_sigaction = terminated;
     termination.sa_flags = SA_SIGINFO;
@@ -55,25 +50,36 @@ int ticker(void) {
     }
 
     fctnl_setup(STDIN_FILENO);
-
-    char input[128];
+    int cur_length = 128;
+    char input[cur_length]; //calloc(cur_length,1); // need to be dynamically resized
+   // int bytes_read = 0;
+    int ret = 0;
     while(1){ // as long as the user did not quit the program keep listening for input
-
         printf("ticker> ");
         fflush(stdout);
         // Waits for user input with current process suspended
+        if((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EAGAIN){
+            perror("Reading input failed");
+        }
+        printf("%d\n",ret);
         sigsuspend(&set);
-        memset(input, 0, sizeof(input)); // Clear the buffer
-        if(read(STDIN_FILENO,input,sizeof(input)) < 0){
-            perror("reading from user input failed\n");
-        } // read whatever
+        // while(bytes_read = (read(STDIN_FILENO,input,cur_length))!=0){
+        //     if(bytes_read == -1){
+        //         perror("Reading input failed");
+        //     }
+        //     int input_length = strlen(input);
+        //     if(input_length >= sizeof(input)){
+        //                     printf("%s\n",input);
+        //         input = dynamic_resize(input,cur_length);
+        //         cur_length*=2;
+        //     }
+        // } // read whatever
         if(errno == EWOULDBLOCK) // if nothing continue
             continue;
         evaluate(input, sizeof(input));
     }
     return 0;
 }
-
 /*
     signal handler for notification of a message from a watcher process
 */
@@ -130,3 +136,11 @@ void evaluate(char input[], size_t size){
         printf("???\n");
     }
 }
+
+
+// char *dynamic_resize(char input[],int cur_size){
+//     char *new_input_buffer = realloc(input, cur_size *2);
+//     memset(new_input_buffer, 0, cur_size*2); // Clear the buffer
+//     memcpy(new_input_buffer,input,cur_size);
+//     return new_input_buffer;
+// }
