@@ -15,15 +15,18 @@ typedef struct watcher{
     char *name;
 } WATCHER;
 
-typedef struct{
-    pid_t pid;
-    WATCHER watcher;
+typedef struct link_list{
     int index;
-} link_table;
+    pid_t pid;
+    WATCHER *watcher;
+    struct link_list *next;
+} TABLE;
 
 void terminated(int sig, siginfo_t *info, void * ucontext);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
-void fctnl_setup();
+void fctnl_setup(int fd);
+void evaluate(char input[],size_t size);
+char **parse(char input[]);
 
 int ticker(void) {
     sigset_t set;
@@ -51,33 +54,30 @@ int ticker(void) {
         return -1;
     }
 
-    fctnl_setup();
+    fctnl_setup(STDIN_FILENO);
 
-    char input[100];
-    int c;
+    char input[128];
     while(1){ // as long as the user did not quit the program keep listening for input
-        *input = 0;
 
         printf("ticker> ");
         fflush(stdout);
         // Waits for user input with current process suspended
         sigsuspend(&set);
-        read(STDIN_FILENO,input,100); // read whatever
+        memset(input, 0, sizeof(input)); // Clear the buffer
+        if(read(STDIN_FILENO,input,sizeof(input)) < 0){
+            perror("reading from user input failed\n");
+        } // read whatever
         if(errno == EWOULDBLOCK) // if nothing continue
             continue;
-        FILE *inputf =fmemopen(input,strlen(input),"r");
-        while((c = fgetc(inputf)) != EOF){
-            
-        } // read the input char by char
-
+        evaluate(input, sizeof(input));
     }
+    return 0;
 }
 
 /*
     signal handler for notification of a message from a watcher process
 */
 void msg_ready(int sig, siginfo_t *info, void * ucontext){
-    printf("SIGIO FIRED\n");
 }
 
 /*
@@ -88,14 +88,45 @@ void terminated(int sig, siginfo_t *info, void * ucontext){
 }
 
 
-void fctnl_setup(){
-    if(fcntl(STDIN_FILENO,F_SETFL, fcntl(0, F_GETFL) |O_ASYNC|O_NONBLOCK) < 0){
+void fctnl_setup(int fd){
+    if(fcntl(fd,F_SETFL, fcntl(0, F_GETFL) |O_ASYNC|O_NONBLOCK) < 0){
         perror("Setting STDIN to async failed");
     }
-    if(fcntl(STDIN_FILENO,F_SETOWN,getpid()) < 0){
+    if(fcntl(fd,F_SETOWN,getpid()) < 0){
         perror("Setting receving process of SIGIO signal failed");
     }
-    if(fcntl(STDIN_FILENO,F_SETSIG,SIGIO) < 0){
+    if(fcntl(fd,F_SETSIG,SIGIO) < 0){
         perror("Setting signal handler for async STDIN failed.");
+    }
+}
+
+void evaluate(char input[], size_t size){
+    char *str  = strtok(input, " ");
+    if(strcmp(str, "start") == 0){
+        printf("start\n");
+        str = strtok(NULL,"\n");
+        printf("%s\n",str);
+    }else if(strcmp(str, "watchers\n") == 0){
+        printf("watchers\n");
+    }else if(strcmp(str, "stop") == 0){
+        printf("stop\n");
+        str = strtok(NULL,"\n");
+        printf("%s\n",str);
+    }else if(strcmp(str, "show") == 0){
+        printf("show\n");
+        str = strtok(NULL,"\n");
+        printf("%s\n",str);
+    }else if(strcmp(str, "trace") == 0){
+        printf("trace\n");
+        str = strtok(NULL,"\n");
+        printf("%s\n",str);
+    }else if(strcmp(str,"untrace") == 0){
+        printf("untrace\n");
+        str = strtok(NULL,"\n");
+        printf("%s\n",str);
+    }else if(strcmp(str, "quit\n") == 0){
+        printf("quit\n");
+    }else{
+        printf("???\n");
     }
 }
