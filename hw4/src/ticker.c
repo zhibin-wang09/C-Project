@@ -26,7 +26,6 @@ void terminated(int sig, siginfo_t *info, void * ucontext);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
 void evaluate(char input[],size_t size);
-char *dynamic_resize(char input[],int cur_size);
 
 int ticker(void) {
     sigset_t set;
@@ -68,18 +67,33 @@ int ticker(void) {
         }
         // Waits for user input with current process suspended
         memset(input,0,cur_length);
-        while((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EWOULDBLOCK){
-                bytes_read += ret;
-                if(bytes_read >= cur_length){
-                    input = dynamic_resize(input,cur_length);
-                }
+        while((ret = read(STDIN_FILENO,input+bytes_read,cur_length)) > 0){
+            bytes_read += ret;
+            if(bytes_read >= cur_length){
+                input = realloc(input,cur_length*2);
+                cur_length *=2;
+            }
         }
+        //printf("ret: %d, errno: %d,bytesread: %d,cur_length: %d, input: %s\n",ret,errno,bytes_read,cur_length,input);
         if(ret == -1 && errno != EWOULDBLOCK) perror("Reading input failed");
-        //printf("%d, %d\n",ret,errno==EWOULDBLOCK);
-        if(errno == EWOULDBLOCK) {sigsuspend(&set); ticker_print = 0;continue;}
-        evaluate(input, sizeof(input));
-        ticker_print = 1;
-        bytes_read = 0;
+        if(errno == EWOULDBLOCK) { // in the case where read has read everything or there is not input
+            if(bytes_read != 0){ // input is ready and stored in buffer
+                evaluate(input, sizeof(input));
+                ticker_print = 1;
+                bytes_read =0;
+                continue;
+            }else{ // no input read
+                ticker_print =0;
+            }
+            sigsuspend(&set); // stop until input is read
+            bytes_read = 0;
+            continue;
+        }
+        if(ret == 0){ // ret is 0 means input from echo
+            evaluate(input, sizeof(input));
+            ticker_print = 1;
+            bytes_read = 0;
+        }
     }
     return 0;
 }
@@ -140,12 +154,4 @@ void evaluate(char input[], size_t size){
     }else{
         printf("???\n");
     }
-}
-
-
-char *dynamic_resize(char input[],int cur_size){
-    char *new_input_buffer = realloc(input, cur_size *2);
-    memset(new_input_buffer, 0, cur_size*2); // Clear the buffer
-    memcpy(new_input_buffer,input,cur_size);
-    return new_input_buffer;
 }
