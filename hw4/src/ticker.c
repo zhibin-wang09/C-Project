@@ -26,6 +26,7 @@ void terminated(int sig, siginfo_t *info, void * ucontext);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
 void evaluate(char input[],size_t size);
+volatile int ready= 0;
 //char *dynamic_resize(char input[],int cur_size);
 
 int ticker(void) {
@@ -54,15 +55,23 @@ int ticker(void) {
     char input[cur_length]; //calloc(cur_length,1); // need to be dynamically resized
    // int bytes_read = 0;
     int ret = 0;
+    memset(input,0,cur_length);
+    if((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EWOULDBLOCK){
+            perror("Reading input failed");
+    }
+    if(errno != EWOULDBLOCK) {ready = 1;}
+    printf("%d, %d\n",ret,errno==EWOULDBLOCK);
     while(1){ // as long as the user did not quit the program keep listening for input
         printf("ticker> ");
         fflush(stdout);
         // Waits for user input with current process suspended
-        if((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EAGAIN){
-            perror("Reading input failed");
+        if(ready == 0){
+            sigsuspend(&set);
+            memset(input,0,cur_length);
+            if((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EAGAIN){
+                perror("Reading input failed");
+            }
         }
-        printf("%d\n",ret);
-        sigsuspend(&set);
         // while(bytes_read = (read(STDIN_FILENO,input,cur_length))!=0){
         //     if(bytes_read == -1){
         //         perror("Reading input failed");
@@ -74,9 +83,8 @@ int ticker(void) {
         //         cur_length*=2;
         //     }
         // } // read whatever
-        if(errno == EWOULDBLOCK) // if nothing continue
-            continue;
         evaluate(input, sizeof(input));
+        ready = 0;
     }
     return 0;
 }
@@ -84,6 +92,7 @@ int ticker(void) {
     signal handler for notification of a message from a watcher process
 */
 void msg_ready(int sig, siginfo_t *info, void * ucontext){
+    fprintf(stderr, "msg ready\n");
 }
 
 /*
