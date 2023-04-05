@@ -26,7 +26,7 @@ void terminated(int sig, siginfo_t *info, void * ucontext);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
 void evaluate(char input[],size_t size);
-//char *dynamic_resize(char input[],int cur_size);
+char *dynamic_resize(char input[],int cur_size);
 
 int ticker(void) {
     sigset_t set;
@@ -57,7 +57,8 @@ int ticker(void) {
 
     fctnl_setup(STDIN_FILENO);
     int cur_length = 128;
-    char input[cur_length]; //calloc(cur_length,1); // need to be dynamically resized
+    int bytes_read = 0;
+    char *input = malloc(cur_length); //calloc(cur_length,1); // need to be dynamically resized
     int ret = 0;
     int ticker_print = 1;
     while(1){ // as long as the user did not quit the program keep listening for input
@@ -67,13 +68,18 @@ int ticker(void) {
         }
         // Waits for user input with current process suspended
         memset(input,0,cur_length);
-        if((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EWOULDBLOCK){
-                perror("Reading input failed");
+        while((ret = read(STDIN_FILENO,input,cur_length)) < 0 && errno != EWOULDBLOCK){
+                bytes_read += ret;
+                if(bytes_read >= cur_length){
+                    input = dynamic_resize(input,cur_length);
+                }
         }
+        if(ret == -1 && errno != EWOULDBLOCK) perror("Reading input failed");
         //printf("%d, %d\n",ret,errno==EWOULDBLOCK);
         if(errno == EWOULDBLOCK) {sigsuspend(&set); ticker_print = 0;continue;}
         evaluate(input, sizeof(input));
         ticker_print = 1;
+        bytes_read = 0;
     }
     return 0;
 }
@@ -137,9 +143,9 @@ void evaluate(char input[], size_t size){
 }
 
 
-// char *dynamic_resize(char input[],int cur_size){
-//     char *new_input_buffer = realloc(input, cur_size *2);
-//     memset(new_input_buffer, 0, cur_size*2); // Clear the buffer
-//     memcpy(new_input_buffer,input,cur_size);
-//     return new_input_buffer;
-// }
+char *dynamic_resize(char input[],int cur_size){
+    char *new_input_buffer = realloc(input, cur_size *2);
+    memset(new_input_buffer, 0, cur_size*2); // Clear the buffer
+    memcpy(new_input_buffer,input,cur_size);
+    return new_input_buffer;
+}
