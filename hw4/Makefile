@@ -9,7 +9,7 @@ LIBD := lib
 MAIN  := $(BLDD)/main.o
 
 ALL_SRCF := $(shell find $(SRCD) -type f -name *.c)
-ALL_LIBF := $(shell find $(LIBD) -type f -name *.c)
+ALL_LIBF := $(shell find $(LIBD) -type f -name *.o)
 ALL_OBJF := $(patsubst $(SRCD)/%,$(BLDD)/%,$(ALL_SRCF:.c=.o) $(ALL_LIBF:.c=.o))
 ALL_FUNCF := $(filter-out $(MAIN) $(AUX), $(ALL_OBJF))
 
