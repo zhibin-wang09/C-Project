@@ -6,15 +6,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include "ticker.h"
-#include "cli.h"
 
-typedef struct watcher{
+struct watcher{
     pid_t pid;
-    int enable;
+    int enable; // if the watcher is currently being traced
     int inputfd;
     int outputfd;
     char *name;
-} WATCHER;
+};
+
 typedef struct link_list{
     int index;
     pid_t pid;
@@ -28,6 +28,8 @@ void terminated(int sig, siginfo_t *info, void * ucontext);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
 void evaluate(char input[],int *stop);
+void add_to_table(WATCHER *watcher);
+
 
 int ticker(void) {
     sigset_t set;
@@ -56,9 +58,9 @@ int ticker(void) {
         return -1;
     }
 
-     fctnl_setup(STDIN_FILENO);
-    // WATCHER_TYPE cli_watcher = {};
-    // cli_watcher_start(&cli_watcher,NULL);
+    fctnl_setup(STDIN_FILENO);
+    WATCHER_TYPE *cli_watcher = &watcher_types[CLI_WATCHER_TYPE];
+    (*cli_watcher).start(cli_watcher, NULL);
 
     int cur_length = 128;
     int bytes_read = 0;
@@ -156,7 +158,6 @@ void evaluate(char input[],int *stop){
          if(strcmp(command, "watchers") == 0){
             printf("watchers\n");
         }else if(strcmp(command, "quit") == 0){
-            printf("quit\n");
         }else{
             printf("???\n");
         }
@@ -164,4 +165,8 @@ void evaluate(char input[],int *stop){
     input[counter] = '\n';
     ptr = arg+1;
     *stop = counter+1 + *stop;
+}
+
+void add_to_table(WATCHER *watcher){
+
 }

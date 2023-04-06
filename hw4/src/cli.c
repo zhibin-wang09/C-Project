@@ -1,13 +1,18 @@
 #include <stdlib.h>
 
 #include "ticker.h"
-#include "store.h"
+#include "lib/store.h"
 #include "cli.h"
 #include "debug.h"
 
+extern int add_to_table(WATCHER *watcher);
+
+
 WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     // TO BE IMPLEMENTED
-    abort();
+    WATCHER cli_watcher = {-1,0,1,2,"CLI"};
+    add_to_table(&cli_watcher);
+    return &cli_watcher;
 }
 
 int cli_watcher_stop(WATCHER *wp) {
