@@ -1,18 +1,24 @@
 #include <stdlib.h>
 
 #include "ticker.h"
-#include "lib/store.h"
+#include "store.h"
 #include "cli.h"
 #include "debug.h"
-
-extern int add_to_table(WATCHER *watcher);
+#include "watcher_define.h"
 
 
 WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     // TO BE IMPLEMENTED
-    WATCHER cli_watcher = {-1,0,1,2,"CLI"};
-    add_to_table(&cli_watcher);
-    return &cli_watcher;
+    WATCHER  *cli_watcher = malloc(sizeof(WATCHER));
+    if(cli_watcher == NULL){
+        perror("Ran out of memory");
+    }
+    cli_watcher -> pid = -1;
+    cli_watcher -> enable = 0;
+    cli_watcher -> inputfd = STDIN_FILENO;
+    cli_watcher -> outputfd = STDOUT_FILENO;
+    cli_watcher -> name = "CLI";
+    return cli_watcher;
 }
 
 int cli_watcher_stop(WATCHER *wp) {

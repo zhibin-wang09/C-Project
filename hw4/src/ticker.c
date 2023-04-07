@@ -6,29 +6,19 @@
 #include <unistd.h>
 #include <errno.h>
 #include "ticker.h"
-
-struct watcher{
-    pid_t pid;
-    int enable; // if the watcher is currently being traced
-    int inputfd;
-    int outputfd;
-    char *name;
-};
-
-typedef struct link_list{
-    int index;
-    pid_t pid;
-    WATCHER *watcher;
-    struct link_list *next;
-} TABLE;
+#include <sys/wait.h>
+#include "watcher_define.h"
 
 
-
-void terminated(int sig, siginfo_t *info, void * ucontext);
+void terminated(int sig, siginfo_t *act, void* context);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
 void evaluate(char input[],int *stop);
 void add_to_table(WATCHER *watcher);
+void print_table();
+WATCHER *search_table(int index);
+void remove_from_table(int index);
+static NODE head = {0};
 
 
 int ticker(void) {
@@ -40,6 +30,7 @@ int ticker(void) {
     sigdelset(&set,SIGQUIT);
     sigdelset(&set,SIGTERM);
     sigdelset(&set,SIGSTOP);
+
     struct sigaction termination = {0}; // the signal for notifying that a watcher process has terminated
     termination.sa_sigaction = terminated;
     sigemptyset(&termination.sa_mask);
@@ -59,8 +50,12 @@ int ticker(void) {
     }
 
     fctnl_setup(STDIN_FILENO);
+
+    // initialize head and add the cli watcher to table
+    head = (NODE){-1,NULL,NULL};
     WATCHER_TYPE *cli_watcher = &watcher_types[CLI_WATCHER_TYPE];
-    (*cli_watcher).start(cli_watcher, NULL);
+    WATCHER *cli = (*cli_watcher).start(cli_watcher, NULL);
+    add_to_table(cli);
 
     int cur_length = 128;
     int bytes_read = 0;
@@ -111,8 +106,14 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
 /*
     signal handler for termination of a watcher proces
 */
-void terminated(int sig, siginfo_t *info, void * ucontext){
+void terminated(int sig, siginfo_t *act, void *context){
     //reap the terminated child
+    pid_t pid = act -> si_pid;
+    waitpid(pid, NULL,0);
+}
+
+void quit_program(int sig, siginfo_t *info, void *context){
+
 }
 
 
@@ -142,7 +143,19 @@ void evaluate(char input[],int *stop){
     char *args = strtok(NULL,"");
     if(args != NULL){
         if(strcmp(command, "start") == 0){
-            printf("start\n");
+            int i =0;
+            for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != args; i++); // searches through watcher table to find corresponding watcher type
+            if(i ==0) printf("???\n"); // no watcher of request type is found
+            else{
+                // char *channels[1];
+                // char *args =strtok(NULL, "\n");
+                // char *ptr = args;
+                // while(*ptr != 0){
+
+                // }
+                // WATCHER_TYPE type = watcher_types[i];
+                // type.start(&type,args);
+            }
         }else if(strcmp(command,"show") == 0){
             printf("show\n");
         }else if(strcmp(command, "trace") == 0){
@@ -150,13 +163,34 @@ void evaluate(char input[],int *stop){
         }else if(strcmp(command, "untrace") == 0){
             printf("untrace\n");
         }else if(strcmp(command,"stop") == 0){
-            printf("stop\n");
+            int index = 0;
+            char *ptr = args;
+            int invalid = 0;
+            while(*ptr != 0){
+                if(*ptr < '0' || *ptr >'9'){ printf("???\n"); invalid = 1; break;} // read index number while validating
+                index += *ptr - '0';
+                ptr++;
+            }
+            if(invalid != 1){ // input is valid
+                WATCHER *del = search_table(index);
+                if(del == NULL || index == 0){
+                    printf("???\n");
+                }else{
+                    remove_from_table(index);
+                    int i =0;
+                    for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != del->name; i++); // searches through watcher table to find corresponding watcher type
+                    WATCHER_TYPE type = watcher_types[i];
+                    type.stop(del);
+                }
+            }else{ // input is not valid
+                printf("???\n");
+            }
         }else {
             printf("???\n");
         }
     }else{
          if(strcmp(command, "watchers") == 0){
-            printf("watchers\n");
+            print_table();
         }else if(strcmp(command, "quit") == 0){
         }else{
             printf("???\n");
@@ -168,5 +202,56 @@ void evaluate(char input[],int *stop){
 }
 
 void add_to_table(WATCHER *watcher){
+    NODE *ptr = head.next;
+    NODE *prev = &head;
+    int index = head.index;
+    while(ptr != NULL){ // search through the list to find the lowest index
+        if(ptr -> index - index > 1) break;
+        prev = ptr;
+        index = ptr -> index;
+        ptr = ptr -> next;
+            }
+    NODE *new = malloc(sizeof(new));
+    new -> index = index+1;
+    new -> watcher = watcher;
+    new -> next = ptr;
+    prev -> next = new;
+}
 
+
+/**
+ * This function loops through the table and prints every watcher in the table
+ * */
+void print_table(){
+    NODE *ptr = head.next;
+    while(ptr != NULL){
+        WATCHER *watcher = ptr -> watcher;
+
+        char *name = watcher -> name;
+        if(strcmp(name, watcher_types[CLI_WATCHER_TYPE].name) == 0){ printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->inputfd,watcher->outputfd);}
+        else{
+            printf("%d\t%s(%d,%d,%d)",ptr->index,name, watcher->pid,watcher->inputfd,watcher->outputfd);
+        }
+        ptr = ptr -> next;
+    }
+}
+
+void remove_from_table(int index){
+    NODE *ptr = head.next;
+    NODE *slow = &head;
+    while(ptr != NULL){
+        if(ptr->index != index){slow = ptr; ptr  = ptr -> next;}
+        else break;
+    }
+    NODE *next = ptr -> next;
+    slow -> next = next;
+}
+
+WATCHER *search_table(int index){
+    NODE *ptr = head.next;
+    while(ptr != NULL){
+        if(ptr->index != index){ptr  = ptr -> next;}
+        else {return (ptr -> watcher);}
+    }
+    return NULL;
 }
