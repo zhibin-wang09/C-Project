@@ -13,7 +13,7 @@
 void terminated(int sig, siginfo_t *act, void* context);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void fctnl_setup(int fd);
-void evaluate(char input[],int *stop);
+void evaluate(char input[]);
 void add_to_table(WATCHER *watcher);
 void print_table();
 WATCHER *search_table(int index);
@@ -62,17 +62,18 @@ int ticker(void) {
     char *input = malloc(cur_length); //calloc(cur_length,1); // need to be dynamically resized
     int ret = 0;
     int ticker_print = 1;
-    int stop = 0;
+    int cur_bytes_read = 0;
     while(1){ // as long as the user did not quit the program keep listening for input
         if(ticker_print == 1){
             printf("ticker> ");
             fflush(stdout);
         }
         // Waits for user input with current process suspended
-        memset(input+bytes_read,0,cur_length);
-        while((ret = read(STDIN_FILENO,input+bytes_read,1)) > 0){
+        memset(input,0,cur_length);
+        while((ret = read(STDIN_FILENO,input+cur_bytes_read,1)) > 0){
             bytes_read += ret;
-            if(input[bytes_read-1] == '\n') break;
+            cur_bytes_read += ret;
+            if(input[cur_bytes_read-1] == '\n') break;
             if(bytes_read >= cur_length){
                 input = realloc(input,cur_length*2);
                 cur_length *=2;
@@ -85,14 +86,15 @@ int ticker(void) {
             continue;
         }
         if(ret == 1){
-            memset(input + bytes_read, 0, cur_length - bytes_read);
-            evaluate(input+stop,&stop);
+            memset(input + cur_bytes_read, 0, cur_length - cur_bytes_read);
+            evaluate(input);
             ticker_print = 1;
         }
         if(ret == 0 ){ // ret is 0 means EOF
             free(input);
             exit(0);
         }
+        cur_bytes_read = 0;
     }
     return 0;
 }
@@ -129,7 +131,7 @@ void fctnl_setup(int fd){
     }
 }
 
-void evaluate(char input[],int *stop){
+void evaluate(char input[]){
 
     char *arg = input;
     char *ptr = input;
@@ -167,7 +169,7 @@ void evaluate(char input[],int *stop){
             char *ptr = args;
             int invalid = 0;
             while(*ptr != 0){
-                if(*ptr < '0' || *ptr >'9'){ printf("???\n"); invalid = 1; break;} // read index number while validating
+                if(*ptr <= '0' || *ptr >'9'){ printf("???\n"); invalid = 1; break;} // read index number while validating
                 index += *ptr - '0';
                 ptr++;
             }
@@ -182,8 +184,6 @@ void evaluate(char input[],int *stop){
                     WATCHER_TYPE type = watcher_types[i];
                     type.stop(del);
                 }
-            }else{ // input is not valid
-                printf("???\n");
             }
         }else {
             printf("???\n");
@@ -198,7 +198,6 @@ void evaluate(char input[],int *stop){
     }
     input[counter] = '\n';
     ptr = arg+1;
-    *stop = counter+1 + *stop;
 }
 
 void add_to_table(WATCHER *watcher){
