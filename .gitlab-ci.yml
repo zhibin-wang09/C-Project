@@ -3,7 +3,7 @@ variables:
     GIT_SSL_NO_VERIFY: "true"
     EXEC: ticker
     HW_DIR: hw4
-    PROC_LIMIT 200
+    PROC_LIMIT: 200
     CPU_LIMIT: 60
     FILE_LIMIT: 1000000
 before_script:
