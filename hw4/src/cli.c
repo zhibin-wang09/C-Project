@@ -15,15 +15,17 @@ WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     }
     cli_watcher -> pid = -1;
     cli_watcher -> enable = 0;
-    cli_watcher -> inputfd = STDIN_FILENO;
-    cli_watcher -> outputfd = STDOUT_FILENO;
-    cli_watcher -> name = "CLI";
+    cli_watcher -> parent_inputfd = STDIN_FILENO;
+    cli_watcher -> parent_outputfd = STDOUT_FILENO;
+    cli_watcher -> name = type -> name;
+    cli_watcher -> child_inputfd = -1;
+    cli_watcher -> child_outputfd = -1;
     return cli_watcher;
 }
 
 int cli_watcher_stop(WATCHER *wp) {
     // TO BE IMPLEMENTED
-    abort();
+    return -1;
 }
 
 int cli_watcher_send(WATCHER *wp, void *arg) {

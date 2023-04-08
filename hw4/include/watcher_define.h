@@ -5,8 +5,10 @@
 struct watcher{
     pid_t pid;
     int enable; // if the watcher is currently being traced
-    int inputfd;
-    int outputfd;
+    int parent_inputfd;
+    int parent_outputfd;
+    int child_inputfd;
+    int child_outputfd;
     char *name;
 };
 

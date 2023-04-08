@@ -110,12 +110,11 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
 */
 void terminated(int sig, siginfo_t *act, void *context){
     //reap the terminated child
-    // pid_t pid = act -> si_pid;
-    // int status =0;
-    // // clear up all the zombie processes
-    // while(){
+    int status =0;
+    // clear up all the zombie processes
+    while((waitpid(-1, &status, WNOHANG)) > 0){
 
-    // }
+    }
 }
 
 void quit_program(int sig, siginfo_t *info, void *context){
