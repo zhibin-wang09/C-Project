@@ -110,8 +110,12 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
 */
 void terminated(int sig, siginfo_t *act, void *context){
     //reap the terminated child
-    pid_t pid = act -> si_pid;
-    waitpid(pid, NULL,0);
+    // pid_t pid = act -> si_pid;
+    // int status =0;
+    // // clear up all the zombie processes
+    // while(){
+
+    // }
 }
 
 void quit_program(int sig, siginfo_t *info, void *context){
@@ -145,18 +149,29 @@ void evaluate(char input[]){
     char *args = strtok(NULL,"");
     if(args != NULL){
         if(strcmp(command, "start") == 0){
-            int i =0;
-            for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != args; i++); // searches through watcher table to find corresponding watcher type
-            if(i ==0) printf("???\n"); // no watcher of request type is found
+            if(!strcmp(args,"CLI")) printf("???\n"); // no watcher of request type is found
             else{
-                // char *channels[1];
-                // char *args =strtok(NULL, "\n");
-                // char *ptr = args;
-                // while(*ptr != 0){
-
-                // }
-                // WATCHER_TYPE type = watcher_types[i];
-                // type.start(&type,args);
+                char *socket_name = strtok(args, " "); // the websocket name
+                int i =0;
+                for(i = 0; watcher_types[i].name != NULL; i++){
+                    if(!strcmp(watcher_types[i].name,socket_name)) break;
+                } // searches through watcher table to find corresponding watcher type
+                if(watcher_types[i].name == NULL){ printf("???\n");} // no watcher of request type found
+                else {
+                    char *all_channels = strtok(NULL, "\n"); // input could have more than 1 channel
+                    if(all_channels == NULL){ // no channel
+                        printf("???\n");
+                    }else{
+                        char *channel = strtok(all_channels," "); // we only want the first one
+                        if(channel == NULL) printf("???\n");
+                        else {
+                            WATCHER_TYPE type = watcher_types[i];
+                            char *channel_args[1] = {channel};
+                            WATCHER *watcher = type.start(&type,channel_args);
+                            add_to_table(watcher);
+                        }
+                    }
+                }
             }
         }else if(strcmp(command,"show") == 0){
             printf("show\n");
@@ -197,7 +212,7 @@ void evaluate(char input[]){
         }
     }
     input[counter] = '\n';
-    ptr = arg+1;
+    //ptr = arg+1;
 }
 
 void add_to_table(WATCHER *watcher){
@@ -227,9 +242,9 @@ void print_table(){
         WATCHER *watcher = ptr -> watcher;
 
         char *name = watcher -> name;
-        if(strcmp(name, watcher_types[CLI_WATCHER_TYPE].name) == 0){ printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->inputfd,watcher->outputfd);}
+        if(strcmp(name, watcher_types[CLI_WATCHER_TYPE].name) == 0){ printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);}
         else{
-            printf("%d\t%s(%d,%d,%d)",ptr->index,name, watcher->pid,watcher->inputfd,watcher->outputfd);
+            printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);
         }
         ptr = ptr -> next;
     }
