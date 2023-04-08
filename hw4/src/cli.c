@@ -20,6 +20,7 @@ WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     cli_watcher -> name = type -> name;
     cli_watcher -> child_inputfd = -1;
     cli_watcher -> child_outputfd = -1;
+    cli_watcher -> args = NULL;
     return cli_watcher;
 }
 

@@ -7,6 +7,7 @@
 #include "watcher_define.h"
 #include <signal.h>
 #include <errno.h>
+#include <string.h>
 
 WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     // TO BE IMPLEMENTED
@@ -33,6 +34,12 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     bitstamp_watcher -> child_inputfd = parent_to_child[0];
     bitstamp_watcher -> child_outputfd = child_to_parent[1];
     bitstamp_watcher -> name = type -> name;
+    size_t size_of_arg =0;
+    char *c = *args;
+    while(*c != '\0'){c++; size_of_arg++;};
+    char *copy_args = malloc(size_of_arg);
+    memcpy(copy_args, args[0],size_of_arg);
+    bitstamp_watcher -> args = copy_args;
     return bitstamp_watcher;
 }
 

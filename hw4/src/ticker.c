@@ -12,6 +12,7 @@
 
 void terminated(int sig, siginfo_t *act, void* context);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
+void quit_program(int sig, siginfo_t *info, void *context);
 void fctnl_setup(int fd);
 void evaluate(char input[]);
 void add_to_table(WATCHER *watcher);
@@ -19,6 +20,7 @@ void print_table();
 WATCHER *search_table(int index);
 void remove_from_table(int index);
 static NODE head = {0};
+static int terminate_program = 0;
 
 
 int ticker(void) {
@@ -49,6 +51,14 @@ int ticker(void) {
         return -1;
     }
 
+    struct sigaction quit= {0};
+    quit.sa_sigaction = &quit_program;
+    sigemptyset(&quit.sa_mask);
+    if(sigaction(SIGINT, &quit, NULL) < 0){
+        perror("Creating SIGINT failed");
+        return -1;
+    }
+
     fctnl_setup(STDIN_FILENO);
 
     // initialize head and add the cli watcher to table
@@ -70,6 +80,7 @@ int ticker(void) {
         }
         // Waits for user input with current process suspended
         memset(input,0,cur_length);
+        if(terminate_program) {exit(0);}
         while((ret = read(STDIN_FILENO,input+cur_bytes_read,1)) > 0){
             bytes_read += ret;
             cur_bytes_read += ret;
@@ -111,14 +122,20 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
 void terminated(int sig, siginfo_t *act, void *context){
     //reap the terminated child
     int status =0;
+    pid_t pid = 0;
     // clear up all the zombie processes
-    while((waitpid(-1, &status, WNOHANG)) > 0){
-
-    }
+    while((pid =waitpid(-1, &status, WNOHANG)) > 0){}
 }
 
 void quit_program(int sig, siginfo_t *info, void *context){
-
+    NODE *ptr = head.next -> next;
+    while(ptr != NULL){
+        pid_t pid = (ptr -> watcher) -> pid;
+        remove_from_table(ptr -> index);
+        kill(pid, SIGTERM);
+        ptr = ptr -> next;
+    }
+    terminate_program = 1;
 }
 
 
@@ -192,11 +209,11 @@ void evaluate(char input[]){
                 if(del == NULL || index == 0){
                     printf("???\n");
                 }else{
-                    remove_from_table(index);
                     int i =0;
                     for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != del->name; i++); // searches through watcher table to find corresponding watcher type
                     WATCHER_TYPE type = watcher_types[i];
                     type.stop(del);
+                    remove_from_table(index);
                 }
             }
         }else {
@@ -206,6 +223,7 @@ void evaluate(char input[]){
          if(strcmp(command, "watchers") == 0){
             print_table();
         }else if(strcmp(command, "quit") == 0){
+            kill(getpid(),SIGINT);
         }else{
             printf("???\n");
         }
@@ -243,7 +261,16 @@ void print_table(){
         char *name = watcher -> name;
         if(strcmp(name, watcher_types[CLI_WATCHER_TYPE].name) == 0){ printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);}
         else{
-            printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);
+            printf("%d\t%s(%d,%d,%d)",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);
+            int i =0;
+            for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != watcher->name; i++); // searches through watcher table to find corresponding watcher type
+            WATCHER_TYPE type = watcher_types[i];
+            char **arg = type.argv;
+            while(*arg != NULL){
+                printf(" %s", *arg);
+                arg++;
+            }
+            printf(" [%s]\n",watcher->args);
         }
         ptr = ptr -> next;
     }
@@ -258,6 +285,9 @@ void remove_from_table(int index){
     }
     NODE *next = ptr -> next;
     slow -> next = next;
+    free((ptr -> watcher )-> args);
+    free(ptr -> watcher);
+    free(ptr);
 }
 
 WATCHER *search_table(int index){
