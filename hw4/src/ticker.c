@@ -14,11 +14,6 @@ void terminated(int sig, siginfo_t *act, void* context);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void quit_program(int sig, siginfo_t *info, void *context);
 void fctnl_setup(int fd);
-void evaluate(char input[]);
-void add_to_table(WATCHER *watcher);
-void print_table();
-WATCHER *search_table(int index);
-void remove_from_table(int index);
 static NODE head = {0};
 static int terminate_program = 0;
 
@@ -75,12 +70,12 @@ int ticker(void) {
     int cur_bytes_read = 0;
     while(1){ // as long as the user did not quit the program keep listening for input
         if(ticker_print == 1){
-            printf("ticker> ");
+            (*cli_watcher).send(NULL, "ticker> ");
             fflush(stdout);
         }
         // Waits for user input with current process suspended
         memset(input,0,cur_length);
-        if(terminate_program) {exit(0);}
+        if(terminate_program) {free(input);exit(0);}
         while((ret = read(STDIN_FILENO,input+cur_bytes_read,1)) > 0){
             bytes_read += ret;
             cur_bytes_read += ret;
@@ -98,7 +93,7 @@ int ticker(void) {
         }
         if(ret == 1){
             memset(input + cur_bytes_read, 0, cur_length - cur_bytes_read);
-            evaluate(input);
+            watcher_types[CLI_WATCHER_TYPE].recv(NULL,input);
             ticker_print = 1;
         }
         if(ret == 0 ){ // ret is 0 means EOF
@@ -151,87 +146,6 @@ void fctnl_setup(int fd){
     }
 }
 
-void evaluate(char input[]){
-
-    char *arg = input;
-    char *ptr = input;
-    int counter =0;
-    while(*arg != '\n'){ // parse the command
-        arg++;
-        counter++;
-    }
-    input[counter] = '\0';
-    char *command = strtok(ptr," ");
-    char *args = strtok(NULL,"");
-    if(args != NULL){
-        if(strcmp(command, "start") == 0){
-            if(!strcmp(args,"CLI")) printf("???\n"); // no watcher of request type is found
-            else{
-                char *socket_name = strtok(args, " "); // the websocket name
-                int i =0;
-                for(i = 0; watcher_types[i].name != NULL; i++){
-                    if(!strcmp(watcher_types[i].name,socket_name)) break;
-                } // searches through watcher table to find corresponding watcher type
-                if(watcher_types[i].name == NULL){ printf("???\n");} // no watcher of request type found
-                else {
-                    char *all_channels = strtok(NULL, "\n"); // input could have more than 1 channel
-                    if(all_channels == NULL){ // no channel
-                        printf("???\n");
-                    }else{
-                        char *channel = strtok(all_channels," "); // we only want the first one
-                        if(channel == NULL) printf("???\n");
-                        else {
-                            WATCHER_TYPE type = watcher_types[i];
-                            char *channel_args[1] = {channel};
-                            WATCHER *watcher = type.start(&type,channel_args);
-                            add_to_table(watcher);
-                        }
-                    }
-                }
-            }
-        }else if(strcmp(command,"show") == 0){
-            printf("show\n");
-        }else if(strcmp(command, "trace") == 0){
-            printf("trace\n");
-        }else if(strcmp(command, "untrace") == 0){
-            printf("untrace\n");
-        }else if(strcmp(command,"stop") == 0){
-            int index = 0;
-            char *ptr = args;
-            int invalid = 0;
-            while(*ptr != 0){
-                if(*ptr <= '0' || *ptr >'9'){ printf("???\n"); invalid = 1; break;} // read index number while validating
-                index += *ptr - '0';
-                ptr++;
-            }
-            if(invalid != 1){ // input is valid
-                WATCHER *del = search_table(index);
-                if(del == NULL || index == 0){
-                    printf("???\n");
-                }else{
-                    int i =0;
-                    for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != del->name; i++); // searches through watcher table to find corresponding watcher type
-                    WATCHER_TYPE type = watcher_types[i];
-                    type.stop(del);
-                    remove_from_table(index);
-                }
-            }
-        }else {
-            printf("???\n");
-        }
-    }else{
-         if(strcmp(command, "watchers") == 0){
-            print_table();
-        }else if(strcmp(command, "quit") == 0){
-            kill(getpid(),SIGINT);
-        }else{
-            printf("???\n");
-        }
-    }
-    input[counter] = '\n';
-    //ptr = arg+1;
-}
-
 void add_to_table(WATCHER *watcher){
     NODE *ptr = head.next;
     NODE *prev = &head;
@@ -247,6 +161,7 @@ void add_to_table(WATCHER *watcher){
     new -> watcher = watcher;
     new -> next = ptr;
     prev -> next = new;
+    watcher->index = index+1;
 }
 
 
@@ -257,21 +172,7 @@ void print_table(){
     NODE *ptr = head.next;
     while(ptr != NULL){
         WATCHER *watcher = ptr -> watcher;
-
-        char *name = watcher -> name;
-        if(strcmp(name, watcher_types[CLI_WATCHER_TYPE].name) == 0){ printf("%d\t%s(%d,%d,%d)\n",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);}
-        else{
-            printf("%d\t%s(%d,%d,%d)",ptr->index,name, watcher->pid,watcher->parent_inputfd,watcher->parent_outputfd);
-            int i =0;
-            for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != watcher->name; i++); // searches through watcher table to find corresponding watcher type
-            WATCHER_TYPE type = watcher_types[i];
-            char **arg = type.argv;
-            while(*arg != NULL){
-                printf(" %s", *arg);
-                arg++;
-            }
-            printf(" [%s]\n",watcher->args);
-        }
+        watcher_types[CLI_WATCHER_TYPE].send(watcher, NULL);
         ptr = ptr -> next;
     }
 }

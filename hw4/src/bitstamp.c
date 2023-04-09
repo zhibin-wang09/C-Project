@@ -21,6 +21,8 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
         close(parent_to_child[1]); // close write of second pipe
         dup2(child_to_parent[1],STDOUT_FILENO);
         dup2(parent_to_child[0], STDIN_FILENO);
+        close(child_to_parent[1]);//close child_to_parent[1]
+        close(parent_to_child[0]);//close parent_to_child[0]
         if(execvp((type->argv)[0], type -> argv) == -1){ perror("Creating watcher failed");}
     }
 
@@ -37,7 +39,8 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     size_t size_of_arg =0;
     char *c = *args;
     while(*c != '\0'){c++; size_of_arg++;};
-    char *copy_args = malloc(size_of_arg);
+    size_of_arg++;
+    char *copy_args = calloc(size_of_arg,1);
     memcpy(copy_args, args[0],size_of_arg);
     bitstamp_watcher -> args = copy_args;
     return bitstamp_watcher;
