@@ -139,5 +139,5 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
 
 int cli_watcher_trace(WATCHER *wp, int enable) {
     // TO BE IMPLEMENTED
-    abort();
+    return -1;
 }
