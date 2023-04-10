@@ -13,7 +13,7 @@
 void terminated(int sig, siginfo_t *act, void* context);
 void msg_ready(int sig, siginfo_t *info, void * ucontext);
 void quit_program(int sig, siginfo_t *info, void *context);
-void fctnl_setup(int fd);
+void fcntl_setup(int fd);
 static NODE head = {0};
 static int terminate_program = 0;
 
@@ -54,7 +54,7 @@ int ticker(void) {
         return -1;
     }
 
-    fctnl_setup(STDIN_FILENO);
+    fcntl_setup(STDIN_FILENO);
 
     // initialize head and add the cli watcher to table
     head = (NODE){-1,NULL,NULL};
@@ -108,7 +108,23 @@ int ticker(void) {
     signal handler for notification of a message from a watcher process
 */
 void msg_ready(int sig, siginfo_t *info, void * ucontext){
-    //write(STDIN_FILENO, "msg ready\n",10);
+    if(info->si_fd != 0){ // if notification is not from user input
+        // search for the watcher with this si_fd as their parent_inputfd
+        NODE *ptr = head.next;
+        while(ptr != NULL){
+            if(ptr -> watcher -> parent_inputfd == info -> si_fd){break;}
+            ptr = ptr -> next;
+        }
+        int i= 1;
+        // searches through watcher table to find corresponding watcher type
+        for(i = 1; watcher_types[i].name != NULL && strcmp(watcher_types[i].name, ptr->watcher->name); i++);
+
+        //write the data received into a buffer
+
+        //pass the input to recv
+        watcher_types[i].recv(ptr -> watcher,"");
+
+    }
 }
 
 /*
@@ -134,7 +150,7 @@ void quit_program(int sig, siginfo_t *info, void *context){
 }
 
 
-void fctnl_setup(int fd){
+void fcntl_setup(int fd){
     if(fcntl(fd,F_SETFL, O_ASYNC|O_NONBLOCK) < 0){
         perror("Setting STDIN to async failed");
     }

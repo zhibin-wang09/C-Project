@@ -10,8 +10,9 @@
 #include <string.h>
 #include <fcntl.h>
 
+extern int fcntl_setup(int fd);
+
 WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
-    // TO BE IMPLEMENTED
     pid_t watcher_pid;
     int child_to_parent[2]; // first pipe: fd[0] is the read end for the parent, fd[1] is the write end for the child
     int parent_to_child[2]; // second pipe : fd[0] is the read end for the child, fd[1] is the write end for the parent
@@ -22,9 +23,6 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
         close(parent_to_child[1]); // close write of second pipe
         dup2(child_to_parent[1],STDOUT_FILENO);
         dup2(parent_to_child[0], STDIN_FILENO);
-        if(fcntl(STDIN_FILENO,F_SETFL, O_ASYNC|O_NONBLOCK) < 0){perror("Setting STDIN to async failed");}
-        if(fcntl(STDIN_FILENO,F_SETOWN,getpid()) < 0){perror("Setting receving process of SIGIO signal failed");}
-        if(fcntl(STDIN_FILENO,F_SETSIG,SIGIO) < 0){perror("Setting signal handler for async STDIN failed.");}
         close(child_to_parent[1]);//close child_to_parent[1]
         close(parent_to_child[0]);//close parent_to_child[0]
         if(execvp((type->argv)[0], type -> argv) == -1){ perror("Creating watcher failed");}
@@ -40,6 +38,7 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     bitstamp_watcher -> child_inputfd = parent_to_child[0];
     bitstamp_watcher -> child_outputfd = child_to_parent[1];
     bitstamp_watcher -> name = type -> name;
+    fcntl_setup(bitstamp_watcher -> parent_inputfd);
     size_t size_of_arg =0;
     char *c = *args;
     while(*c != '\0'){c++; size_of_arg++;};
@@ -54,7 +53,6 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
 }
 
 int bitstamp_watcher_stop(WATCHER *wp) {
-    // TO BE IMPLEMENTED
     pid_t pid = wp->pid;
     if (kill(pid,SIGTERM) < 0){
         perror("kill failed was returned\n");
@@ -66,24 +64,22 @@ int bitstamp_watcher_stop(WATCHER *wp) {
 }
 
 int bitstamp_watcher_send(WATCHER *wp, void *arg) {
-    // TO BE IMPLEMENTED
     char *msg = (char *)arg;
     if(write(wp->parent_outputfd,msg,strlen(msg)) < 0){
         perror("Connecting to watcher failed");
+        return -1;
     }
-    char output[258];
-    int ret = read(wp->parent_inputfd, output, sizeof(output));
-    printf("ret: %d, output: %s\n",ret,output);
     return 0;
 }
 
 int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
-    // TO BE IMPLEMENTED
-    abort();
+    // char output[258];
+    // int ret = read(info->si_fd, output, sizeof(output));
+    // printf("ret: %d, %s\n",ret,output);
+    return 0;
 }
 
 int bitstamp_watcher_trace(WATCHER *wp, int enable) {
-    // TO BE IMPLEMENTED
     wp->enable = enable;
     return 0;
 }

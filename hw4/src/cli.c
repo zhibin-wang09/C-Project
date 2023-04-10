@@ -10,7 +10,6 @@
 
 
 WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
-    // TO BE IMPLEMENTED
     WATCHER  *cli_watcher = malloc(sizeof(WATCHER));
     if(cli_watcher == NULL){
         perror("Ran out of memory");
@@ -28,7 +27,6 @@ WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
 }
 
 int cli_watcher_stop(WATCHER *wp) {
-    // TO BE IMPLEMENTED
     return -1;
 }
 
@@ -57,7 +55,6 @@ int cli_watcher_send(WATCHER *wp, void *arg) {
 }
 
 int cli_watcher_recv(WATCHER *wp, char *txt) {
-    // TO BE IMPLEMENTED
     char *arg = txt;
     char *ptr = txt;
     int counter =0;
@@ -73,8 +70,8 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
             if(!strcmp(args,"CLI")) watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n"); // no watcher of request type is found
             else{
                 char *socket_name = strtok(args, " "); // the websocket name
-                int i =0;
-                for(i = 0; watcher_types[i].name != NULL; i++){
+                int i =1;
+                for(i = 1; watcher_types[i].name != NULL; i++){
                     if(!strcmp(watcher_types[i].name,socket_name)) break;
                 } // searches through watcher table to find corresponding watcher type
                 if(watcher_types[i].name == NULL){ watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");} // no watcher of request type found
@@ -96,10 +93,27 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
             }
         }else if(strcmp(command,"show") == 0){
             watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
-        }else if(strcmp(command, "trace") == 0){
-            watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
-        }else if(strcmp(command, "untrace") == 0){
-            watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
+        }else if(strcmp(command, "trace") == 0 || strcmp(command, "untrace") == 0){
+            int index = 0;
+            char *ptr = args;
+            int invalid = 0;
+            while(*ptr != 0){
+                if(*ptr <= '0' || *ptr >'9'){watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n"); invalid = 1; break;} // read index number while validating
+                index += *ptr - '0';
+                ptr++;
+            }
+            if(invalid != 1){
+                WATCHER *target = search_table(index);
+                if(target == NULL || index == 0){
+                    watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
+                }else{
+                    int i =0;
+                    for(i = 0; watcher_types[i].name != NULL && strcmp(watcher_types[i].name,target->name); i++); // searches through watcher table to find corresponding watcher type
+                    WATCHER_TYPE type = watcher_types[i];
+                    if(strcmp(command,"trace") == 0) type.trace(target,1);
+                    else type.trace(target,0);
+                }
+            }
         }else if(strcmp(command,"stop") == 0){
             int index = 0;
             char *ptr = args;
@@ -115,7 +129,7 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
                     watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
                 }else{
                     int i =0;
-                    for(i = 0; watcher_types[i].name != NULL && watcher_types[i].name != del->name; i++); // searches through watcher table to find corresponding watcher type
+                    for(i = 0; watcher_types[i].name != NULL && strcmp(watcher_types[i].name,del->name); i++); // searches through watcher table to find corresponding watcher type
                     WATCHER_TYPE type = watcher_types[i];
                     type.stop(del);
                     remove_from_table(index);
@@ -138,6 +152,5 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
 }
 
 int cli_watcher_trace(WATCHER *wp, int enable) {
-    // TO BE IMPLEMENTED
     return -1;
 }
