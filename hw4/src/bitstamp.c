@@ -5,10 +5,13 @@
 #include "bitstamp.h"
 #include "debug.h"
 #include "watcher_define.h"
+#include "store.h"
+#include "argo.h"
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <time.h>
 
 extern int fcntl_setup(int fd);
 
@@ -75,12 +78,23 @@ int bitstamp_watcher_send(WATCHER *wp, void *arg) {
 
 int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
     wp -> serial_num += 1;
-    fprintf(stderr, "[%d][%s][%d][%d]: %s", 1, wp->name, wp -> parent_inputfd, wp->serial_num ,txt);
+    if(wp -> enable){
+        struct timespec time;
+        clock_gettime(CLOCK_REALTIME,&time);
+        txt = strstr(txt, "Server message:");
+        if(txt == NULL){perror("Unable to parse"); return -1;}
+        fprintf(stderr, "[%ld.%06ld][%s][%2d][%5d]: %s\n", time.tv_sec, time.tv_nsec/1000, wp->name, wp -> parent_inputfd, wp->serial_num ,txt);
+    }
+    // if(strstr(txt,"Server message:")){
+    //     FILE *stream;
+    //     if(stream = (fmemopen(txt,strlen(txt),"r")) == NULL){perror("Unable to parse"); return -1;}
+    //     ARGO_VALUE parse = argo_read_value(stream);
+    //     fprintf("val: %d\n",argo_value_get_member(parse,));
+    // }
     return 0;
 }
 
 int bitstamp_watcher_trace(WATCHER *wp, int enable) {
     wp -> enable = enable;
-    wp -> serial_num = 0;
     return 0;
 }
