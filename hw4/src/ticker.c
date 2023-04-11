@@ -62,9 +62,14 @@ int ticker(void) {
     WATCHER *cli = (*cli_watcher).start(cli_watcher, NULL);
     add_to_table(cli);
 
-    int cur_length = 128;
-    int bytes_read = 0;
-    char *input = malloc(cur_length); //calloc(cur_length,1); // need to be dynamically resized
+    char input[1];
+    size_t buf_len;
+    char *buf;
+    FILE *stream = open_memstream(&buf,&buf_len);
+    if(stream == NULL){
+        perror("Open writing stream failed.");
+        return -1;
+    }
     int ret = 0;
     int ticker_print = 1;
     int cur_bytes_read = 0;
@@ -74,16 +79,12 @@ int ticker(void) {
             fflush(stdout);
         }
         // Waits for user input with current process suspended
-        memset(input,0,cur_length);
-        if(terminate_program) {free(input);exit(0);}
-        while((ret = read(STDIN_FILENO,input+cur_bytes_read,1)) > 0){
-            bytes_read += ret;
+        //memset(input,0,cur_length);
+        if(terminate_program) {free(buf);fclose(stream);exit(0);}
+        while((ret = read(STDIN_FILENO,input,1)) > 0){
             cur_bytes_read += ret;
-            if(input[cur_bytes_read-1] == '\n') break;
-            if(bytes_read >= cur_length){
-                input = realloc(input,cur_length*2);
-                cur_length *=2;
-            }
+            if(input[0] == '\n'){ fprintf(stream,"%s",input);break;}
+            fprintf(stream,"%s",input);
         }
         if(ret == -1 && errno != EWOULDBLOCK) perror("Reading input failed");
         if(errno == EWOULDBLOCK) { // in the case where read has read everything or there is not input
@@ -92,15 +93,18 @@ int ticker(void) {
             continue;
         }
         if(ret == 1){
-            memset(input + cur_bytes_read, 0, cur_length - cur_bytes_read);
-            watcher_types[CLI_WATCHER_TYPE].recv(NULL,input);
+            //memset(input + cur_bytes_read, 0, cur_length - cur_bytes_read);
+            fflush(stream);
+            watcher_types[CLI_WATCHER_TYPE].recv(NULL,buf);
+            fseeko(stream, 0, SEEK_SET);
             ticker_print = 1;
         }
         if(ret == 0 ){ // ret is 0 means EOF
-            free(input);
+            free(buf);
+            fclose(stream);
             exit(0);
         }
-        cur_bytes_read = 0;
+        //cur_bytes_read = 0;
     }
     return 0;
 }
@@ -120,10 +124,19 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
         for(i = 1; watcher_types[i].name != NULL && strcmp(watcher_types[i].name, ptr->watcher->name); i++);
 
         //write the data received into a buffer
+        char *buf;
+        size_t buf_len;
+        FILE *stream = open_memstream(&buf,&buf_len);
 
+        char input[1];
+        while(read(info->si_fd,input,1) > 0){
+            fprintf(stream,"%s",input);
+        }
+        fflush(stream);
         //pass the input to recv
-        watcher_types[i].recv(ptr -> watcher,"");
-
+        watcher_types[i].recv(ptr -> watcher,buf);
+        fclose(stream);
+        free(buf);
     }
 }
 

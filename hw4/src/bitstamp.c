@@ -73,6 +73,7 @@ int bitstamp_watcher_send(WATCHER *wp, void *arg) {
 }
 
 int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
+    printf("%s\n",txt);
     // char output[258];
     // int ret = read(info->si_fd, output, sizeof(output));
     // printf("ret: %d, %s\n",ret,output);
