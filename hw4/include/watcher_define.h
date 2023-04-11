@@ -10,6 +10,9 @@ struct watcher{
     int child_inputfd;
     int child_outputfd;
     char *name;
+    char *args;
+    int index;
+    int serial_num;
 };
 
 typedef struct link_list{
@@ -18,3 +21,7 @@ typedef struct link_list{
     struct link_list *next;
 } NODE;
 
+void add_to_table(WATCHER *watcher);
+void print_table();
+WATCHER *search_table(int index);
+void remove_from_table(int index);

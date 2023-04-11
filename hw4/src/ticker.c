@@ -131,10 +131,13 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
         char input[1];
         while(read(info->si_fd,input,1) > 0){
             fprintf(stream,"%s",input);
+            if(input[0] == '\n'){
+                fflush(stream);
+                //pass the input to recv
+                watcher_types[i].recv(ptr -> watcher,buf);
+                fseeko(stream, 0, SEEK_SET);
+            }
         }
-        fflush(stream);
-        //pass the input to recv
-        watcher_types[i].recv(ptr -> watcher,buf);
         fclose(stream);
         free(buf);
     }

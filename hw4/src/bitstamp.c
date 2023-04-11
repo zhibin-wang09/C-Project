@@ -38,6 +38,7 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     bitstamp_watcher -> child_inputfd = parent_to_child[0];
     bitstamp_watcher -> child_outputfd = child_to_parent[1];
     bitstamp_watcher -> name = type -> name;
+    bitstamp_watcher -> serial_num = 0;
     fcntl_setup(bitstamp_watcher -> parent_inputfd);
     size_t size_of_arg =0;
     char *c = *args;
@@ -73,14 +74,13 @@ int bitstamp_watcher_send(WATCHER *wp, void *arg) {
 }
 
 int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
-    printf("%s\n",txt);
-    // char output[258];
-    // int ret = read(info->si_fd, output, sizeof(output));
-    // printf("ret: %d, %s\n",ret,output);
+    wp -> serial_num += 1;
+    fprintf(stderr, "[%d][%s][%d][%d]: %s", 1, wp->name, wp -> parent_inputfd, wp->serial_num ,txt);
     return 0;
 }
 
 int bitstamp_watcher_trace(WATCHER *wp, int enable) {
-    wp->enable = enable;
+    wp -> enable = enable;
+    wp -> serial_num = 0;
     return 0;
 }
