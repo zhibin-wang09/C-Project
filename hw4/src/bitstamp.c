@@ -81,9 +81,11 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
     if(wp -> enable){
         struct timespec time;
         clock_gettime(CLOCK_REALTIME,&time);
-        txt = strstr(txt, "Server message:");
         if(txt == NULL){perror("Unable to parse"); return -1;}
-        fprintf(stderr, "[%ld.%06ld][%s][%2d][%5d]: %s\n", time.tv_sec, time.tv_nsec/1000, wp->name, wp -> parent_inputfd, wp->serial_num ,txt);
+        fprintf(stderr, "[%ld.%06ld][%s][%2d][%5d]: ", time.tv_sec, time.tv_nsec/1000, wp->name, wp -> parent_inputfd, wp->serial_num);
+        fflush(stderr);
+        if(txt[0]=='\b'){txt = txt+2;}
+        fprintf(stderr,"%s",txt);
     }
     // if(strstr(txt,"Server message:")){
     //     FILE *stream;
