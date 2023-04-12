@@ -92,7 +92,12 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
                 }
             }
         }else if(strcmp(command,"show") == 0){
-            watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
+            struct store_value *value= store_get(args);
+            if(value == NULL){printf("???\n");}
+            else{
+                printf("%s\t%f",args,value->content.double_value);
+            }
+            store_free_value(value);
         }else if(strcmp(command, "trace") == 0 || strcmp(command, "untrace") == 0){
             int index = 0;
             char *ptr = args;

@@ -57,7 +57,7 @@ int ticker(void) {
     fcntl_setup(STDIN_FILENO);
 
     // initialize head and add the cli watcher to table
-    head = (NODE){-1,NULL,NULL};
+    head.index = -1;
     WATCHER_TYPE *cli_watcher = &watcher_types[CLI_WATCHER_TYPE];
     WATCHER *cli = (*cli_watcher).start(cli_watcher, NULL);
     add_to_table(cli);
@@ -80,7 +80,14 @@ int ticker(void) {
         }
         // Waits for user input with current process suspended
         //memset(input,0,cur_length);
-        if(terminate_program) {free(buf);fclose(stream);exit(0);}
+        if(terminate_program) {
+            free(head.next -> watcher-> args);
+            free(head.next -> watcher);
+            free(head.next);
+            fclose(stream);
+            free(buf);
+            exit(0);
+        }
         while((ret = read(STDIN_FILENO,input,1)) > 0){
             cur_bytes_read += ret;
             if(input[0] == '\n'){ fprintf(stream,"%s",input);break;}
@@ -100,8 +107,11 @@ int ticker(void) {
             ticker_print = 1;
         }
         if(ret == 0 ){ // ret is 0 means EOF
-            free(buf);
+            free(head.next -> watcher-> args);
+            free(head.next -> watcher);
+            free(head.next);
             fclose(stream);
+            free(buf);
             exit(0);
         }
         //cur_bytes_read = 0;
@@ -156,11 +166,13 @@ void terminated(int sig, siginfo_t *act, void *context){
 
 void quit_program(int sig, siginfo_t *info, void *context){
     NODE *ptr = head.next -> next;
+    NODE *prev = ptr;
     while(ptr != NULL){
-        pid_t pid = (ptr -> watcher) -> pid;
-        remove_from_table(ptr -> index);
-        kill(pid, SIGTERM);
+        prev = ptr;
+        pid_t pid = (prev -> watcher) -> pid;
         ptr = ptr -> next;
+        remove_from_table(prev -> index);
+        kill(pid, SIGTERM);
     }
     terminate_program = 1;
 }
@@ -187,8 +199,8 @@ void add_to_table(WATCHER *watcher){
         prev = ptr;
         index = ptr -> index;
         ptr = ptr -> next;
-            }
-    NODE *new = malloc(sizeof(new));
+    }
+    NODE *new = malloc(sizeof(NODE));
     new -> index = index+1;
     new -> watcher = watcher;
     new -> next = ptr;

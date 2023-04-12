@@ -13,6 +13,8 @@ struct watcher{
     char *args;
     int index;
     int serial_num;
+    struct store_value *price_store;
+    struct store_value *volume_store;
 };
 
 typedef struct link_list{

@@ -77,6 +77,7 @@ int bitstamp_watcher_send(WATCHER *wp, void *arg) {
 }
 
 int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
+    //printf("enable: %d\n",wp->enable);
     wp -> serial_num += 1;
     if(wp -> enable){
         struct timespec time;
@@ -87,12 +88,45 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
         if(txt[0]=='\b'){txt = txt+2;}
         fprintf(stderr,"%s",txt);
     }
-    // if(strstr(txt,"Server message:")){
-    //     FILE *stream;
-    //     if(stream = (fmemopen(txt,strlen(txt),"r")) == NULL){perror("Unable to parse"); return -1;}
-    //     ARGO_VALUE parse = argo_read_value(stream);
-    //     fprintf("val: %d\n",argo_value_get_member(parse,));
-    // }
+    if(strstr(txt,"Server message:")){
+        char *json = strstr(txt, "{"); // start of json format
+        FILE *stream;
+        if((stream = (fmemopen(json,strlen(json),"r"))) == NULL){perror("Unable to create stream"); return -1;}
+        ARGO_VALUE *parse = argo_read_value(stream);
+        if(parse == NULL){perror("Unable to parse the json"); return -1;}
+        ARGO_VALUE *event_argo = argo_value_get_member(parse,"event");
+        if(event_argo == NULL){perror("Unable to find the event member"); return -1;}
+        char *event = argo_value_get_chars(event_argo);
+
+        if(!strcmp(event, "trade")){ // event is trade then extract price and amount
+            ARGO_VALUE *data = argo_value_get_member(parse,"data"); // the data object
+            ARGO_VALUE *amount_argo = argo_value_get_member(data,"amount");
+            ARGO_VALUE *price_argo = argo_value_get_member(data,"price");
+            double amount;
+            argo_value_get_double(amount_argo,&amount);
+            double price;
+            argo_value_get_double(price_argo,&price);
+            // char buf1[128];
+            // snprintf(buf1, sizeof(buf1),"bitstamp.net:live_trades_%s:price",wp->args);
+            // struct store_value price_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
+            // store_put(buf1,&price_store);
+            // char buf2[128];
+            // snprintf(buf2, sizeof(buf2),"bitstamp.net:live_trades_%s:volume",wp->args);
+            // if(store_get(buf2) == NULL){ // initial volume = amount
+            //     struct store_value amount_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
+            //     wp->volume_store = &amount_store;
+            //     store_put(buf2, &amount_store);
+            // }else{ // accumulating volume = previous volumn + amount
+            //     struct store_value *previous_volume_store = store_get(buf2);
+            //     previous_volume_store -> content.double_value = previous_volume_store -> content.double_value + amount;
+            //     store_put(buf2,previous_volume_store);
+            // }
+            // wp->price_store = &price_store;
+        }
+        free(event);
+        argo_free_value(parse);
+        fclose(stream);
+    }
     return 0;
 }
 
