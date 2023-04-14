@@ -13,6 +13,7 @@ WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     WATCHER  *cli_watcher = malloc(sizeof(WATCHER));
     if(cli_watcher == NULL){
         perror("Ran out of memory");
+        return NULL;
     }
     cli_watcher -> pid = -1;
     cli_watcher -> enable = 0;
@@ -73,6 +74,10 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
     }
     txt[counter] = '\0';
     char *command = strtok(ptr," ");
+    if(command == 0){
+        watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
+        return 0;
+    }
     char *args = strtok(NULL,"");
     if(args != NULL){
         if(strcmp(command, "start") == 0){
@@ -96,17 +101,27 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
                             if(*ptr == ' ') size++;
                             ptr ++;
                         }
-                        size++; // count last string
-                        char *args[size + 1]; // put null at the end for termination
+                        size+=2; // count last string and the null terminating
+                        char *args[size]; // put null at the end for termination
                         char *cpy = strtok(all_channels," "); // get first args
+                        if(cpy == NULL){ // not even one arg
+                            watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
+                            return -1;
+                        }
                         args[0] = calloc(1,strlen(cpy)+1);
                         strncpy(args[0],cpy, strlen(cpy)); // copy over first argument
+                        int actual_size = 1;
                         for(int i =1;i<size;i++){
                             cpy = strtok(NULL, " ");
+                            if(cpy == NULL){
+                                continue;
+                            }
                             args[i] = calloc(1,strlen(cpy)+1);
                             strncpy(args[i],cpy, strlen(cpy));
+                            actual_size++;
                         }
-                        args[size] = NULL; // last index is a null index
+                        size = actual_size+1;
+                        args[size-1] = NULL; // last index is a null index
                         //WATCHER *watcher = 
                         type.start(&type,args);
                         for(int i = 0; i < size ;i++){
