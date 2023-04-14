@@ -23,6 +23,7 @@ WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     cli_watcher -> child_outputfd = -1;
     cli_watcher -> args = NULL;
     cli_watcher -> index= 0;
+    add_to_table(cli_watcher);
     return cli_watcher;
 }
 
@@ -48,10 +49,12 @@ int cli_watcher_send(WATCHER *wp, void *arg) {
                 printf(" %s", *arg);
                 arg++;
             }
-            printf("[");
+            printf(" [");
             char **ptr = (wp->args);
+            if(*ptr != 0) printf("%s", *ptr);
+            ptr++;
             while(*ptr != 0){
-                printf("%s ",*ptr);
+                printf(" %s",*ptr);
                 ptr++;
             }
             printf("]\n");
@@ -104,11 +107,12 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
                             strncpy(args[i],cpy, strlen(cpy));
                         }
                         args[size] = NULL; // last index is a null index
-                        WATCHER *watcher = type.start(&type,args);
+                        //WATCHER *watcher = 
+                        type.start(&type,args);
                         for(int i = 0; i < size ;i++){
                             free(args[i]);
                         }
-                        add_to_table(watcher);
+                        //add_to_table(watcher);
                     }
                 }
             }

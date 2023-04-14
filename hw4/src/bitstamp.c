@@ -26,7 +26,6 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
         close(parent_to_child[1]); // close write of second pipe
         dup2(child_to_parent[1],STDOUT_FILENO);
         dup2(parent_to_child[0], STDIN_FILENO);
-        fcntl_setup(STDIN_FILENO);
         close(child_to_parent[1]);//close child_to_parent[1]
         close(parent_to_child[0]);//close parent_to_child[0]
         if(execvp((type->argv)[0], type -> argv) == -1){ perror("Creating watcher failed");}
@@ -46,6 +45,7 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     bitstamp_watcher -> price_store = NULL;
     bitstamp_watcher -> volume_store = NULL;
     fcntl_setup(bitstamp_watcher -> parent_inputfd);
+    add_to_table(bitstamp_watcher);
 
     int size_args = 0;
     char **ptr = args;

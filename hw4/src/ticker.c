@@ -60,8 +60,9 @@ int ticker(void) {
     // initialize head and add the cli watcher to table
     head.index = -1;
     WATCHER_TYPE *cli_watcher = &watcher_types[CLI_WATCHER_TYPE];
-    WATCHER *cli = (*cli_watcher).start(cli_watcher, NULL);
-    add_to_table(cli);
+    //WATCHER *cli = 
+    (*cli_watcher).start(cli_watcher, NULL);
+    //add_to_table(cli);
 
     char input[1];
     size_t buf_len;
@@ -125,25 +126,23 @@ int ticker(void) {
 void msg_ready(int sig, siginfo_t *info, void * ucontext){
     if(info->si_fd != 0){ // if notification is not from user input
         // search for the watcher with this si_fd as their parent_inputfd
-        NODE *ptr = head.next;
+        NODE *ptr = head.next -> next;
         while(ptr != NULL){
-            if(ptr -> watcher -> parent_inputfd == info -> si_fd){break;}
-            ptr = ptr -> next;
-        }
-        int i= 1;
-        // searches through watcher table to find corresponding watcher type
-        if(ptr == NULL) return; // race condition where watchers is not added to table but msg is ready
-        for(i = 1; watcher_types[i].name != NULL 
-            && strcmp(watcher_types[i].name, ptr->watcher->name); 
-            i++);
+            //if(ptr -> watcher -> parent_inputfd == info -> si_fd){break;}
+            int i= 1;
+            // searches through watcher table to find corresponding watcher type
+            //if(ptr == NULL) return; // race condition where watchers is not added to table but msg is ready
+            for(i = 1; watcher_types[i].name != NULL 
+                && strcmp(watcher_types[i].name, ptr->watcher->name); 
+                i++);
 
-        //write the data received into a buffer
-        char *buf;
-        size_t buf_len;
-        FILE *stream = open_memstream(&buf,&buf_len);
+            //write the data received into a buffer
+            char *buf;
+            size_t buf_len;
+            FILE *stream = open_memstream(&buf,&buf_len);
 
-        char input;
-        while(read(info->si_fd,&input,1) > 0){
+            char input;
+            while(read(ptr->watcher->parent_inputfd,&input,1) > 0){
             fprintf(stream,"%c",input);
             if(input == '\n'){
                 fflush(stream);
@@ -155,6 +154,8 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
         }
         fclose(stream);
         free(buf);
+            ptr = ptr -> next;
+        }
     }
 }
 
