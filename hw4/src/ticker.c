@@ -8,6 +8,7 @@
 #include "ticker.h"
 #include <sys/wait.h>
 #include "watcher_define.h"
+#include "store.h"
 
 
 void terminated(int sig, siginfo_t *act, void* context);
@@ -131,21 +132,25 @@ void msg_ready(int sig, siginfo_t *info, void * ucontext){
         }
         int i= 1;
         // searches through watcher table to find corresponding watcher type
-        for(i = 1; watcher_types[i].name != NULL && strcmp(watcher_types[i].name, ptr->watcher->name); i++);
+        if(ptr == NULL) return; // race condition where watchers is not added to table but msg is ready
+        for(i = 1; watcher_types[i].name != NULL 
+            && strcmp(watcher_types[i].name, ptr->watcher->name); 
+            i++);
 
         //write the data received into a buffer
         char *buf;
         size_t buf_len;
         FILE *stream = open_memstream(&buf,&buf_len);
 
-        char input[1];
-        while(read(info->si_fd,input,1) > 0){
-            fprintf(stream,"%s",input);
-            if(input[0] == '\n'){
+        char input;
+        while(read(info->si_fd,&input,1) > 0){
+            fprintf(stream,"%c",input);
+            if(input == '\n'){
                 fflush(stream);
-                //pass the input to recv
+                // //pass the input to recv
                 watcher_types[i].recv(ptr -> watcher,buf);
                 fseeko(stream, 0, SEEK_SET);
+                memset(buf,0,buf_len);
             }
         }
         fclose(stream);
@@ -230,6 +235,11 @@ void remove_from_table(int index){
     }
     NODE *next = ptr -> next;
     slow -> next = next;
+    char **tmp = ptr-> watcher -> args;
+    while(*tmp != NULL){
+        free(*tmp);
+        tmp++;
+    }
     free((ptr -> watcher )-> args);
     free(ptr -> watcher);
     free(ptr);

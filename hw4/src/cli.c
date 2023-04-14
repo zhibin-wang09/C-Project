@@ -48,7 +48,13 @@ int cli_watcher_send(WATCHER *wp, void *arg) {
                 printf(" %s", *arg);
                 arg++;
             }
-            printf(" [%s]\n",wp->args);
+            printf("[");
+            char **ptr = (wp->args);
+            while(*ptr != 0){
+                printf("%s ",*ptr);
+                ptr++;
+            }
+            printf("]\n");
         }
     }
     return 0;
@@ -80,14 +86,29 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
                     if(all_channels == NULL){ // no channel
                         watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
                     }else{
-                        char *channel = strtok(all_channels," "); // we only want the first one
-                        if(channel == NULL) watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
-                        else {
-                            WATCHER_TYPE type = watcher_types[i];
-                            char *channel_args[1] = {channel};
-                            WATCHER *watcher = type.start(&type,channel_args);
-                            add_to_table(watcher);
+                        WATCHER_TYPE type = watcher_types[i];
+                        int size = 0;
+                        char *ptr = all_channels;
+                        while(*ptr != 0){
+                            if(*ptr == ' ') size++;
+                            ptr ++;
                         }
+                        size++; // count last string
+                        char *args[size + 1]; // put null at the end for termination
+                        char *cpy = strtok(all_channels," "); // get first args
+                        args[0] = calloc(1,strlen(cpy)+1);
+                        strncpy(args[0],cpy, strlen(cpy)); // copy over first argument
+                        for(int i =1;i<size;i++){
+                            cpy = strtok(NULL, " ");
+                            args[i] = calloc(1,strlen(cpy)+1);
+                            strncpy(args[i],cpy, strlen(cpy));
+                        }
+                        args[size] = NULL; // last index is a null index
+                        WATCHER *watcher = type.start(&type,args);
+                        for(int i = 0; i < size ;i++){
+                            free(args[i]);
+                        }
+                        add_to_table(watcher);
                     }
                 }
             }
@@ -95,9 +116,9 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
             struct store_value *value= store_get(args);
             if(value == NULL){printf("???\n");}
             else{
-                printf("%s\t%f",args,value->content.double_value);
+                printf("%s\t%f\n",args,value->content.double_value);
+                store_free_value(value);
             }
-            store_free_value(value);
         }else if(strcmp(command, "trace") == 0 || strcmp(command, "untrace") == 0){
             int index = 0;
             char *ptr = args;

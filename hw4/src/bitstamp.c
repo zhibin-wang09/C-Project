@@ -26,6 +26,7 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
         close(parent_to_child[1]); // close write of second pipe
         dup2(child_to_parent[1],STDOUT_FILENO);
         dup2(parent_to_child[0], STDIN_FILENO);
+        fcntl_setup(STDIN_FILENO);
         close(child_to_parent[1]);//close child_to_parent[1]
         close(parent_to_child[0]);//close parent_to_child[0]
         if(execvp((type->argv)[0], type -> argv) == -1){ perror("Creating watcher failed");}
@@ -42,16 +43,28 @@ WATCHER *bitstamp_watcher_start(WATCHER_TYPE *type, char *args[]) {
     bitstamp_watcher -> child_outputfd = child_to_parent[1];
     bitstamp_watcher -> name = type -> name;
     bitstamp_watcher -> serial_num = 0;
+    bitstamp_watcher -> price_store = NULL;
+    bitstamp_watcher -> volume_store = NULL;
     fcntl_setup(bitstamp_watcher -> parent_inputfd);
-    size_t size_of_arg =0;
-    char *c = *args;
-    while(*c != '\0'){c++; size_of_arg++;};
-    size_of_arg++;
-    char *copy_args = calloc(size_of_arg,1);
-    memcpy(copy_args, args[0],size_of_arg);
-    bitstamp_watcher -> args = copy_args;
-    char buf[128];
-    snprintf(buf, sizeof(buf),"{ \"event\": \"bts:subscribe\", \"data\": { \"channel\": \"%s\" } }\n",bitstamp_watcher->args);
+
+    int size_args = 0;
+    char **ptr = args;
+    while(*ptr != 0){
+        size_args++;
+        ptr++;
+    }
+    int num_strings = size_args + 1; // lenght of the array + null
+    char **copy = calloc(num_strings * 8,1); // allocate space for the array
+    char **point = copy;
+    for( int i =0; i< num_strings; i++){
+        if(i == num_strings -1 ){*copy = 0;break;}
+        *copy = calloc(1,strlen(args[i])+1);
+        strncpy(*copy, args[i],strlen(args[i]));
+        copy++;
+    }
+    bitstamp_watcher -> args = point;
+    char buf[258];
+    snprintf(buf, sizeof(buf),"{ \"event\": \"bts:subscribe\", \"data\": { \"channel\": \"%s\" } }\n",*(bitstamp_watcher->args));
     bitstamp_watcher_send(bitstamp_watcher,buf);
     return bitstamp_watcher;
 }
@@ -85,7 +98,7 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
         if(txt == NULL){perror("Unable to parse"); return -1;}
         fprintf(stderr, "[%ld.%06ld][%s][%2d][%5d]: ", time.tv_sec, time.tv_nsec/1000, wp->name, wp -> parent_inputfd, wp->serial_num);
         fflush(stderr);
-        if(txt[0]=='\b'){txt = txt+2;}
+        //if(txt[0]=='\b'){txt = txt+2;}
         fprintf(stderr,"%s",txt);
     }
     if(strstr(txt,"Server message:")){
@@ -106,22 +119,23 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
             argo_value_get_double(amount_argo,&amount);
             double price;
             argo_value_get_double(price_argo,&price);
-            // char buf1[128];
-            // snprintf(buf1, sizeof(buf1),"bitstamp.net:live_trades_%s:price",wp->args);
-            // struct store_value price_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
-            // store_put(buf1,&price_store);
-            // char buf2[128];
-            // snprintf(buf2, sizeof(buf2),"bitstamp.net:live_trades_%s:volume",wp->args);
-            // if(store_get(buf2) == NULL){ // initial volume = amount
-            //     struct store_value amount_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
-            //     wp->volume_store = &amount_store;
-            //     store_put(buf2, &amount_store);
-            // }else{ // accumulating volume = previous volumn + amount
-            //     struct store_value *previous_volume_store = store_get(buf2);
-            //     previous_volume_store -> content.double_value = previous_volume_store -> content.double_value + amount;
-            //     store_put(buf2,previous_volume_store);
-            // }
-            // wp->price_store = &price_store;
+            char buf1[128];
+            snprintf(buf1, sizeof(buf1),"bitstamp.net:%s:price",*(wp->args));
+            struct store_value price_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
+            store_put(buf1,&price_store);
+            char buf2[128];
+            snprintf(buf2, sizeof(buf2),"bitstamp.net:%s:volume",*(wp->args));
+            struct store_value *previous_volume_store;
+            if((previous_volume_store = store_get(buf2) )== NULL){ // initial volume = amount
+                struct store_value amount_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
+                wp->volume_store = &amount_store;
+                store_put(buf2, &amount_store);
+            }else{ // accumulating volume = previous volumn + amount
+                previous_volume_store -> content.double_value = previous_volume_store -> content.double_value + amount;
+                store_put(buf2,previous_volume_store);
+                store_free_value(previous_volume_store);
+            }
+            wp->price_store = &price_store;
         }
         free(event);
         argo_free_value(parse);
