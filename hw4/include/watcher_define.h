@@ -10,7 +10,7 @@ struct watcher{
     int child_inputfd;
     int child_outputfd;
     char *name;
-    char *args;
+    char **args;
     int index;
     int serial_num;
     struct store_value *price_store;

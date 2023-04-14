@@ -127,7 +127,7 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
             snprintf(buf2, sizeof(buf2),"bitstamp.net:%s:volume",*(wp->args));
             struct store_value *previous_volume_store;
             if((previous_volume_store = store_get(buf2) )== NULL){ // initial volume = amount
-                struct store_value amount_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=price};
+                struct store_value amount_store = {.type=STORE_DOUBLE_TYPE, .content.double_value=amount};
                 wp->volume_store = &amount_store;
                 store_put(buf2, &amount_store);
             }else{ // accumulating volume = previous volumn + amount
