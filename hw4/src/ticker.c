@@ -95,7 +95,7 @@ int ticker(void) {
             if(input[0] == '\n'){ fprintf(stream,"%s",input);break;}
             fprintf(stream,"%s",input);
         }
-        if(ret == -1 && errno != EWOULDBLOCK) perror("Reading input failed");
+        if(ret == -1 && errno != EWOULDBLOCK) {perror("Reading input failed"); return -1;}
         if(errno == EWOULDBLOCK) { // in the case where read has read everything or there is not input
             sigsuspend(&set); // stop until input is read
             ticker_print = 0;
