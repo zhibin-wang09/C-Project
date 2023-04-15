@@ -103,7 +103,7 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
             adjust[0] = '>';
             adjust[1] = ' ';
             strncpy(adjust+2,txt,strlen(txt));
-            fprintf(stderr,"%s",adjust);
+            fprintf(stderr,"%s\n",adjust);
             free(adjust);
         }else{
             fprintf(stderr,"%s",txt);

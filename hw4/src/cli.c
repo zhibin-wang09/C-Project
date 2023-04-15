@@ -7,6 +7,7 @@
 #include "watcher_define.h"
 #include <string.h>
 #include <signal.h>
+#include <time.h>
 
 
 WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
@@ -74,6 +75,15 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
         counter++;
     }
     txt[counter] = '\0';
+    if(wp!=NULL){
+        wp->serial_num +=1;
+        if(wp->enable){
+            struct timespec time;
+            clock_gettime(CLOCK_REALTIME,&time);
+            if(txt == NULL){perror("Unable to parse"); return -1;}
+            fprintf(stderr, "[%ld.%06ld][%s][%2d][%5d]: %s\n\n", time.tv_sec, time.tv_nsec/1000, wp->name, wp -> parent_inputfd, wp->serial_num,txt);
+        }
+    }
     char *command = strtok(ptr," ");
     if(command == 0){
         watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
@@ -144,13 +154,13 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
             char *ptr = args;
             int invalid = 0;
             while(*ptr != 0){
-                if(*ptr <= '0' || *ptr >'9'){watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n"); invalid = 1; break;} // read index number while validating
+                if(*ptr < '0' || *ptr >'9'){watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n"); invalid = 1; break;} // read index number while validating
                 index += *ptr - '0';
                 ptr++;
             }
             if(invalid != 1){
                 WATCHER *target = search_table(index);
-                if(target == NULL || index == 0){
+                if(target == NULL){
                     watcher_types[CLI_WATCHER_TYPE].send(NULL,"???\n");
                 }else{
                     int i =0;
