@@ -98,8 +98,16 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
         if(txt == NULL){perror("Unable to parse"); return -1;}
         fprintf(stderr, "[%ld.%06ld][%s][%2d][%5d]: ", time.tv_sec, time.tv_nsec/1000, wp->name, wp -> parent_inputfd, wp->serial_num);
         fflush(stderr);
-        //if(txt[0]=='\b'){txt = txt+2;}
-        fprintf(stderr,"%s",txt);
+        if(strlen(txt) > 2 && txt[0]=='\b' && txt[1] =='\b'){
+            char *adjust = calloc(strlen(txt)+3, 1); // addition space for '> ' and null terminator
+            adjust[0] = '>';
+            adjust[1] = ' ';
+            strncpy(adjust+2,txt,strlen(txt));
+            fprintf(stderr,"%s",adjust);
+            free(adjust);
+        }else{
+            fprintf(stderr,"%s",txt);
+        }
     }
     if(strstr(txt,"Server message:")){
         char *json = strstr(txt, "{"); // start of json format
