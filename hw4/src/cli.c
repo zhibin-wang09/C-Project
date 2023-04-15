@@ -24,6 +24,7 @@ WATCHER *cli_watcher_start(WATCHER_TYPE *type, char *args[]) {
     cli_watcher -> child_outputfd = -1;
     cli_watcher -> args = NULL;
     cli_watcher -> index= 0;
+    cli_watcher -> serial_num  =0;
     add_to_table(cli_watcher);
     return cli_watcher;
 }
@@ -197,5 +198,6 @@ int cli_watcher_recv(WATCHER *wp, char *txt) {
 }
 
 int cli_watcher_trace(WATCHER *wp, int enable) {
+    wp->enable = enable;
     return -1;
 }
