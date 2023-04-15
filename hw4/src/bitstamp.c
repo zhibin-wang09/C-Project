@@ -111,6 +111,7 @@ int bitstamp_watcher_recv(WATCHER *wp, char *txt) {
     }
     if(strstr(txt,"Server message:")){
         char *json = strstr(txt, "{"); // start of json format
+        if(json == NULL){return -1;}
         FILE *stream;
         if((stream = (fmemopen(json,strlen(json),"r"))) == NULL){perror("Unable to create stream"); return -1;}
         ARGO_VALUE *parse = argo_read_value(stream);
