@@ -102,9 +102,8 @@ int ticker(void) {
             continue;
         }
         if(ret == 1){
-            //memset(input + cur_bytes_read, 0, cur_length - cur_bytes_read);
             fflush(stream);
-            watcher_types[CLI_WATCHER_TYPE].recv(NULL,buf);
+            watcher_types[CLI_WATCHER_TYPE].recv(head.next->watcher,buf);
             fseeko(stream, 0, SEEK_SET);
             ticker_print = 1;
         }
