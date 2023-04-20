@@ -8,13 +8,12 @@ LIBD := lib
 UTILD := util
 
 MAIN  := $(BLDD)/main.o
-CLIENT_MAIN  := $(BLDD)/client.o
 LIB := $(LIBD)/jeux.a
 LIB_DB := $(LIBD)/jeux_debug.a
 
 ALL_SRCF := $(shell find $(SRCD) -type f -name \*.c)
 ALL_OBJF := $(patsubst $(SRCD)/%,$(BLDD)/%,$(ALL_SRCF:.c=.o))
-ALL_FUNCF := $(filter-out $(MAIN) $(CLIENT_MAIN), $(ALL_OBJF))
+ALL_FUNCF := $(filter-out $(MAIN), $(ALL_OBJF))
 
 TEST_SRC := $(shell find $(TSTD) -type f -name \*.c)
 
