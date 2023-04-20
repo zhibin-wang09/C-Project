@@ -10,6 +10,9 @@
 #ifndef JEUX_GLOBALS_H
 #define JEUX_GLOBALS_H
 
+#include "client_registry.h"
+#include "player_registry.h"
+
 CLIENT_REGISTRY *client_registry;
 PLAYER_REGISTRY *player_registry;
 
