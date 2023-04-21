@@ -24,7 +24,7 @@ int _debug_packets_ = 1;
 
 static void terminate(int status);
 void terminal_is_closed(int sig, siginfo_t *act, void* context);
-int get_listenfd(char *port);
+int open_listenfd(char *port);
 
 /*
  * "Jeux" game server.
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]){
     // shutdown of the server.
 
     int listenfd;
-    if((listenfd = get_listenfd(argv[2]) < 0)){
+    if((listenfd = open_listenfd(argv[2])) < 0){
         return -1;
     }
 
@@ -70,14 +70,14 @@ int main(int argc, char* argv[]){
     pthread_t tid;
     while(1){
         clientaddr_len = sizeof(struct sockaddr);
-        connfd = malloc(sizeof(*connfd));
+        connfd = malloc(sizeof(int));
         if((*connfd = accept(listenfd, &clientaddr, &clientaddr_len)) < 0){
             perror("creating communication sock file descriptor failed\n");
-            fprintf(stderr, "errno : %d\n",errno);
+            exit(1);
         }
         if(pthread_create(&tid, NULL, &jeux_client_service,connfd)){
             perror("start thread for jeux client service failed\n");
-            fprintf(stderr, "errno : %d\n",errno);
+            exit(1);
         }
 
     }
@@ -86,14 +86,14 @@ int main(int argc, char* argv[]){
     fprintf(stderr, "You have to finish implementing main() "
 	    "before the Jeux server will function.\n");
 
-    terminate(EXIT_FAILURE);
+    terminate(EXIT_SUCCESS);
 }
 
 void terminal_is_closed(int sig, siginfo_t *act, void* context){
-
+    terminate(EXIT_SUCCESS);
 }
 
-int get_listenfd(char *port){
+int open_listenfd(char *port){
     struct addrinfo hint, *res, *ptr;
     int listenfd, optval=1;
     memset(&hint, 0,sizeof(struct addrinfo));
@@ -101,13 +101,12 @@ int get_listenfd(char *port){
     hint.ai_flags = AI_NUMERICSERV | AI_PASSIVE | AI_ADDRCONFIG; // indicate that socket uses port number as service, , is an listening socket, and is a connection
     if(getaddrinfo(NULL,port,&hint,&res)){ // get the list of addresses
         perror("Get addr failed\n");
-        fprintf(stderr, "errno : %d\n", errno);
-        return -1;
+        return -2;
     }
 
     for(ptr = res; ptr ; ptr = ptr -> ai_next){
         //creates a socket descriptor
-        if((listenfd  = socket(ptr->ai_family, ptr -> ai_socktype, ptr -> ai_protocol) < 0)) continue; // create socket connection
+        if((listenfd  = socket(ptr->ai_family, ptr -> ai_socktype, ptr -> ai_protocol)) < 0) continue; // create socket connection
         setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,    //line:netp:csapp:setsockopt
                    (const void *)&optval , sizeof(int));
         if(!bind(listenfd, ptr -> ai_addr, ptr -> ai_addrlen)) break; // create server side endpoint
@@ -122,7 +121,6 @@ int get_listenfd(char *port){
 
     if(listen(listenfd, 1024) < 0){
         perror("Converting descriptor to listen descriptor failed\n");
-        fprintf(stderr, "errno: %d\n",errno);
         close(listenfd);
         return -1;
     }
