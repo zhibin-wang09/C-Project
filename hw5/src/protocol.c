@@ -19,7 +19,9 @@ int proto_send_packet(int fd, JEUX_PACKET_HEADER *hdr, void *data){
 }
 
 int proto_recv_packet(int fd, JEUX_PACKET_HEADER *hdr, void **payloadp){
-	if(rio_readn(fd,hdr,sizeof(JEUX_PACKET_HEADER)) < 0) { close(fd); perror("reading header failed\n");return -1;} // read header
+	int ret;
+	if((ret = rio_readn(fd,hdr,sizeof(JEUX_PACKET_HEADER))) == 0) { close(fd); return -1;} // read header, close fd if eof
+	if(ret < 0){close(fd);perror("reading header failed\n");return -1;} // if error close fd as well and print error message
 	int size = ntohs(hdr->size);
 	if(size > 0){ // received packet contains paylaod
 		*payloadp= malloc(size);
