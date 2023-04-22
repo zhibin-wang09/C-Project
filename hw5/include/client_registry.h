@@ -60,10 +60,7 @@ void creg_fini(CLIENT_REGISTRY *cr);
 /*
  * Register a client file descriptor.
  * If successful, returns a reference to the the newly registered CLIENT,
- * otherwise NULL.  The returned CLIENT has a reference count of two:
- * one count is for the reference held by the registry itself for as long
- * as the client remains connected and the other is for the reference
- * that is returned.
+ * otherwise NULL.  The returned CLIENT has a reference count of one.
  *
  * @param cr  The client registry.
  * @param fd  The file descriptor to be registered.
