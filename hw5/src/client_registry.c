@@ -44,7 +44,7 @@ CLIENT *creg_register(CLIENT_REGISTRY *cr, int fd){
 	(cr->list_of_clients)[i] = client;
 	cr->current_capacity = cr->current_capacity+1;
 	//client_ref(client, "client is registered and returned\n");
-	//pthread_mutex_unlock(&(cr -> lock));
+	pthread_mutex_unlock(&(cr -> lock));
 
 	return client;
 }
