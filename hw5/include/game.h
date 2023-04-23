@@ -95,6 +95,7 @@ int game_apply_move(GAME *game, GAME_MOVE *move);
  *
  * @param game  The GAME to be resigned.
  * @param role  The GAME_ROLE of the player making the resignation.
+ * @return 0 if resignation was successful, otherwise -1.
  */
 int game_resign(GAME *game, GAME_ROLE role);
 
