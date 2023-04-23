@@ -105,7 +105,7 @@ CLIENT *creg_lookup(CLIENT_REGISTRY *cr, char *user);
  *
  * @param cr  The registry for which the set of usernames is to be
  * obtained.
- * @return the list of usernames as a NULL-terminated array of strings.
+ * @return the list of players as a NULL-terminated array of pointers.
  */
 PLAYER **creg_all_players(CLIENT_REGISTRY *cr);
 
