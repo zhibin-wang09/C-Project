@@ -1,0 +1,1363 @@
+--ascii is deprecated. Use LANG/LC_* variables to control encoding, and TERM/--color to control colors.
+[----] Criterion v2.4.1-13-g2f48d0f-dirty (bleeding)
+[====] Running 3 tests from basecode_suite:
+[RUN ] basecode_suite::startup_EOF_test
+ticker> [PASS] basecode_suite::startup_EOF_test: (0.01s)
+[RUN ] basecode_suite::startup_quit_test
+ticker> ticker> [PASS] basecode_suite::startup_quit_test: (0.01s)
+[RUN ] basecode_suite::startup_watchers_test
+[PASS] basecode_suite::startup_watchers_test: (0.01s)
+[====] Running 14 tests from basic:
+[RUN ] basic::show_no_arg
+Running test basic/show_no_arg on target bin/ticker
+                   [expect PROMPT]
+1682268394.544119: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1315 usec, limit 100000)
+>>> show
+                   [expect ERROR]
+1682268394.544334: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (162 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.544362: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (10 usec, limit 1000)
+                   [expect EOF]
+End of test basic/show_no_arg
+1682268394.545764: Driver: timeout (0, 1000)
+[PASS] basic::show_no_arg: (0.00s)
+[RUN ] basic::show_nonexistent
+Running test basic/show_nonexistent on target bin/ticker
+                   [expect PROMPT]
+1682268394.581153: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1808 usec, limit 100000)
+>>> show xyzzy
+                   [expect ERROR]
+1682268394.581339: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (133 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.581363: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (8 usec, limit 1000)
+                   [expect EOF]
+End of test basic/show_nonexistent
+[PASS] basic::show_nonexistent: (0.00s)
+1682268394.582978: Driver: timeout (0, 1000)
+[RUN ] basic::start_empty_eof
+Running test basic/start_empty_eof on target bin/ticker
+                   [expect PROMPT]
+1682268394.618603: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1535 usec, limit 100000)
+>>> 
+                   [expect ERROR]
+1682268394.618780: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (119 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.618801: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (8 usec, limit 1000)
+                   [expect EOF]
+End of test basic/start_empty_eof
+[PASS] basic::start_empty_eof: (0.00s)
+1682268394.620289: Driver: timeout (0, 1000)
+[RUN ] basic::start_eof
+Running test basic/start_eof on target bin/ticker
+                   [expect PROMPT]
+1682268394.652638: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1066 usec, limit 100000)
+                   [expect EOF]
+End of test basic/start_eof
+[PASS] basic::start_eof: (0.00s)
+1682268394.654102: Driver: timeout (0, 1000)
+[RUN ] basic::start_no_arg
+Running test basic/start_no_arg on target bin/ticker
+                   [expect PROMPT]
+1682268394.688996: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1497 usec, limit 100000)
+>>> start
+                   [expect ERROR]
+1682268394.689224: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (178 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.689250: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (11 usec, limit 1000)
+                   [expect EOF]
+End of test basic/start_no_arg
+[PASS] basic::start_no_arg: (0.00s)
+1682268394.690922: Driver: timeout (0, 1000)
+[RUN ] basic::start_quit_eof
+Running test basic/start_quit_eof on target bin/ticker
+                   [expect PROMPT]
+1682268394.723259: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1439 usec, limit 100000)
+>>> quit
+                   [expect EOF]
+1682268394.723643: Driver <~~ [PROMPT  ] 'ticker> '
+Response read when expecting EOF: 'ticker> ' -- skipping
+End of test basic/start_quit_eof
+[PASS] basic::start_quit_eof: (0.00s)
+1682268394.724719: Driver: timeout (0, 1000)
+[RUN ] basic::start_trace_untrace
+Running test basic/start_trace_untrace on target bin/ticker
+                   [expect PROMPT]
+1682268394.759364: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1251 usec, limit 100000)
+>>> trace 0
+                   [expect PROMPT]
+1682268394.759501: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (82 usec, limit 1000)
+>>> untrace 0
+                   [expect TRACE]
+1682268394.759617: Driver <~~ [TRACE   ] '[1682268394.759573][CLI][ 0][    2]: untrace 0
+'
+TRACE EVENT:	[1682268394.759573][CLI       ][ 0][    2]: untrace 0
+
+Event type matched expected type TRACE (97 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.759667: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268394.759677: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (4 usec, limit 1000)
+                   [expect EOF]
+End of test basic/start_trace_untrace
+[PASS] basic::start_trace_untrace: (0.00s)
+1682268394.761113: Driver: timeout (0, 1000)
+[RUN ] basic::start_watchers
+Running test basic/start_watchers on target bin/ticker
+                   [expect PROMPT]
+1682268394.795240: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1074 usec, limit 100000)
+>>> watchers
+                   [expect WATCHER]
+1682268394.795349: Driver <~~ [WATCHER ] '0	CLI(-1,0,1)
+'
+Event type matched expected type WATCHER (66 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.795385: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (7 usec, limit 1000)
+                   [expect EOF]
+End of test basic/start_watchers
+[PASS] basic::start_watchers: (0.00s)
+1682268394.796717: Driver: timeout (0, 1000)
+[RUN ] basic::stop_CLI
+Running test basic/stop_CLI on target bin/ticker
+                   [expect PROMPT]
+1682268394.826342: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1050 usec, limit 100000)
+>>> stop 0
+                   [expect ERROR]
+1682268394.826489: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (104 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.826506: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (6 usec, limit 1000)
+                   [expect EOF]
+End of test basic/stop_CLI
+[PASS] basic::stop_CLI: (0.00s)
+1682268394.827848: Driver: timeout (0, 1000)
+[RUN ] basic::stop_no_arg
+Running test basic/stop_no_arg on target bin/ticker
+                   [expect PROMPT]
+1682268394.859983: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1150 usec, limit 100000)
+>>> stop
+                   [expect ERROR]
+1682268394.860184: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (156 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.860212: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (10 usec, limit 1000)
+                   [expect EOF]
+End of test basic/stop_no_arg
+1682268394.861613: Driver: timeout (0, 1000)
+[PASS] basic::stop_no_arg: (0.00s)
+[RUN ] basic::stop_nonexistent
+Running test basic/stop_nonexistent on target bin/ticker
+                   [expect PROMPT]
+1682268394.897864: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1001 usec, limit 100000)
+>>> stop 1
+                   [expect ERROR]
+1682268394.898047: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (132 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.898069: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (8 usec, limit 1000)
+                   [expect EOF]
+End of test basic/stop_nonexistent
+[PASS] basic::stop_nonexistent: (0.00s)
+1682268394.899441: Driver: timeout (0, 1000)
+[RUN ] basic::trace_no_arg
+Running test basic/trace_no_arg on target bin/ticker
+                   [expect PROMPT]
+1682268394.934282: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1419 usec, limit 100000)
+>>> trace
+                   [expect ERROR]
+1682268394.934544: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (207 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.934571: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (10 usec, limit 1000)
+                   [expect EOF]
+End of test basic/trace_no_arg
+[PASS] basic::trace_no_arg: (0.00s)
+1682268394.935994: Driver: timeout (0, 1000)
+[RUN ] basic::trace_nonexistent
+Running test basic/trace_nonexistent on target bin/ticker
+                   [expect PROMPT]
+1682268394.970259: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1528 usec, limit 100000)
+>>> trace 1
+                   [expect ERROR]
+1682268394.970399: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (94 usec, limit 1000)
+                   [expect PROMPT]
+1682268394.970419: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (7 usec, limit 1000)
+                   [expect EOF]
+End of test basic/trace_nonexistent
+[PASS] basic::trace_nonexistent: (0.00s)
+1682268394.971759: Driver: timeout (0, 1000)
+[RUN ] basic::untrace_no_arg
+Running test basic/untrace_no_arg on target bin/ticker
+                   [expect PROMPT]
+1682268395.005603: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1611 usec, limit 100000)
+>>> untrace
+                   [expect ERROR]
+1682268395.005744: Driver <~~ [ERROR   ] '???
+'
+Event type matched expected type ERROR (84 usec, limit 1000)
+                   [expect PROMPT]
+1682268395.005765: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (8 usec, limit 1000)
+                   [expect EOF]
+End of test basic/untrace_no_arg
+[PASS] basic::untrace_no_arg: (0.00s)
+1682268395.007519: Driver: timeout (0, 1000)
+[====] Running 2 tests from network:
+[RUN ] network::bitstamp_live_orders
+Running test network/bitstamp_live_orders on target bin/ticker
+                   [expect PROMPT]
+1682268395.041254: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1396 usec, limit 100000)
+>>> start bitstamp.net live_orders_btcusd
+                   [expect PROMPT]
+1682268395.041697: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (389 usec, limit 100000)
+Delay (1, 0)
+>>> trace 1
+                   [expect PROMPT]
+1682268396.042383: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (208 usec, limit 1000)
+                   [expect TRACE]
+1682268396.068979: Driver <~~ [TRACE   ] '[1682268396.068805][bitstamp.net][ 3][   21]: > Server message: '{"data":{"id":1611503292768256,"id_str":"1611503292768256","order_type":0,"datetime":"1682268396","microtimestamp":"1682268396007000","amount":0.06411425,"amount_str":"0.06411425","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268396.068805][bitstamp.net][ 3][   21]: > Server message: '{"data":{"id":1611503292768256,"id_str":"1611503292768256","order_type":0,"datetime":"1682268396","microtimestamp":"1682268396007000","amount":0.06411425,"amount_str":"0.06411425","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268396.069117: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268396.110945: Driver <~~ [TRACE   ] '[1682268396.110780][bitstamp.net][ 3][   22]: > Server message: '{"data":{"id":1611503292764160,"id_str":"1611503292764160","order_type":1,"datetime":"1682268396","microtimestamp":"1682268396053000","amount":0.26578986,"amount_str":"0.26578986","price":27690,"price_str":"27690"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268396.110780][bitstamp.net][ 3][   22]: > Server message: '{"data":{"id":1611503292764160,"id_str":"1611503292764160","order_type":1,"datetime":"1682268396","microtimestamp":"1682268396053000","amount":0.26578986,"amount_str":"0.26578986","price":27690,"price_str":"27690"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268396.111112: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268396.134039: Driver <~~ [TRACE   ] '[1682268396.133837][bitstamp.net][ 3][   23]: > Server message: '{"data":{"id":1611503294119937,"id_str":"1611503294119937","order_type":0,"datetime":"1682268396","microtimestamp":"1682268396074000","amount":0.61602891,"amount_str":"0.61602891","price":27628,"price_str":"27628"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268396.133837][bitstamp.net][ 3][   23]: > Server message: '{"data":{"id":1611503294119937,"id_str":"1611503294119937","order_type":0,"datetime":"1682268396","microtimestamp":"1682268396074000","amount":0.61602891,"amount_str":"0.61602891","price":27628,"price_str":"27628"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268396.134196: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268396.183180: Driver <~~ [TRACE   ] '[1682268396.183011][bitstamp.net][ 3][   24]: > Server message: '{"data":{"id":1611503294304257,"id_str":"1611503294304257","order_type":1,"datetime":"1682268396","microtimestamp":"1682268396118000","amount":0.20022937,"amount_str":"0.20022937","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268396.183011][bitstamp.net][ 3][   24]: > Server message: '{"data":{"id":1611503294304257,"id_str":"1611503294304257","order_type":1,"datetime":"1682268396","microtimestamp":"1682268396118000","amount":0.20022937,"amount_str":"0.20022937","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268396.183320: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268396.183459: Driver <~~ [TRACE   ] '[1682268396.183346][bitstamp.net][ 3][   25]: > Server message: '{"data":{"id":1611503294304258,"id_str":"1611503294304258","order_type":1,"datetime":"1682268396","microtimestamp":"1682268396119000","amount":0.06556049,"amount_str":"0.06556049","price":27689,"price_str":"27689"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268396.183346][bitstamp.net][ 3][   25]: > Server message: '{"data":{"id":1611503294304258,"id_str":"1611503294304258","order_type":1,"datetime":"1682268396","microtimestamp":"1682268396119000","amount":0.06556049,"amount_str":"0.06556049","price":27689,"price_str":"27689"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+>>> untrace 1
+                   [expect PROMPT]
+1682268396.183642: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (83 usec, limit 1000)
+                   [expect EOF]
+1682268396.185357: Driver: timeout (0, 1000)
+Timeout reading response from child
+End of test network/bitstamp_live_orders
+[PASS] network::bitstamp_live_orders: (1.15s)
+[RUN ] network::bitstamp_multi_live_orders
+Running test network/bitstamp_multi_live_orders on target bin/ticker
+                   [expect PROMPT]
+1682268396.218815: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (998 usec, limit 100000)
+>>> start bitstamp.net live_orders_btcusd
+                   [expect PROMPT]
+1682268396.219229: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (364 usec, limit 100000)
+>>> start bitstamp.net live_orders_btcgbp
+                   [expect PROMPT]
+1682268396.219839: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (582 usec, limit 100000)
+>>> start bitstamp.net live_orders_btceur
+                   [expect PROMPT]
+1682268396.220482: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (607 usec, limit 100000)
+Delay (1, 0)
+>>> trace 1
+                   [expect PROMPT]
+1682268397.221084: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (255 usec, limit 1000)
+>>> trace 2
+                   [expect PROMPT]
+1682268397.221288: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (151 usec, limit 1000)
+>>> trace 3
+                   [expect PROMPT]
+1682268397.221463: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (126 usec, limit 1000)
+                   [expect TRACE]
+1682268397.348593: Driver <~~ [TRACE   ] '[1682268397.348406][bitstamp.net][ 3][   11]: > Server message: '{"data":{"id":1611503258980357,"id_str":"1611503258980357","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397292000","amount":0.27123365,"amount_str":"0.27123365","price":27651,"price_str":"27651"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.348406][bitstamp.net][ 3][   11]: > Server message: '{"data":{"id":1611503258980357,"id_str":"1611503258980357","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397292000","amount":0.27123365,"amount_str":"0.27123365","price":27651,"price_str":"27651"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.348710: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.387300: Driver <~~ [TRACE   ] '[1682268397.387152][bitstamp.net][ 3][   12]: > Server message: '{"data":{"id":1611503299264512,"id_str":"1611503299264512","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397330000","amount":0.27120536,"amount_str":"0.27120536","price":27654,"price_str":"27654"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.387152][bitstamp.net][ 3][   12]: > Server message: '{"data":{"id":1611503299264512,"id_str":"1611503299264512","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397330000","amount":0.27120536,"amount_str":"0.27120536","price":27654,"price_str":"27654"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.387432: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.404366: Driver <~~ [TRACE   ] '[1682268397.404181][bitstamp.net][ 6][   20]: > Server message: '{"data":{"id":1611503298326528,"id_str":"1611503298326528","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397351000","amount":0.061305,"amount_str":"0.06130500","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.404181][bitstamp.net][ 6][   20]: > Server message: '{"data":{"id":1611503298326528,"id_str":"1611503298326528","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397351000","amount":0.061305,"amount_str":"0.06130500","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.404526: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.461045: Driver <~~ [TRACE   ] '[1682268397.460901][bitstamp.net][ 3][   13]: > Server message: '{"data":{"id":1611503298338816,"id_str":"1611503298338816","order_type":1,"datetime":"1682268397","microtimestamp":"1682268397402000","amount":0.73421014,"amount_str":"0.73421014","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.460901][bitstamp.net][ 3][   13]: > Server message: '{"data":{"id":1611503298338816,"id_str":"1611503298338816","order_type":1,"datetime":"1682268397","microtimestamp":"1682268397402000","amount":0.73421014,"amount_str":"0.73421014","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.461165: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.468138: Driver <~~ [TRACE   ] '[1682268397.467948][bitstamp.net][ 6][   21]: > Server message: '{"data":{"id":1611503299600384,"id_str":"1611503299600384","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397412000","amount":0.01436584,"amount_str":"0.01436584","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.467948][bitstamp.net][ 6][   21]: > Server message: '{"data":{"id":1611503299600384,"id_str":"1611503299600384","order_type":0,"datetime":"1682268397","microtimestamp":"1682268397412000","amount":0.01436584,"amount_str":"0.01436584","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.468286: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.519721: Driver <~~ [TRACE   ] '[1682268397.519560][bitstamp.net][ 3][   14]: > Server message: '{"data":{"id":1611503299813376,"id_str":"1611503299813376","order_type":1,"datetime":"1682268397","microtimestamp":"1682268397463000","amount":0.23869595,"amount_str":"0.23869595","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.519560][bitstamp.net][ 3][   14]: > Server message: '{"data":{"id":1611503299813376,"id_str":"1611503299813376","order_type":1,"datetime":"1682268397","microtimestamp":"1682268397463000","amount":0.23869595,"amount_str":"0.23869595","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.519853: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.522024: Driver <~~ [TRACE   ] '[1682268397.521870][bitstamp.net][ 3][   15]: > Server message: '{"data":{"id":1611503299817472,"id_str":"1611503299817472","order_type":1,"datetime":"1682268397","microtimestamp":"1682268397465000","amount":0.075,"amount_str":"0.07500000","price":27692,"price_str":"27692"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.521870][bitstamp.net][ 3][   15]: > Server message: '{"data":{"id":1611503299817472,"id_str":"1611503299817472","order_type":1,"datetime":"1682268397","microtimestamp":"1682268397465000","amount":0.075,"amount_str":"0.07500000","price":27692,"price_str":"27692"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.522173: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.695699: Driver <~~ [TRACE   ] '[1682268397.695545][bitstamp.net][ 3][   16]: > Server message: '{"data":{"id":1611503297097728,"id_str":"1611503297097728","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397635000","amount":0.13557758,"amount_str":"0.13557758","price":27659,"price_str":"27659"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.695545][bitstamp.net][ 3][   16]: > Server message: '{"data":{"id":1611503297097728,"id_str":"1611503297097728","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397635000","amount":0.13557758,"amount_str":"0.13557758","price":27659,"price_str":"27659"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.695842: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.695983: Driver <~~ [TRACE   ] '[1682268397.695861][bitstamp.net][ 3][   17]: > Server message: '{"data":{"id":1611503296540672,"id_str":"1611503296540672","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397637000","amount":0.00618596,"amount_str":"0.00618596","price":27665,"price_str":"27665"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.695861][bitstamp.net][ 3][   17]: > Server message: '{"data":{"id":1611503296540672,"id_str":"1611503296540672","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397637000","amount":0.00618596,"amount_str":"0.00618596","price":27665,"price_str":"27665"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.701747: Driver <~~ [TRACE   ] '[1682268397.701595][bitstamp.net][ 6][   22]: > Server message: '{"data":{"id":1611503229005824,"id_str":"1611503229005824","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397650000","amount":0.18054485,"amount_str":"0.18054485","price":25225,"price_str":"25225"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.701595][bitstamp.net][ 6][   22]: > Server message: '{"data":{"id":1611503229005824,"id_str":"1611503229005824","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397650000","amount":0.18054485,"amount_str":"0.18054485","price":25225,"price_str":"25225"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.701875: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.706203: Driver <~~ [TRACE   ] '[1682268397.706061][bitstamp.net][ 6][   23]: > Server message: '{"data":{"id":1611503259394052,"id_str":"1611503259394052","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397650000","amount":0.13546942,"amount_str":"0.13546942","price":25213,"price_str":"25213"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.706061][bitstamp.net][ 6][   23]: > Server message: '{"data":{"id":1611503259394052,"id_str":"1611503259394052","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397650000","amount":0.13546942,"amount_str":"0.13546942","price":25213,"price_str":"25213"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.706354: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.741928: Driver <~~ [TRACE   ] '[1682268397.741781][bitstamp.net][ 3][   18]: > Server message: '{"data":{"id":1611503300681728,"id_str":"1611503300681728","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397675000","amount":0.13557483,"amount_str":"0.13557483","price":27660,"price_str":"27660"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.741781][bitstamp.net][ 3][   18]: > Server message: '{"data":{"id":1611503300681728,"id_str":"1611503300681728","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397675000","amount":0.13557483,"amount_str":"0.13557483","price":27660,"price_str":"27660"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.742095: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.742341: Driver <~~ [TRACE   ] '[1682268397.742165][bitstamp.net][ 6][   24]: > Server message: '{"data":{"id":1611503300739072,"id_str":"1611503300739072","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397689000","amount":0.18051938,"amount_str":"0.18051938","price":25229,"price_str":"25229"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.742165][bitstamp.net][ 6][   24]: > Server message: '{"data":{"id":1611503300739072,"id_str":"1611503300739072","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397689000","amount":0.18051938,"amount_str":"0.18051938","price":25229,"price_str":"25229"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.742507: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.742974: Driver <~~ [TRACE   ] '[1682268397.742841][bitstamp.net][ 6][   25]: > Server message: '{"data":{"id":1611503300739073,"id_str":"1611503300739073","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397689000","amount":0.135459,"amount_str":"0.13545900","price":25215,"price_str":"25215"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.742841][bitstamp.net][ 6][   25]: > Server message: '{"data":{"id":1611503300739073,"id_str":"1611503300739073","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397689000","amount":0.135459,"amount_str":"0.13545900","price":25215,"price_str":"25215"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.752109: Driver <~~ [TRACE   ] '[1682268397.751944][bitstamp.net][ 3][   19]: > Server message: '{"data":{"id":1611503297028098,"id_str":"1611503297028098","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397696000","amount":0.26578986,"amount_str":"0.26578986","price":27690,"price_str":"27690"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.751944][bitstamp.net][ 3][   19]: > Server message: '{"data":{"id":1611503297028098,"id_str":"1611503297028098","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397696000","amount":0.26578986,"amount_str":"0.26578986","price":27690,"price_str":"27690"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.752249: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.761925: Driver <~~ [TRACE   ] '[1682268397.761784][bitstamp.net][ 3][   20]: > Server message: '{"data":{"id":1611503299813376,"id_str":"1611503299813376","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397706000","amount":0.23869595,"amount_str":"0.23869595","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.761784][bitstamp.net][ 3][   20]: > Server message: '{"data":{"id":1611503299813376,"id_str":"1611503299813376","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397706000","amount":0.23869595,"amount_str":"0.23869595","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.762044: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.768843: Driver <~~ [TRACE   ] '[1682268397.768738][bitstamp.net][ 6][   26]: > Server message: '{"data":{"id":1611503299600384,"id_str":"1611503299600384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397717000","amount":0.01436584,"amount_str":"0.01436584","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.768738][bitstamp.net][ 6][   26]: > Server message: '{"data":{"id":1611503299600384,"id_str":"1611503299600384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397717000","amount":0.01436584,"amount_str":"0.01436584","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.768943: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.772398: Driver <~~ [TRACE   ] '[1682268397.772286][bitstamp.net][ 6][   27]: > Server message: '{"data":{"id":1611503296335873,"id_str":"1611503296335873","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397717000","amount":0.1,"amount_str":"0.10000000","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.772286][bitstamp.net][ 6][   27]: > Server message: '{"data":{"id":1611503296335873,"id_str":"1611503296335873","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397717000","amount":0.1,"amount_str":"0.10000000","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.772491: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.779381: Driver <~~ [TRACE   ] '[1682268397.779259][bitstamp.net][ 3][   21]: > Server message: '{"data":{"id":1611503279960064,"id_str":"1611503279960064","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397722000","amount":0.27936145,"amount_str":"0.27936145","price":27677,"price_str":"27677"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.779259][bitstamp.net][ 3][   21]: > Server message: '{"data":{"id":1611503279960064,"id_str":"1611503279960064","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397722000","amount":0.27936145,"amount_str":"0.27936145","price":27677,"price_str":"27677"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.779489: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.781759: Driver <~~ [TRACE   ] '[1682268397.781626][bitstamp.net][ 3][   22]: > Server message: '{"data":{"id":1611503291080704,"id_str":"1611503291080704","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397724000","amount":0.03364158,"amount_str":"0.03364158","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.781626][bitstamp.net][ 3][   22]: > Server message: '{"data":{"id":1611503291080704,"id_str":"1611503291080704","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397724000","amount":0.03364158,"amount_str":"0.03364158","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.781875: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.791637: Driver <~~ [TRACE   ] '[1682268397.791489][bitstamp.net][ 3][   23]: > Server message: '{"data":{"id":1611503298342912,"id_str":"1611503298342912","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397734000","amount":0.19944043,"amount_str":"0.19944043","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.791489][bitstamp.net][ 3][   23]: > Server message: '{"data":{"id":1611503298342912,"id_str":"1611503298342912","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397734000","amount":0.19944043,"amount_str":"0.19944043","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.791772: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.803927: Driver <~~ [TRACE   ] '[1682268397.803831][bitstamp.net][ 3][   24]: > Server message: '{"data":{"id":1611503299817472,"id_str":"1611503299817472","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397745000","amount":0.075,"amount_str":"0.07500000","price":27692,"price_str":"27692"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.803831][bitstamp.net][ 3][   24]: > Server message: '{"data":{"id":1611503299817472,"id_str":"1611503299817472","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397745000","amount":0.075,"amount_str":"0.07500000","price":27692,"price_str":"27692"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.804023: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.807152: Driver <~~ [TRACE   ] '[1682268397.807060][bitstamp.net][ 3][   25]: > Server message: '{"data":{"id":1611503286706176,"id_str":"1611503286706176","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397751000","amount":0.04491,"amount_str":"0.04491000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.807060][bitstamp.net][ 3][   25]: > Server message: '{"data":{"id":1611503286706176,"id_str":"1611503286706176","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397751000","amount":0.04491,"amount_str":"0.04491000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.807250: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.812527: Driver <~~ [TRACE   ] '[1682268397.812409][bitstamp.net][ 3][   26]: > Server message: '{"data":{"id":1611503301017600,"id_str":"1611503301017600","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397757000","amount":0.0087,"amount_str":"0.00870000","price":27690,"price_str":"27690"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.812409][bitstamp.net][ 3][   26]: > Server message: '{"data":{"id":1611503301017600,"id_str":"1611503301017600","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397757000","amount":0.0087,"amount_str":"0.00870000","price":27690,"price_str":"27690"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.812658: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.819980: Driver <~~ [TRACE   ] '[1682268397.819875][bitstamp.net][ 3][   27]: > Server message: '{"data":{"id":1611503301046272,"id_str":"1611503301046272","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397764000","amount":0.63548489,"amount_str":"0.63548489","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.819875][bitstamp.net][ 3][   27]: > Server message: '{"data":{"id":1611503301046272,"id_str":"1611503301046272","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397764000","amount":0.63548489,"amount_str":"0.63548489","price":27691,"price_str":"27691"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.820072: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.820124: Driver <~~ [TRACE   ] '[1682268397.820065][bitstamp.net][ 6][   28]: > Server message: '{"data":{"id":1611503301058560,"id_str":"1611503301058560","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397767000","amount":0.1,"amount_str":"0.10000000","price":25223,"price_str":"25223"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.820065][bitstamp.net][ 6][   28]: > Server message: '{"data":{"id":1611503301058560,"id_str":"1611503301058560","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397767000","amount":0.1,"amount_str":"0.10000000","price":25223,"price_str":"25223"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.820183: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.835576: Driver <~~ [TRACE   ] '[1682268397.835414][bitstamp.net][ 6][   29]: > Server message: '{"data":{"id":1611503301103616,"id_str":"1611503301103616","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397778000","amount":0.02508016,"amount_str":"0.02508016","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.835414][bitstamp.net][ 6][   29]: > Server message: '{"data":{"id":1611503301103616,"id_str":"1611503301103616","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397778000","amount":0.02508016,"amount_str":"0.02508016","price":25193,"price_str":"25193"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.835745: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.855676: Driver <~~ [TRACE   ] '[1682268397.855530][bitstamp.net][ 3][   28]: > Server message: '{"data":{"id":1611503301136384,"id_str":"1611503301136384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397786000","amount":0.21133671,"amount_str":"0.21133671","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.855530][bitstamp.net][ 3][   28]: > Server message: '{"data":{"id":1611503301136384,"id_str":"1611503301136384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397786000","amount":0.21133671,"amount_str":"0.21133671","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.855813: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.861505: Driver <~~ [TRACE   ] '[1682268397.861236][bitstamp.net][ 3][   29]: > Server message: '{"data":{"id":1611503301169152,"id_str":"1611503301169152","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397794000","amount":0.18985324,"amount_str":"0.18985324","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.861236][bitstamp.net][ 3][   29]: > Server message: '{"data":{"id":1611503301169152,"id_str":"1611503301169152","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397794000","amount":0.18985324,"amount_str":"0.18985324","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.861638: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.862547: Driver <~~ [TRACE   ] '[1682268397.862373][bitstamp.net][ 6][   30]: > Server message: '{"data":{"id":1611503278329856,"id_str":"1611503278329856","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397803000","amount":0.94147645,"amount_str":"0.94147645","price":25241,"price_str":"25241"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268397.862373][bitstamp.net][ 6][   30]: > Server message: '{"data":{"id":1611503278329856,"id_str":"1611503278329856","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397803000","amount":0.94147645,"amount_str":"0.94147645","price":25241,"price_str":"25241"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.862673: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.865788: Driver <~~ [TRACE   ] '[1682268397.865641][bitstamp.net][ 3][   30]: > Server message: '{"data":{"id":1611503301222401,"id_str":"1611503301222401","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397808000","amount":0.35581511,"amount_str":"0.35581511","price":27695,"price_str":"27695"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.865641][bitstamp.net][ 3][   30]: > Server message: '{"data":{"id":1611503301222401,"id_str":"1611503301222401","order_type":1,"datetime":"1682268398","microtimestamp":"1682268397808000","amount":0.35581511,"amount_str":"0.35581511","price":27695,"price_str":"27695"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.865921: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.873324: Driver <~~ [TRACE   ] '[1682268397.873193][bitstamp.net][ 3][   31]: > Server message: '{"data":{"id":1611503301255168,"id_str":"1611503301255168","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397815000","amount":0.04521,"amount_str":"0.04521000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.873193][bitstamp.net][ 3][   31]: > Server message: '{"data":{"id":1611503301255168,"id_str":"1611503301255168","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397815000","amount":0.04521,"amount_str":"0.04521000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.873443: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268397.884847: Driver <~~ [TRACE   ] '[1682268397.884662][bitstamp.net][ 3][   32]: > Server message: '{"data":{"id":1611503301300224,"id_str":"1611503301300224","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397826000","amount":0.18049308,"amount_str":"0.18049308","price":27659,"price_str":"27659"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268397.884662][bitstamp.net][ 3][   32]: > Server message: '{"data":{"id":1611503301300224,"id_str":"1611503301300224","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397826000","amount":0.18049308,"amount_str":"0.18049308","price":27659,"price_str":"27659"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268397.885008: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.001081: Driver <~~ [TRACE   ] '[1682268398.000902][bitstamp.net][ 6][   31]: > Server message: '{"data":{"id":1611503301648384,"id_str":"1611503301648384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397912000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.000902][bitstamp.net][ 6][   31]: > Server message: '{"data":{"id":1611503301648384,"id_str":"1611503301648384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268397912000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.001232: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.073642: Driver <~~ [TRACE   ] '[1682268398.073468][bitstamp.net][ 6][   32]: > Server message: '{"data":{"id":1611503302090752,"id_str":"1611503302090752","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398019000","amount":0.1,"amount_str":"0.10000000","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.073468][bitstamp.net][ 6][   32]: > Server message: '{"data":{"id":1611503302090752,"id_str":"1611503302090752","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398019000","amount":0.1,"amount_str":"0.10000000","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.073833: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.084897: Driver <~~ [TRACE   ] '[1682268398.084764][bitstamp.net][ 6][   33]: > Server message: '{"data":{"id":1611503301058560,"id_str":"1611503301058560","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398030000","amount":0.1,"amount_str":"0.10000000","price":25223,"price_str":"25223"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.084764][bitstamp.net][ 6][   33]: > Server message: '{"data":{"id":1611503301058560,"id_str":"1611503301058560","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398030000","amount":0.1,"amount_str":"0.10000000","price":25223,"price_str":"25223"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.085021: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.091649: Driver <~~ [TRACE   ] '[1682268398.091454][bitstamp.net][ 6][   34]: > Server message: '{"data":{"id":1611503301648384,"id_str":"1611503301648384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398038000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.091454][bitstamp.net][ 6][   34]: > Server message: '{"data":{"id":1611503301648384,"id_str":"1611503301648384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398038000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.091817: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.116004: Driver <~~ [TRACE   ] '[1682268398.115852][bitstamp.net][ 6][   35]: > Server message: '{"data":{"id":1611503298260993,"id_str":"1611503298260993","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398050000","amount":1.2,"amount_str":"1.20000000","price":25172,"price_str":"25172"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.115852][bitstamp.net][ 6][   35]: > Server message: '{"data":{"id":1611503298260993,"id_str":"1611503298260993","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398050000","amount":1.2,"amount_str":"1.20000000","price":25172,"price_str":"25172"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.116134: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.116554: Driver <~~ [TRACE   ] '[1682268398.116424][bitstamp.net][ 6][   36]: > Server message: '{"data":{"id":1611503298269184,"id_str":"1611503298269184","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398050000","amount":0.3,"amount_str":"0.30000000","price":25195,"price_str":"25195"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.116424][bitstamp.net][ 6][   36]: > Server message: '{"data":{"id":1611503298269184,"id_str":"1611503298269184","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398050000","amount":0.3,"amount_str":"0.30000000","price":25195,"price_str":"25195"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.158956: Driver <~~ [TRACE   ] '[1682268398.158789][bitstamp.net][ 6][   37]: > Server message: '{"data":{"id":1611503302443008,"id_str":"1611503302443008","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398105000","amount":1.2,"amount_str":"1.20000000","price":25179,"price_str":"25179"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.158789][bitstamp.net][ 6][   37]: > Server message: '{"data":{"id":1611503302443008,"id_str":"1611503302443008","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398105000","amount":1.2,"amount_str":"1.20000000","price":25179,"price_str":"25179"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.159122: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.162316: Driver <~~ [TRACE   ] '[1682268398.162199][bitstamp.net][ 6][   38]: > Server message: '{"data":{"id":1611503302451200,"id_str":"1611503302451200","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398107000","amount":0.3,"amount_str":"0.30000000","price":25199,"price_str":"25199"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.162199][bitstamp.net][ 6][   38]: > Server message: '{"data":{"id":1611503302451200,"id_str":"1611503302451200","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398107000","amount":0.3,"amount_str":"0.30000000","price":25199,"price_str":"25199"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.162437: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.214392: Driver <~~ [TRACE   ] '[1682268398.214126][bitstamp.net][ 6][   39]: > Server message: '{"data":{"id":1611503302664192,"id_str":"1611503302664192","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398160000","amount":0.00325726,"amount_str":"0.00325726","price":999999999,"price_str":"999999999"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.214126][bitstamp.net][ 6][   39]: > Server message: '{"data":{"id":1611503302664192,"id_str":"1611503302664192","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398160000","amount":0.00325726,"amount_str":"0.00325726","price":999999999,"price_str":"999999999"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.214601: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.214714: Driver <~~ [TRACE   ] '[1682268398.214557][bitstamp.net][ 6][   40]: > Server message: '{"data":{"id":1611503302664192,"id_str":"1611503302664192","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398160000","amount":0,"amount_str":"0","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.214557][bitstamp.net][ 6][   40]: > Server message: '{"data":{"id":1611503302664192,"id_str":"1611503302664192","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398160000","amount":0,"amount_str":"0","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.228442: Driver <~~ [TRACE   ] '[1682268398.228312][bitstamp.net][ 6][   41]: > Server message: '{"data":{"id":1611503302090752,"id_str":"1611503302090752","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398160000","amount":0.09674274,"amount_str":"0.09674274","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_changed"}'
+'
+TRACE EVENT:	[1682268398.228312][bitstamp.net][ 6][   41]: > Server message: '{"data":{"id":1611503302090752,"id_str":"1611503302090752","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398160000","amount":0.09674274,"amount_str":"0.09674274","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_changed"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.228558: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.237147: Driver <~~ [TRACE   ] '[1682268398.236947][bitstamp.net][ 3][   33]: > Server message: '{"data":{"id":1611503302709248,"id_str":"1611503302709248","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398171000","amount":0.00671152,"amount_str":"0.00671152","price":27666,"price_str":"27666"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.236947][bitstamp.net][ 3][   33]: > Server message: '{"data":{"id":1611503302709248,"id_str":"1611503302709248","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398171000","amount":0.00671152,"amount_str":"0.00671152","price":27666,"price_str":"27666"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.237319: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.254782: Driver <~~ [TRACE   ] '[1682268398.254625][bitstamp.net][ 6][   42]: > Server message: '{"data":{"id":1611503302819841,"id_str":"1611503302819841","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398197000","amount":0.74370395,"amount_str":"0.74370395","price":25240,"price_str":"25240"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.254625][bitstamp.net][ 6][   42]: > Server message: '{"data":{"id":1611503302819841,"id_str":"1611503302819841","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398197000","amount":0.74370395,"amount_str":"0.74370395","price":25240,"price_str":"25240"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.254924: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.365103: Driver <~~ [TRACE   ] '[1682268398.364931][bitstamp.net][ 6][   43]: > Server message: '{"data":{"id":1611503302090752,"id_str":"1611503302090752","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398313000","amount":0.09674274,"amount_str":"0.09674274","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.364931][bitstamp.net][ 6][   43]: > Server message: '{"data":{"id":1611503302090752,"id_str":"1611503302090752","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398313000","amount":0.09674274,"amount_str":"0.09674274","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.365261: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.380268: Driver <~~ [TRACE   ] '[1682268398.380127][bitstamp.net][ 3][   34]: > Server message: '{"data":{"id":1611503273717761,"id_str":"1611503273717761","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398324000","amount":0.1,"amount_str":"0.10000000","price":27666,"price_str":"27666"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.380127][bitstamp.net][ 3][   34]: > Server message: '{"data":{"id":1611503273717761,"id_str":"1611503273717761","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398324000","amount":0.1,"amount_str":"0.10000000","price":27666,"price_str":"27666"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.380447: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.383149: Driver <~~ [TRACE   ] '[1682268398.382972][bitstamp.net][ 6][   44]: > Server message: '{"data":{"id":1611501692547073,"id_str":"1611501692547073","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398329000","amount":0.125,"amount_str":"0.12500000","price":25225,"price_str":"25225"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.382972][bitstamp.net][ 6][   44]: > Server message: '{"data":{"id":1611501692547073,"id_str":"1611501692547073","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398329000","amount":0.125,"amount_str":"0.12500000","price":25225,"price_str":"25225"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.383311: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.395958: Driver <~~ [TRACE   ] '[1682268398.395835][bitstamp.net][ 3][   35]: > Server message: '{"data":{"id":1611503301169152,"id_str":"1611503301169152","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398341000","amount":0.18985324,"amount_str":"0.18985324","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.395835][bitstamp.net][ 3][   35]: > Server message: '{"data":{"id":1611503301169152,"id_str":"1611503301169152","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398341000","amount":0.18985324,"amount_str":"0.18985324","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.396076: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.421634: Driver <~~ [TRACE   ] '[1682268398.421446][bitstamp.net][ 6][   45]: > Server message: '{"data":{"id":1611503303524352,"id_str":"1611503303524352","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398369000","amount":0.125,"amount_str":"0.12500000","price":25331,"price_str":"25331"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.421446][bitstamp.net][ 6][   45]: > Server message: '{"data":{"id":1611503303524352,"id_str":"1611503303524352","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398369000","amount":0.125,"amount_str":"0.12500000","price":25331,"price_str":"25331"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.421795: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.426016: Driver <~~ [TRACE   ] '[1682268398.425863][bitstamp.net][ 6][   46]: > Server message: '{"data":{"id":1611503303532544,"id_str":"1611503303532544","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398372000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.425863][bitstamp.net][ 6][   46]: > Server message: '{"data":{"id":1611503303532544,"id_str":"1611503303532544","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398372000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.426141: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.433529: Driver <~~ [TRACE   ] '[1682268398.433357][bitstamp.net][ 6][   47]: > Server message: '{"data":{"id":1611503303561217,"id_str":"1611503303561217","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398378000","amount":0.15,"amount_str":"0.15000000","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.433357][bitstamp.net][ 6][   47]: > Server message: '{"data":{"id":1611503303561217,"id_str":"1611503303561217","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398378000","amount":0.15,"amount_str":"0.15000000","price":25222,"price_str":"25222"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.433661: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.467285: Driver <~~ [TRACE   ] '[1682268398.467123][bitstamp.net][ 6][   48]: > Server message: '{"data":{"id":1611503303532544,"id_str":"1611503303532544","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398398000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.467123][bitstamp.net][ 6][   48]: > Server message: '{"data":{"id":1611503303532544,"id_str":"1611503303532544","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398398000","amount":0.125,"amount_str":"0.12500000","price":25214,"price_str":"25214"},"channel":"live_orders_btceur","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.467402: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.470750: Driver <~~ [TRACE   ] '[1682268398.470554][bitstamp.net][ 3][   36]: > Server message: '{"data":{"id":1611503303647233,"id_str":"1611503303647233","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398399000","amount":0.37917353,"amount_str":"0.37917353","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.470554][bitstamp.net][ 3][   36]: > Server message: '{"data":{"id":1611503303647233,"id_str":"1611503303647233","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398399000","amount":0.37917353,"amount_str":"0.37917353","price":27630,"price_str":"27630"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.470899: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.480245: Driver <~~ [TRACE   ] '[1682268398.480054][bitstamp.net][ 6][   49]: > Server message: '{"data":{"id":1611503303749632,"id_str":"1611503303749632","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398424000","amount":0.125,"amount_str":"0.12500000","price":25225,"price_str":"25225"},"channel":"live_orders_btceur","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.480054][bitstamp.net][ 6][   49]: > Server message: '{"data":{"id":1611503303749632,"id_str":"1611503303749632","order_type":1,"datetime":"1682268398","microtimestamp":"1682268398424000","amount":0.125,"amount_str":"0.12500000","price":25225,"price_str":"25225"},"channel":"live_orders_btceur","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.480407: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.516749: Driver <~~ [TRACE   ] '[1682268398.516551][bitstamp.net][ 3][   37]: > Server message: '{"data":{"id":1611503301255168,"id_str":"1611503301255168","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398459000","amount":0.04521,"amount_str":"0.04521000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.516551][bitstamp.net][ 3][   37]: > Server message: '{"data":{"id":1611503301255168,"id_str":"1611503301255168","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398459000","amount":0.04521,"amount_str":"0.04521000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.516971: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.519864: Driver <~~ [TRACE   ] '[1682268398.519657][bitstamp.net][ 3][   38]: > Server message: '{"data":{"id":1611503301136384,"id_str":"1611503301136384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398461000","amount":0.21133671,"amount_str":"0.21133671","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+'
+TRACE EVENT:	[1682268398.519657][bitstamp.net][ 3][   38]: > Server message: '{"data":{"id":1611503301136384,"id_str":"1611503301136384","order_type":0,"datetime":"1682268398","microtimestamp":"1682268398461000","amount":0.21133671,"amount_str":"0.21133671","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_deleted"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.520006: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.574758: Driver <~~ [TRACE   ] '[1682268398.574609][bitstamp.net][ 3][   39]: > Server message: '{"data":{"id":1611503304138752,"id_str":"1611503304138752","order_type":0,"datetime":"1682268399","microtimestamp":"1682268398519000","amount":0.04521,"amount_str":"0.04521000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.574609][bitstamp.net][ 3][   39]: > Server message: '{"data":{"id":1611503304138752,"id_str":"1611503304138752","order_type":0,"datetime":"1682268399","microtimestamp":"1682268398519000","amount":0.04521,"amount_str":"0.04521000","price":27632,"price_str":"27632"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268398.574873: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.597453: Driver <~~ [TRACE   ] '[1682268398.597308][bitstamp.net][ 3][   40]: > Server message: '{"data":{"id":1611503304155138,"id_str":"1611503304155138","order_type":0,"datetime":"1682268399","microtimestamp":"1682268398523000","amount":0.21133671,"amount_str":"0.21133671","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_created"}'
+'
+TRACE EVENT:	[1682268398.597308][bitstamp.net][ 3][   40]: > Server message: '{"data":{"id":1611503304155138,"id_str":"1611503304155138","order_type":0,"datetime":"1682268399","microtimestamp":"1682268398523000","amount":0.21133671,"amount_str":"0.21133671","price":27633,"price_str":"27633"},"channel":"live_orders_btcusd","event":"order_created"}'
+
+Event type matched expected type TRACE 
+>>> untrace 1
+                   [expect PROMPT]
+1682268398.597597: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268398.597787: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (181 usec, limit 1000)
+>>> untrace 2
+                   [expect PROMPT]
+1682268398.597870: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (52 usec, limit 1000)
+>>> untrace 3
+                   [expect PROMPT]
+1682268398.597967: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (78 usec, limit 1000)
+                   [expect EOF]
+1682268398.599393: Driver: timeout (0, 1000)
+Timeout reading response from child
+End of test network/bitstamp_multi_live_orders
+[PASS] network::bitstamp_multi_live_orders: (2.38s)
+[====] Running 3 tests from store:
+[RUN ] store::receive_btcusd_tracing_long
+Running test store/receive_btcusd_tracing_long on target bin/ticker
+                   [expect PROMPT]
+1682268398.634334: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1380 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268398.634882: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (490 usec, limit 100000)
+Delay (0, 100000)
+>>> trace 1
+                   [expect PROMPT]
+1682268398.735472: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (204 usec, limit 1000)
+                   [expect TRACE]
+1682268399.544414: Driver <~~ [TRACE   ] '[1682268399.544146][tester][ 3][    4]: > Server message: '{"data":{"id":282223347,"timestamp":"1682193128","amount":0.22916,"amount_str":"0.22916000","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128824000","buy_order_id":1611194999468035,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268399.544146][tester    ][ 3][    4]: > Server message: '{"data":{"id":282223347,"timestamp":"1682193128","amount":0.22916,"amount_str":"0.22916000","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128824000","buy_order_id":1611194999468035,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268399.544665: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268399.624008: Driver <~~ [TRACE   ] '[1682268399.623703][tester][ 3][    5]: > Server message: '{"data":{"id":282223351,"timestamp":"1682193128","amount":0.03900625,"amount_str":"0.03900625","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268399.623703][tester    ][ 3][    5]: > Server message: '{"data":{"id":282223351,"timestamp":"1682193128","amount":0.03900625,"amount_str":"0.03900625","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268399.624170: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268399.639320: Driver <~~ [TRACE   ] '[1682268399.638995][tester][ 3][    6]: > Server message: '{"data":{"id":282223352,"timestamp":"1682193128","amount":0.26099375,"amount_str":"0.26099375","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194763689984},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268399.638995][tester    ][ 3][    6]: > Server message: '{"data":{"id":282223352,"timestamp":"1682193128","amount":0.26099375,"amount_str":"0.26099375","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194763689984},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268399.639504: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268399.689441: Driver <~~ [TRACE   ] '[1682268399.689244][tester][ 3][    7]: > Server message: '{"data":{"id":282223357,"timestamp":"1682193130","amount":0.00060999,"amount_str":"0.00060999","price":27654,"price_str":"27654","type":0,"microtimestamp":"1682193130969000","buy_order_id":1611195008253952,"sell_order_id":1611193542979585},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268399.689244][tester    ][ 3][    7]: > Server message: '{"data":{"id":282223357,"timestamp":"1682193130","amount":0.00060999,"amount_str":"0.00060999","price":27654,"price_str":"27654","type":0,"microtimestamp":"1682193130969000","buy_order_id":1611195008253952,"sell_order_id":1611193542979585},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268399.689621: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268400.433867: Driver <~~ [TRACE   ] '[1682268400.433691][tester][ 3][    8]: > Server message: '{"data":{"id":282223362,"timestamp":"1682193133","amount":0.00397,"amount_str":"0.00397000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193133715000","buy_order_id":1611195019501568,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268400.433691][tester    ][ 3][    8]: > Server message: '{"data":{"id":282223362,"timestamp":"1682193133","amount":0.00397,"amount_str":"0.00397000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193133715000","buy_order_id":1611195019501568,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268400.434017: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268400.783353: Driver <~~ [TRACE   ] '[1682268400.783252][tester][ 3][    9]: > Server message: '{"data":{"id":282223385,"timestamp":"1682193152","amount":0.00308,"amount_str":"0.00308000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152069000","buy_order_id":1611195094679552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268400.783252][tester    ][ 3][    9]: > Server message: '{"data":{"id":282223385,"timestamp":"1682193152","amount":0.00308,"amount_str":"0.00308000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152069000","buy_order_id":1611195094679552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268400.783456: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268401.407333: Driver <~~ [TRACE   ] '[1682268401.407058][tester][ 3][   10]: > Server message: '{"data":{"id":282223386,"timestamp":"1682193152","amount":0.3123,"amount_str":"0.31230000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152694000","buy_order_id":1611195097239552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268401.407058][tester    ][ 3][   10]: > Server message: '{"data":{"id":282223386,"timestamp":"1682193152","amount":0.3123,"amount_str":"0.31230000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152694000","buy_order_id":1611195097239552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268401.407509: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268402.253074: Driver <~~ [TRACE   ] '[1682268402.252928][tester][ 3][   11]: > Server message: '{"data":{"id":282223390,"timestamp":"1682193159","amount":0.00347,"amount_str":"0.00347000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193159538000","buy_order_id":1611195125272576,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268402.252928][tester    ][ 3][   11]: > Server message: '{"data":{"id":282223390,"timestamp":"1682193159","amount":0.00347,"amount_str":"0.00347000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193159538000","buy_order_id":1611195125272576,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268402.253190: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268402.674038: Driver <~~ [TRACE   ] '[1682268402.673813][tester][ 3][   12]: > Server message: '{"data":{"id":282223395,"timestamp":"1682193171","amount":0.00317,"amount_str":"0.00317000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193171960000","buy_order_id":1611195176153090,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268402.673813][tester    ][ 3][   12]: > Server message: '{"data":{"id":282223395,"timestamp":"1682193171","amount":0.00317,"amount_str":"0.00317000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193171960000","buy_order_id":1611195176153090,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268402.674186: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268403.065393: Driver <~~ [TRACE   ] '[1682268403.065250][tester][ 3][   13]: > Server message: '{"data":{"id":282223397,"timestamp":"1682193178","amount":0.35477608,"amount_str":"0.35477608","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268403.065250][tester    ][ 3][   13]: > Server message: '{"data":{"id":282223397,"timestamp":"1682193178","amount":0.35477608,"amount_str":"0.35477608","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268403.065510: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268404.074710: Driver <~~ [TRACE   ] '[1682268404.074505][tester][ 3][   14]: > Server message: '{"data":{"id":282223398,"timestamp":"1682193178","amount":0.14522392,"amount_str":"0.14522392","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195106435072},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268404.074505][tester    ][ 3][   14]: > Server message: '{"data":{"id":282223398,"timestamp":"1682193178","amount":0.14522392,"amount_str":"0.14522392","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195106435072},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268404.074900: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268404.640172: Driver <~~ [TRACE   ] '[1682268404.640007][tester][ 3][   15]: > Server message: '"END OF STREAM"'
+'
+End of stream is indicated
+Event type (EOS) does not match expected repeat (TRACE) -- advancing
+                   [expect EOS]
+Event type matched expected type EOS 
+                   [expect EOF]
+1682268404.640686: Driver <~~ [OTHER   ] '
+'
+Response read when expecting EOF: '
+' -- skipping
+End of test store/receive_btcusd_tracing_long
+1682268404.641786: Driver: timeout (0, 1000)
+[PASS] store::receive_btcusd_tracing_long: (6.01s)
+[RUN ] store::receive_btcusd_tracing_long_show
+Running test store/receive_btcusd_tracing_long_show on target bin/ticker
+                   [expect PROMPT]
+1682268404.677841: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1594 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268404.678260: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (367 usec, limit 100000)
+Delay (0, 100000)
+>>> trace 1
+                   [expect PROMPT]
+1682268404.778637: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (141 usec, limit 1000)
+                   [expect TRACE]
+1682268405.584010: Driver <~~ [TRACE   ] '[1682268405.583804][tester][ 3][    4]: > Server message: '{"data":{"id":282223347,"timestamp":"1682193128","amount":0.22916,"amount_str":"0.22916000","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128824000","buy_order_id":1611194999468035,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268405.583804][tester    ][ 3][    4]: > Server message: '{"data":{"id":282223347,"timestamp":"1682193128","amount":0.22916,"amount_str":"0.22916000","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128824000","buy_order_id":1611194999468035,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268405.584175: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268405.663295: Driver <~~ [TRACE   ] '[1682268405.663168][tester][ 3][    5]: > Server message: '{"data":{"id":282223351,"timestamp":"1682193128","amount":0.03900625,"amount_str":"0.03900625","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268405.663168][tester    ][ 3][    5]: > Server message: '{"data":{"id":282223351,"timestamp":"1682193128","amount":0.03900625,"amount_str":"0.03900625","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268405.663393: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268405.678715: Driver <~~ [TRACE   ] '[1682268405.678535][tester][ 3][    6]: > Server message: '{"data":{"id":282223352,"timestamp":"1682193128","amount":0.26099375,"amount_str":"0.26099375","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194763689984},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268405.678535][tester    ][ 3][    6]: > Server message: '{"data":{"id":282223352,"timestamp":"1682193128","amount":0.26099375,"amount_str":"0.26099375","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194763689984},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268405.678849: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268405.729091: Driver <~~ [TRACE   ] '[1682268405.728904][tester][ 3][    7]: > Server message: '{"data":{"id":282223357,"timestamp":"1682193130","amount":0.00060999,"amount_str":"0.00060999","price":27654,"price_str":"27654","type":0,"microtimestamp":"1682193130969000","buy_order_id":1611195008253952,"sell_order_id":1611193542979585},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268405.728904][tester    ][ 3][    7]: > Server message: '{"data":{"id":282223357,"timestamp":"1682193130","amount":0.00060999,"amount_str":"0.00060999","price":27654,"price_str":"27654","type":0,"microtimestamp":"1682193130969000","buy_order_id":1611195008253952,"sell_order_id":1611193542979585},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268405.729247: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268406.473665: Driver <~~ [TRACE   ] '[1682268406.473472][tester][ 3][    8]: > Server message: '{"data":{"id":282223362,"timestamp":"1682193133","amount":0.00397,"amount_str":"0.00397000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193133715000","buy_order_id":1611195019501568,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268406.473472][tester    ][ 3][    8]: > Server message: '{"data":{"id":282223362,"timestamp":"1682193133","amount":0.00397,"amount_str":"0.00397000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193133715000","buy_order_id":1611195019501568,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268406.473824: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268406.823143: Driver <~~ [TRACE   ] '[1682268406.823015][tester][ 3][    9]: > Server message: '{"data":{"id":282223385,"timestamp":"1682193152","amount":0.00308,"amount_str":"0.00308000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152069000","buy_order_id":1611195094679552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268406.823015][tester    ][ 3][    9]: > Server message: '{"data":{"id":282223385,"timestamp":"1682193152","amount":0.00308,"amount_str":"0.00308000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152069000","buy_order_id":1611195094679552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268406.823266: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268407.447268: Driver <~~ [TRACE   ] '[1682268407.446969][tester][ 3][   10]: > Server message: '{"data":{"id":282223386,"timestamp":"1682193152","amount":0.3123,"amount_str":"0.31230000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152694000","buy_order_id":1611195097239552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268407.446969][tester    ][ 3][   10]: > Server message: '{"data":{"id":282223386,"timestamp":"1682193152","amount":0.3123,"amount_str":"0.31230000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193152694000","buy_order_id":1611195097239552,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268407.447445: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268408.293130: Driver <~~ [TRACE   ] '[1682268408.292920][tester][ 3][   11]: > Server message: '{"data":{"id":282223390,"timestamp":"1682193159","amount":0.00347,"amount_str":"0.00347000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193159538000","buy_order_id":1611195125272576,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268408.292920][tester    ][ 3][   11]: > Server message: '{"data":{"id":282223390,"timestamp":"1682193159","amount":0.00347,"amount_str":"0.00347000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193159538000","buy_order_id":1611195125272576,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268408.293310: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268408.713686: Driver <~~ [TRACE   ] '[1682268408.713477][tester][ 3][   12]: > Server message: '{"data":{"id":282223395,"timestamp":"1682193171","amount":0.00317,"amount_str":"0.00317000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193171960000","buy_order_id":1611195176153090,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268408.713477][tester    ][ 3][   12]: > Server message: '{"data":{"id":282223395,"timestamp":"1682193171","amount":0.00317,"amount_str":"0.00317000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193171960000","buy_order_id":1611195176153090,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268408.713852: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268409.105078: Driver <~~ [TRACE   ] '[1682268409.104925][tester][ 3][   13]: > Server message: '{"data":{"id":282223397,"timestamp":"1682193178","amount":0.35477608,"amount_str":"0.35477608","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268409.104925][tester    ][ 3][   13]: > Server message: '{"data":{"id":282223397,"timestamp":"1682193178","amount":0.35477608,"amount_str":"0.35477608","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195015839744},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268409.105208: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268410.114372: Driver <~~ [TRACE   ] '[1682268410.114190][tester][ 3][   14]: > Server message: '{"data":{"id":282223398,"timestamp":"1682193178","amount":0.14522392,"amount_str":"0.14522392","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195106435072},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268410.114190][tester    ][ 3][   14]: > Server message: '{"data":{"id":282223398,"timestamp":"1682193178","amount":0.14522392,"amount_str":"0.14522392","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193178346000","buy_order_id":1611195202310144,"sell_order_id":1611195106435072},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE  -- not advancing
+1682268410.114523: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268410.679632: Driver <~~ [TRACE   ] '[1682268410.679548][tester][ 3][   15]: > Server message: '"END OF STREAM"'
+'
+End of stream is indicated
+Event type (EOS) does not match expected repeat (TRACE) -- advancing
+                   [expect EOS]
+Event type matched expected type EOS 
+>>> show tester:live_trades_btcusd:price
+                   [expect SHOW]
+1682268410.679711: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268410.679826: Driver <~~ [ERROR   ] '???
+'
+Event type (ERROR) did not match expected type SHOW
+Aborting test store/receive_btcusd_tracing_long_show
+[----] tests/__helper.c:13: Assertion Failed
+[----]   
+[----]   The test driver returned an error (-1)
+[----]   
+[FAIL] store::receive_btcusd_tracing_long_show: (6.01s)
+[RUN ] store::receive_btcusd_tracing_short
+Running test store/receive_btcusd_tracing_short on target bin/ticker
+                   [expect PROMPT]
+1682268410.716100: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1152 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268410.716525: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (381 usec, limit 100000)
+Delay (0, 100000)
+>>> trace 1
+                   [expect PROMPT]
+1682268410.816828: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (97 usec, limit 100000)
+                   [expect TRACE]
+1682268411.622033: Driver <~~ [TRACE   ] '[1682268411.621828][tester][ 3][    4]: > Server message: '{"data":{"id":282223347,"timestamp":"1682193128","amount":0.22916,"amount_str":"0.22916000","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128824000","buy_order_id":1611194999468035,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268411.621828][tester    ][ 3][    4]: > Server message: '{"data":{"id":282223347,"timestamp":"1682193128","amount":0.22916,"amount_str":"0.22916000","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128824000","buy_order_id":1611194999468035,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268411.622177: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268411.702157: Driver <~~ [TRACE   ] '[1682268411.701973][tester][ 3][    5]: > Server message: '{"data":{"id":282223351,"timestamp":"1682193128","amount":0.03900625,"amount_str":"0.03900625","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268411.701973][tester    ][ 3][    5]: > Server message: '{"data":{"id":282223351,"timestamp":"1682193128","amount":0.03900625,"amount_str":"0.03900625","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194027659264},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268411.702302: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268411.717635: Driver <~~ [TRACE   ] '[1682268411.717404][tester][ 3][    6]: > Server message: '{"data":{"id":282223352,"timestamp":"1682193128","amount":0.26099375,"amount_str":"0.26099375","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194763689984},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268411.717404][tester    ][ 3][    6]: > Server message: '{"data":{"id":282223352,"timestamp":"1682193128","amount":0.26099375,"amount_str":"0.26099375","price":27652,"price_str":"27652","type":0,"microtimestamp":"1682193128907000","buy_order_id":1611194999762945,"sell_order_id":1611194763689984},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268411.717816: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268411.767778: Driver <~~ [TRACE   ] '[1682268411.767595][tester][ 3][    7]: > Server message: '{"data":{"id":282223357,"timestamp":"1682193130","amount":0.00060999,"amount_str":"0.00060999","price":27654,"price_str":"27654","type":0,"microtimestamp":"1682193130969000","buy_order_id":1611195008253952,"sell_order_id":1611193542979585},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268411.767595][tester    ][ 3][    7]: > Server message: '{"data":{"id":282223357,"timestamp":"1682193130","amount":0.00060999,"amount_str":"0.00060999","price":27654,"price_str":"27654","type":0,"microtimestamp":"1682193130969000","buy_order_id":1611195008253952,"sell_order_id":1611193542979585},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268411.767947: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268412.512368: Driver <~~ [TRACE   ] '[1682268412.512153][tester][ 3][    8]: > Server message: '{"data":{"id":282223362,"timestamp":"1682193133","amount":0.00397,"amount_str":"0.00397000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193133715000","buy_order_id":1611195019501568,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+'
+TRACE EVENT:	[1682268412.512153][tester    ][ 3][    8]: > Server message: '{"data":{"id":282223362,"timestamp":"1682193133","amount":0.00397,"amount_str":"0.00397000","price":27660,"price_str":"27660","type":0,"microtimestamp":"1682193133715000","buy_order_id":1611195019501568,"sell_order_id":1611195011182593},"channel":"live_trades_btcusd","event":"trade"}'
+
+Event type matched expected type TRACE 
+>>> show tester:live_trades_btcusd:price
+                   [expect SHOW]
+1682268412.512644: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268412.512909: Driver <~~ [ERROR   ] '???
+'
+Event type (ERROR) did not match expected type SHOW
+Aborting test store/receive_btcusd_tracing_short
+[----] tests/__helper.c:13: Assertion Failed
+[----]   
+[----]   The test driver returned an error (-1)
+[----]   
+[FAIL] store::receive_btcusd_tracing_short: (1.80s)
+[====] Running 6 tests from watcher:
+[RUN ] watcher::receive_some_tracing
+Running test watcher/receive_some_tracing on target bin/ticker
+                   [expect PROMPT]
+1682268412.550759: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1440 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268412.551133: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (324 usec, limit 100000)
+Delay (0, 100000)
+>>> trace 1
+                   [expect PROMPT]
+1682268412.651490: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (211 usec, limit 1000)
+                   [expect TRACE]
+1682268412.752946: Driver <~~ [TRACE   ] '[1682268412.752791][tester][ 3][    4]: > Server message: '{"time": 200000}'
+'
+TRACE EVENT:	[1682268412.752791][tester    ][ 3][    4]: > Server message: '{"time": 200000}'
+
+Event type matched expected type TRACE 
+                   [expect TRACE]
+1682268412.753056: Driver <~~ [OTHER   ] '
+'
+Ignoring OTHER_EVENT with blank line
+1682268412.753086: Driver <~~ [OTHER   ] 'Unable to find the event member: Resource temporarily unavailable
+'
+Event type (OTHER) did not match expected type TRACE
+Aborting test watcher/receive_some_tracing
+[----] tests/__helper.c:13: Assertion Failed
+[----]   
+[----]   The test driver returned an error (-1)
+[----]   
+[FAIL] watcher::receive_some_tracing: (0.21s)
+[RUN ] watcher::start_wait_stop_watcher_long_delay
+Running test watcher/start_wait_stop_watcher_long_delay on target bin/ticker
+                   [expect PROMPT]
+1682268412.790477: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1959 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268412.790968: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (425 usec, limit 100000)
+Delay (1, 0)
+>>> stop 1
+                   [expect PROMPT]
+1682268413.791446: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (237 usec, limit 1000)
+                   [expect EOF]
+End of test watcher/start_wait_stop_watcher_long_delay
+1682268413.793048: Driver: timeout (0, 1000)
+[PASS] watcher::start_wait_stop_watcher_long_delay: (1.01s)
+[RUN ] watcher::start_wait_stop_watcher_no_file
+Running test watcher/start_wait_stop_watcher_no_file on target bin/ticker
+                   [expect PROMPT]
+1682268413.832324: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1362 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268413.833033: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (641 usec, limit 100000)
+Delay (1, 0)
+>>> stop 1
+                   [expect ERROR]
+1682268414.833232: Driver <~~ [OTHER   ] 'Can't open data file: 'LINK_TO_TEST_DATA'
+'
+Event type (OTHER) does not match expected (ERROR) -- skipping
+1682268414.833447: Driver <~~ [OTHER   ] 'kill failed was returned
+'
+Event type (OTHER) does not match expected (ERROR) -- skipping
+1682268414.833465: Driver <~~ [OTHER   ] ': No such process
+'
+Event type (OTHER) does not match expected (ERROR) -- skipping
+1682268414.833474: Driver <~~ [PROMPT  ] 'ticker> '
+Event type (PROMPT) does not match expected (ERROR) -- skipping
+1682268414.834535: Driver: timeout (0, 1000)
+Timeout reading response from child
+Unexpected EOF event
+Aborting test watcher/start_wait_stop_watcher_no_file
+[----] tests/__helper.c:13: Assertion Failed
+[----]   
+[----]   The test driver returned an error (-1)
+[----]   
+[FAIL] watcher::start_wait_stop_watcher_no_file: (1.01s)
+[RUN ] watcher::start_wait_watchers_long_delay
+Running test watcher/start_wait_watchers_long_delay on target bin/ticker
+                   [expect PROMPT]
+1682268414.868817: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1920 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268414.869397: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (520 usec, limit 100000)
+Delay (1, 0)
+>>> watchers
+                   [expect WATCHER]
+1682268415.869753: Driver <~~ [WATCHER ] '0	CLI(-1,0,1)
+'
+Event type matched expected type WATCHER (138 usec, limit 1000)
+                   [expect WATCHER]
+1682268415.869817: Driver <~~ [WATCHER ] '1	tester(537558,3,7) util/tester LINK_TO_TEST_DATA [IGNORED_CHANNEL]
+'
+Event type matched expected type WATCHER (13 usec, limit 1000)
+                   [expect PROMPT]
+1682268415.869875: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (6 usec, limit 1000)
+                   [expect EOF]
+1682268415.871411: Driver: timeout (0, 1000)
+Timeout reading response from child
+End of test watcher/start_wait_watchers_long_delay
+[PASS] watcher::start_wait_watchers_long_delay: (1.01s)
+[RUN ] watcher::start_watcher
+Running test watcher/start_watcher on target bin/ticker
+                   [expect PROMPT]
+1682268415.902680: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (999 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268415.903032: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (308 usec, limit 100000)
+                   [expect EOF]
+1682268415.903918: Driver <~~ [OTHER   ] 'Can't open data file: 'LINK_TO_TEST_DATA'
+'
+Response read when expecting EOF: 'Can't open data file: 'LINK_TO_TEST_DATA'
+' -- skipping
+End of test watcher/start_watcher
+[PASS] watcher::start_watcher: (0.00s)
+1682268415.905052: Driver: timeout (0, 1000)
+[RUN ] watcher::start_watcher_trace_subscribe
+Running test watcher/start_watcher_trace_subscribe on target bin/ticker
+                   [expect PROMPT]
+1682268415.938603: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (1312 usec, limit 100000)
+>>> start tester IGNORED_CHANNEL
+                   [expect PROMPT]
+1682268415.939005: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (352 usec, limit 100000)
+>>> trace 1
+                   [expect PROMPT]
+1682268415.939094: Driver <~~ [PROMPT  ] 'ticker> '
+Event type matched expected type PROMPT (59 usec, limit 1000)
+                   [expect TRACE]
+1682268415.940191: Driver: timeout (0, 1000)
+1682268415.940233: Driver <~~ [TRACE   ] '[1682268415.940135][tester][ 3][    1]: Websocket connected, you can send text messages of maximum 256 characters.
+'
+TRACE EVENT:	[1682268415.940135][tester    ][ 3][    1]: Websocket connected, you can send text messages of maximum 256 characters.
+
+Event type matched expected type TRACE (1129 usec, limit 1000)
+                   [expect TRACE]
+1682268415.940294: Driver <~~ [TRACE   ] '[1682268415.940175][tester][ 3][    2]: To exit uwsc, type !q<enter>
+'
+TRACE EVENT:	[1682268415.940175][tester    ][ 3][    2]: To exit uwsc, type !q<enter>
+
+Event type matched expected type TRACE (16 usec, limit 1000)
+                   [expect TRACE]
+1682268415.940334: Driver <~~ [TRACE   ] '[1682268415.940226][tester][ 3][    3]: > Send '{ "event": "bts:subscribe", "data": { "channel": "IGNORED_CHANNEL" } }'
+'
+TRACE EVENT:	[1682268415.940226][tester    ][ 3][    3]: > Send '{ "event": "bts:subscribe", "data": { "channel": "IGNORED_CHANNEL" } }'
+
+Event type matched expected type TRACE (23 usec, limit 1000)
+                   [expect EOF]
+1682268415.941922: Driver: timeout (0, 1000)
+Timeout reading response from child
+End of test watcher/start_watcher_trace_subscribe
+[PASS] watcher::start_watcher_trace_subscribe: (0.01s)
+[----] Writing xml report in `crit.xml`.
+[====] Synthesis: Tested: 28 | Passing: 24 | Failing: 4 | Crashing: 0 
