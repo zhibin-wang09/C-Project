@@ -26,7 +26,11 @@ int proto_recv_packet(int fd, JEUX_PACKET_HEADER *hdr, void **payloadp){
 	if(size > 0){ // received packet contains paylaod
 		*payloadp= malloc(size);
 		if(*payloadp == NULL) { close(fd); perror("malloc for payload failed\n"); return -1;}
-		if(rio_readn(fd,*payloadp,size) < 0) { close(fd); perror("reading payload faild\n"); return -1;}
+		if(rio_readn(fd,*payloadp,size) < 0) {
+			close(fd);
+			if(*payloadp != NULL) free(*payloadp);
+			perror("reading payload faild\n"); return -1;
+		}
 	}
 
 	return 0;
