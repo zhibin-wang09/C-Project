@@ -2,16 +2,17 @@
 #include <string.h>
 #include <semaphore.h>
 #include <stdio.h>
+#include <pthread.h>
 #include "client_registry.h"
 #include "client.h"
-#include "pthread.h"
+#include "player.h"
 
 struct client_registry{
 	CLIENT *list_of_clients[MAX_CLIENTS]; // an dynamic  array of clients
 	int current_capacity;
 	pthread_mutex_t lock; // a lock to assist synchronization
 	sem_t semaphore; // used to assist with the waiting for client to shutdown
-};
+} client_registry;
 
 CLIENT_REGISTRY *creg_init(){
 	// initialize heap space for the registry
@@ -74,7 +75,7 @@ CLIENT *creg_lookup(CLIENT_REGISTRY *cr, char *user){
 		PLAYER *p = client_get_player((cr->list_of_clients)[index]); // get the client's name
 		char *p_username = player_get_name(p); // get the name of the player
 		if(!strcmp(p_username, user)){ // if name is the same then return client
-			client_ref((cr->list_of_clients)[index], "reference increased from client lookup\n");
+			client_ref((cr->list_of_clients)[index], "reference increased by client lookup\n");
 			CLIENT *lookup  = (cr->list_of_clients)[index];
 			pthread_mutex_unlock(&(cr -> lock));
 			return lookup;
