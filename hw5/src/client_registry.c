@@ -107,9 +107,12 @@ void creg_wait_for_empty(CLIENT_REGISTRY *cr){
 void creg_shutdown_all(CLIENT_REGISTRY *cr){
 	if(cr == NULL) return;
 	pthread_mutex_lock(&cr->lock);
+	int already_zero = 1; // indicator that the registry is already 0
 	for(int i = 0; i< MAX_CLIENTS;i++){
 		if(!(cr->list_of_clients)[i]) continue; // if the index does not contain client then skip
 		shutdown(client_get_fd(cr->list_of_clients[i]), SHUT_RD);
+		already_zero =0; // not zero
 	}
+	if(already_zero) sem_post(&cr->semaphore);
 	pthread_mutex_unlock(&cr->lock);
 }
