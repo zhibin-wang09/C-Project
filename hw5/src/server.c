@@ -52,6 +52,7 @@ void *jeux_client_service(void *arg){
 					continue;
 				}
 				client_send_ack(client,NULL,0);
+				player_unref(player,"server is discarding logged in player\n");
 				loggedin = 1;
 				break;
 			case JEUX_USERS_PKT:
