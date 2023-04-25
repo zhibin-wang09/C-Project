@@ -29,6 +29,7 @@ void *jeux_client_service(void *arg){
 		void *payload = NULL; // the payload
 		if(proto_recv_packet(connfd,&header,&payload) == -1){ // unblock until packet arrive and update header and payload if any
 			debug("Ending client service...\n");
+			client_logout(client); // remeber to decrease ref count in logout functions because provided function did not seem to do that
 			creg_unregister(client_registry,client);
 			break;
 		}
@@ -51,8 +52,9 @@ void *jeux_client_service(void *arg){
 					free(payload);
 					continue;
 				}
+				free(payload);
+				player_unref(player,"done with using the reference in login");
 				client_send_ack(client,NULL,0);
-				player_unref(player,"server is discarding logged in player\n");
 				loggedin = 1;
 				break;
 			case JEUX_USERS_PKT:
@@ -68,7 +70,7 @@ void *jeux_client_service(void *arg){
 					num_users++;
 				}
 				// allocate space for the text string
-				char *packet_payload = malloc(1);
+				char *packet_payload = calloc(1, sizeof(char));
 				for(int i =0; i< num_users;i++){
 					char user_info[528];
 					//construct a text string for one user
@@ -85,6 +87,8 @@ void *jeux_client_service(void *arg){
 					player_unref(users[i],"packet sent already");
 				}
 				client_send_ack(client,packet_payload,strlen(packet_payload));
+				free(packet_payload);
+				free(users);
 				break;
 			case JEUX_INVITE_PKT:
 				if(!loggedin){ // client is already logged in or there is some other user logged in
@@ -118,6 +122,7 @@ void *jeux_client_service(void *arg){
 				ack.id =id;
 				client_unref(target,"done using target therefore discarded\n");
 				client_send_packet(client,&ack,NULL); // send ack to the sender
+				free(payload);
 				break;
 			case JEUX_REVOKE_PKT:
 				if(!loggedin){ // client is already logged in or there is some other user logged in
@@ -158,7 +163,7 @@ void *jeux_client_service(void *arg){
 				}else{
 					client_send_ack(client, NULL, 0);
 				}
-
+				free(initial_state);
 				break;
 			case JEUX_MOVE_PKT:
 				if(!loggedin){ // client is already logged in or there is some other user logged in
@@ -171,6 +176,7 @@ void *jeux_client_service(void *arg){
 					free(payload);
 					continue;
 				}
+				free(payload);
 				client_send_ack(client,NULL,0);
 				break;
 			case JEUX_RESIGN_PKT:
