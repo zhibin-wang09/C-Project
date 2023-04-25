@@ -160,10 +160,10 @@ void *jeux_client_service(void *arg){
 				}
 				if(initial_state){
 					client_send_ack(client, initial_state, strlen(initial_state));
+					free(initial_state);
 				}else{
 					client_send_ack(client, NULL, 0);
 				}
-				free(initial_state);
 				break;
 			case JEUX_MOVE_PKT:
 				if(!loggedin){ // client is already logged in or there is some other user logged in
