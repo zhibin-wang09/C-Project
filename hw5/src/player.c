@@ -37,7 +37,7 @@ void player_unref(PLAYER *player, char *why){
 	if(player == NULL) return;
 	pthread_mutex_lock(&player->lock);
 	player->reference_count--;
-	debug("decrease reference count on player (%d -> %d) %s",player->reference_count-1, player->reference_count,why);
+	debug("decrease reference count on player (%d -> %d) %s",player->reference_count+1, player->reference_count,why);
 	if(player->reference_count ==0){
 		free(player->username);
 		pthread_mutex_unlock(&player->lock);
