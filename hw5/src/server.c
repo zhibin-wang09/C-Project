@@ -194,5 +194,6 @@ void *jeux_client_service(void *arg){
 				break;
 		}
 	}
+	close(connfd);
 	return NULL;
 }
