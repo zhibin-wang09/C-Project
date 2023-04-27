@@ -3,6 +3,7 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <debug.h>
 #include "client_registry.h"
 #include "client.h"
 #include "player.h"
@@ -21,6 +22,7 @@ CLIENT_REGISTRY *creg_init(){
 	pthread_mutex_init(&(registry -> lock), NULL);
 	registry->current_capacity = 0;
 	sem_init(&(registry->semaphore), 0 ,0);
+	debug("client registry created");
 	return registry;
 }
 
