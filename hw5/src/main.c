@@ -25,6 +25,7 @@ int _debug_packets_ = 1;
 static void terminate(int status);
 void terminal_is_closed(int sig, siginfo_t *act, void* context);
 int open_listenfd(char *port);
+int listenfd;
 
 /*
  * "Jeux" game server.
@@ -59,7 +60,6 @@ int main(int argc, char* argv[]){
     // a SIGHUP handler, so that receipt of SIGHUP will perform a clean
     // shutdown of the server.
 
-    int listenfd;
     if((listenfd = open_listenfd(argv[2])) < 0){
         return -1;
     }
@@ -77,6 +77,8 @@ int main(int argc, char* argv[]){
         }
         if(pthread_create(&tid, NULL, &jeux_client_service,connfd)){
             perror("start thread for jeux client service failed\n");
+            close(listenfd);
+            close(*connfd);
             exit(1);
         }
 
@@ -86,6 +88,7 @@ int main(int argc, char* argv[]){
 }
 
 void terminal_is_closed(int sig, siginfo_t *act, void* context){
+    close(listenfd);
     terminate(EXIT_SUCCESS);
 }
 
