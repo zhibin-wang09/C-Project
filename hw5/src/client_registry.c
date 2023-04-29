@@ -22,7 +22,7 @@ CLIENT_REGISTRY *creg_init(){
 	pthread_mutex_init(&(registry -> lock), NULL);
 	registry->current_capacity = 0;
 	sem_init(&(registry->semaphore), 0 ,0);
-	debug("client registry created");
+	debug("client registry created\n");
 	return registry;
 }
 
