@@ -13,8 +13,8 @@
 struct invitation{
 	CLIENT *source;
 	CLIENT *target;
-	int source_role;
-	int target_role;
+	GAME_ROLE source_role;
+	GAME_ROLE target_role;
 	INVITATION_STATE state;
 	GAME *game;
 	int reference_count;
@@ -32,8 +32,8 @@ INVITATION *inv_create(CLIENT *source, CLIENT *target, GAME_ROLE source_role, GA
 	invite -> state = INV_OPEN_STATE;
 	invite -> source_role = source_role;
 	invite -> target_role = target_role;
-	inv_ref(invite,"for newly created invite\n");
 	pthread_mutex_init(&(invite -> lock), NULL);
+	inv_ref(invite,"for newly created invite\n");
 	return invite;
 }
 
