@@ -27,9 +27,9 @@ CLIENT_REGISTRY *creg_init(){
 }
 
 void creg_fini(CLIENT_REGISTRY *cr){
-	if(!cr){
-		free(cr);
+	if(cr){
 		pthread_mutex_destroy(&(cr->lock));
+		free(cr);
 	}
 	cr = NULL;
 }
