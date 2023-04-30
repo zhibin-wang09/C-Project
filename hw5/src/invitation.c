@@ -90,8 +90,9 @@ GAME *inv_get_game(INVITATION *inv){
 }
 
 int inv_accept(INVITATION *inv){
-	if(inv == NULL || inv->state != INV_OPEN_STATE) return -1;
+	if(inv == NULL) return -1;
 	pthread_mutex_lock(&inv->lock);
+	if(inv->state != INV_OPEN_STATE) return -1;
 	inv->state = INV_ACCEPTED_STATE; // change to accepted state
 	GAME *new_game = game_create(); // create a new game
 	if(!new_game) {pthread_mutex_unlock(&inv->lock);return -1;}
@@ -101,15 +102,17 @@ int inv_accept(INVITATION *inv){
 }
 
 int inv_close(INVITATION *inv, GAME_ROLE role){
-	if(inv == NULL || inv->state == INV_CLOSED_STATE) return -1;
-	if(inv->state != INV_ACCEPTED_STATE && role != NULL_ROLE) return -1; // can't resign a game with no game in progress
-	if(role == NULL_ROLE && inv->state == INV_ACCEPTED_STATE) return -1; // if null role is passed there can not be a game in progress
-
+	if(inv == NULL) return -1;
 	pthread_mutex_lock(&inv->lock);
+	if(inv->state == INV_CLOSED_STATE){pthread_mutex_unlock(&inv->lock); return -1;}
+	if(inv->state != INV_ACCEPTED_STATE && role != NULL_ROLE) {pthread_mutex_unlock(&inv->lock);return -1;} // can't resign a game with no game in progress
+	if(role == NULL_ROLE && inv->state == INV_ACCEPTED_STATE) {pthread_mutex_unlock(&inv->lock);return -1;} // if null role is passed there can not be a game in progress
 	if(inv->state == INV_ACCEPTED_STATE){ // only resign if the game is in progress
 		if(game_resign(inv->game,role)){ pthread_mutex_unlock(&inv->lock); return -1;} // if game resign reuslt in error otherwise resign
+		debug("game resigned");
 	}
 	inv->state = INV_CLOSED_STATE; // change to close state
+	debug("game closed");
 	//inv->game = NULL;
 	pthread_mutex_unlock(&inv->lock);
 	return 0;
