@@ -64,23 +64,27 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    int *connfd;
+    int connfd;
+    int *connfd_p;
     socklen_t clientaddr_len;
     struct sockaddr clientaddr;
     pthread_t tid;
     while(1){
         clientaddr_len = sizeof(struct sockaddr);
-        connfd = malloc(sizeof(int));
-        if((*connfd = accept(listenfd, &clientaddr, &clientaddr_len)) < 0){
+        //connfd = malloc(sizeof(int));
+        if((connfd = accept(listenfd, &clientaddr, &clientaddr_len)) < 0){
             perror("creating communication sock file descriptor failed\n");
-            exit(1);
+            terminate(EXIT_FAILURE);
         }
-        if(pthread_create(&tid, NULL, &jeux_client_service,connfd)){
+        connfd_p = malloc(sizeof(int));
+        *connfd_p = connfd;
+        if(pthread_create(&tid, NULL, &jeux_client_service,connfd_p)){
             perror("start thread for jeux client service failed\n");
             close(listenfd);
-            close(*connfd);
-            exit(1);
+            close(*connfd_p);
+            terminate(EXIT_FAILURE);
         }
+        connfd = 0;
 
     }
 
