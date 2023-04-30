@@ -91,10 +91,12 @@ PLAYER **creg_all_players(CLIENT_REGISTRY *cr){
 	if(cr == NULL) return NULL;
 	pthread_mutex_lock(&(cr -> lock));
 	PLAYER **players = calloc(cr->current_capacity+1, sizeof(PLAYER*));
+	int index =0;
 	for(int i =0; i < MAX_CLIENTS; i++){
 		if(!(cr->list_of_clients)[i]) continue; // if the index does not contain client then skip
-		players[i] = client_get_player(( cr->list_of_clients)[i]);
-		player_ref(players[i],"reference being added to player list\n");
+		players[index] = client_get_player(( cr->list_of_clients)[i]);
+		player_ref(players[index],"reference being added to player list\n");
+		index++;
 	}
 	pthread_mutex_unlock(&(cr->lock));
 	return players;
