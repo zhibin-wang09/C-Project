@@ -85,7 +85,7 @@ int client_logout(CLIENT *client){
                 client_ref(opponent,"client logout needs the opponent reference\n");
             }else{
                 role = inv_get_target_role(inv);
-                opponent = inv_get_target(inv);
+                opponent = inv_get_source(inv);
                 client_ref(opponent,"client logout needs the opponent reference\n");
             }
             if(inv_close(inv,role)){
@@ -489,17 +489,18 @@ int client_make_move(CLIENT *client, int id, char *move){
     GAME_MOVE *game_move = game_parse_move(game,client_role,move);
     if(game_move == NULL){ // if parsing game move resulted in failure
         debug("parsing game move failed\n");
-        pthread_mutex_unlock(&client->lock);
         inv_unref(inv,"done using the reference\n");
         game_unref(game,"done using the reference\n");
+        pthread_mutex_unlock(&client->lock);
         return -1;
     }
     if(game_apply_move(game,game_move)){
         // applying thr game move resulted in failure
         debug("applying game move failed\n");
-        pthread_mutex_unlock(&client->lock);
         inv_unref(inv,"done using the reference\n");
         game_unref(game,"done using the reference\n");
+        free(game_move);
+        pthread_mutex_unlock(&client->lock);
         return -1;
     }
     free(game_move); // need to free GAME_MOVE after apply
@@ -534,7 +535,19 @@ int client_make_move(CLIENT *client, int id, char *move){
        CLIENT *target = inv_get_target(inv);
        client_ref(source,"reference obtained by client_resign_game to get player and update rating\n");
        client_ref(target,"reference obtained by client_resign_game to get player and update rating\n");
-       player_post_result(client_get_player(source),client_get_player(target),winner);
+       if(winner == FIRST_PLAYER_ROLE){
+            if(inv_get_source_role(inv) == FIRST_PLAYER_ROLE){
+                player_post_result(client_get_player(source),client_get_player(target),winner);
+            }else if(inv_get_source_role(inv) == SECOND_PLAYER_ROLE){
+                player_post_result(client_get_player(target),client_get_player(source),winner);
+            }
+       }else if(winner == SECOND_PLAYER_ROLE){
+            if(inv_get_source_role(inv) == SECOND_PLAYER_ROLE){
+                player_post_result(client_get_player(target),client_get_player(source),winner);
+            }else if(inv_get_source_role(inv) == FIRST_PLAYER_ROLE){
+                player_post_result(client_get_player(source),client_get_player(target),winner);
+            }
+       }
 
        JEUX_PACKET_HEADER ended_packet_1 = {0};
        ended_packet_1.type = JEUX_ENDED_PKT;
