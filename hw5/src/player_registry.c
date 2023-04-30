@@ -15,7 +15,7 @@ struct player_registry{
 PLAYER_REGISTRY *preg_init(void){
 	PLAYER_REGISTRY *preg_register = calloc(1,sizeof(PLAYER_REGISTRY));
 	pthread_mutex_init(&preg_register->lock,NULL);
-	debug("player_registry is created");
+	debug("player_registry is created\n");
 	return preg_register;
 }
 
