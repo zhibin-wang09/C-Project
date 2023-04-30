@@ -46,7 +46,7 @@ void *jeux_client_service(void *arg){
 				char *name = (char *) payload;
 				player = preg_register(player_registry,name);
 				if(client_login(client,player)){ // in case of error
-					perror("client login error\n");
+					debug("client login error\n");
 					player_unref(player,"login error\n");
 					client_send_nack(client);
 					free(payload);
