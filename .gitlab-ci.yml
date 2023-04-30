@@ -1,9 +1,8 @@
 image: hwrunner:latest
 variables:
     GIT_SSL_NO_VERIFY: "true"
-    EXEC: ticker
-    HW_DIR: hw4
-    PROC_LIMIT: 200
+    EXEC: jeux
+    HW_DIR: hw5
     CPU_LIMIT: 60
     FILE_LIMIT: 1000000
 before_script:
@@ -19,14 +18,12 @@ build:
 run:
     stage: run
     script:
-        - ulimit -u ${PROC_LIMIT}
         - ulimit -t ${CPU_LIMIT}
         - ulimit -f ${FILE_LIMIT}
         - cd ${HW_DIR} && bin/${EXEC}
 test:
     stage: test
     script:
-        - ulimit -u ${PROC_LIMIT}
         - ulimit -t ${CPU_LIMIT}
         - ulimit -f ${FILE_LIMIT}
-        - cd ${HW_DIR} && bin/${EXEC}_tests -S -j1 --verbose=0 --timeout 60
+        - cd ${HW_DIR} && bin/${EXEC}_tests -S --verbose=0 --timeout 50
