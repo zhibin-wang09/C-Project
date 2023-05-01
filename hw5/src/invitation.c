@@ -92,7 +92,7 @@ GAME *inv_get_game(INVITATION *inv){
 int inv_accept(INVITATION *inv){
 	if(inv == NULL) return -1;
 	pthread_mutex_lock(&inv->lock);
-	if(inv->state != INV_OPEN_STATE) return -1;
+	if(inv->state != INV_OPEN_STATE) {pthread_mutex_unlock(&inv->lock);return -1;}
 	inv->state = INV_ACCEPTED_STATE; // change to accepted state
 	GAME *new_game = game_create(); // create a new game
 	if(!new_game) {pthread_mutex_unlock(&inv->lock);return -1;}
