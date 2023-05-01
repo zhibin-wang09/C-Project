@@ -353,6 +353,7 @@ GAME_MOVE *game_parse_move(GAME *game, GAME_ROLE role, char *str){
 		}else{
 			// not a valid move
 			pthread_mutex_unlock(&game->lock);
+			free(move);
 			return NULL;
 		}
 	}
