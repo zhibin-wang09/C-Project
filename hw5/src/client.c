@@ -217,6 +217,7 @@ int client_make_invitation(CLIENT *source, CLIENT *target,
 	hdr.id = target_id;
 	hdr.type = JEUX_INVITED_PKT;
     hdr.size = htons(strlen(player_get_name(client_get_player(source)))+1);
+    hdr.role = target_role;
 	if(client_send_packet(target,&hdr,player_get_name(client_get_player(source)))){ // send INVITED PACKET to target
         pthread_mutex_unlock(&source->lock);
         pthread_mutex_unlock(&target->lock);
@@ -332,7 +333,7 @@ int client_accept_invitation(CLIENT *client, int id, char **strp){
     CLIENT *source = inv_get_source(inv);
     client_ref(source,"reference obtained temporarily to search through invitation\n");
     for(int i =0; i<255;i++){ // finding the id of the source
-        if(client->invitation_list[i] == inv){
+        if(source->invitation_list[i] == inv){
             source_id = i;
             break;
         }
