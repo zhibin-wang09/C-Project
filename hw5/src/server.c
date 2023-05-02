@@ -33,6 +33,7 @@ void *jeux_client_service(void *arg){
 			creg_unregister(client_registry,client);
 			break;
 		}
+		debug("<= %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s\n",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role,(char *)payload);
 		switch(header.type){
 			case JEUX_LOGIN_PKT: // only login packet are allowed for the first iteration
 				if(!payload) continue;
