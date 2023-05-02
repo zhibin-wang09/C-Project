@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <debug.h>
 #include <string.h>
+#include <time.h>
 
 #include "client_registry.h"
 #include "client.h"
@@ -114,11 +115,16 @@ int client_get_fd(CLIENT *client){
 int client_send_packet(CLIENT *player, JEUX_PACKET_HEADER *pkt, void *data){
 	if(player == NULL) return -1;
 	pthread_mutex_lock(&player->lock);
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC,&time);
+    pkt->timestamp_sec = htonl(time.tv_sec);
+    pkt->timestamp_nsec = htonl(time.tv_nsec);
 	if(proto_send_packet(player->fd,pkt,data)){ // failed to send packet
         pthread_mutex_unlock(&player->lock);
         debug("failed to send packet");
         return -1;
     }
+    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s\n",ntohl(pkt->timestamp_sec),ntohl(pkt->timestamp_nsec),pkt->type,ntohs(pkt->size),pkt->id,pkt->role,(char *)data);
     debug("client sent packet");
 	pthread_mutex_unlock(&player->lock);
 	return 0;
@@ -130,11 +136,16 @@ int client_send_ack(CLIENT *client, void *data, size_t datalen){
 	JEUX_PACKET_HEADER header = {0};
 	header.type = JEUX_ACK_PKT;
 	header.size = htons(datalen);
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC,&time);
+    header.timestamp_sec = htonl(time.tv_sec);
+    header.timestamp_nsec = htonl(time.tv_nsec);
 	if(proto_send_packet(client->fd,&header,data)){
         pthread_mutex_unlock(&client->lock);
         debug("failed to send ack");
         return -1;
     }
+    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s\n",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role,(char *)data);
     debug("client sent ack");
 	pthread_mutex_unlock(&client->lock);
 	return 0;
@@ -145,11 +156,16 @@ int client_send_nack(CLIENT *client){
 	pthread_mutex_lock(&client->lock);
 	JEUX_PACKET_HEADER header = {0};
 	header.type = JEUX_NACK_PKT;
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC,&time);
+    header.timestamp_sec = htonl(time.tv_sec);
+    header.timestamp_nsec = htonl(time.tv_nsec);
 	if(proto_send_packet(client->fd,&header,NULL)){
         pthread_mutex_unlock(&client->lock);
         debug("failed to send nack");
         return -1;
     }
+    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d\n",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role);
     debug("send nack");
 	pthread_mutex_unlock(&client->lock);
 	return 0;

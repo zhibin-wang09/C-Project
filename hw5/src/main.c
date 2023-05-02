@@ -46,7 +46,6 @@ int main(int argc, char* argv[]){
     terminal_closed.sa_sigaction = terminal_is_closed; // SIGHUP handler
     sigemptyset(&terminal_closed.sa_mask);
     if(sigaction(SIGHUP, &terminal_closed,NULL) < 0){ // install handler
-        perror("SIGHUP install error");
         return -1;
     }
     // Perform required initializations of the client_registry and
@@ -73,13 +72,11 @@ int main(int argc, char* argv[]){
         clientaddr_len = sizeof(struct sockaddr);
         //connfd = malloc(sizeof(int));
         if((connfd = accept(listenfd, &clientaddr, &clientaddr_len)) < 0){
-            perror("creating communication sock file descriptor failed\n");
             terminate(EXIT_FAILURE);
         }
         connfd_p = malloc(sizeof(int));
         *connfd_p = connfd;
         if(pthread_create(&tid, NULL, &jeux_client_service,connfd_p)){
-            perror("start thread for jeux client service failed\n");
             close(listenfd);
             close(*connfd_p);
             terminate(EXIT_FAILURE);
@@ -103,7 +100,6 @@ int open_listenfd(char *port){
     hint.ai_socktype = SOCK_STREAM; // SOCK_STREAM indicates that this socket will be used as an end point connection
     hint.ai_flags = AI_NUMERICSERV | AI_PASSIVE | AI_ADDRCONFIG; // indicate that socket uses port number as service, , is an listening socket, and is a connection
     if(getaddrinfo(NULL,port,&hint,&res)){ // get the list of addresses
-        perror("Get addr failed\n");
         return -2;
     }
 
@@ -113,17 +109,15 @@ int open_listenfd(char *port){
         setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,    //line:netp:csapp:setsockopt
                    (const void *)&optval , sizeof(int));
         if(!bind(listenfd, ptr -> ai_addr, ptr -> ai_addrlen)) break; // create server side endpoint
-        if(close(listenfd) < 0){perror("close socket failed\n"); return -1;} // close listenfd because it is no longer needed since it didn't work with bind
+        if(close(listenfd) < 0){ return -1;} // close listenfd because it is no longer needed since it didn't work with bind
     }
 
     freeaddrinfo(res); // necessary to free the return list
     if(!ptr){ // no address succeeded
-        perror("Could not bind\n");
         return -1;
     }
 
     if(listen(listenfd, 1024) < 0){
-        perror("Converting descriptor to listen descriptor failed\n");
         close(listenfd);
         return -1;
     }
