@@ -3,7 +3,8 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <pthread.h>
-#include <debug.h>
+
+#include "debug.h"
 #include "client_registry.h"
 #include "client.h"
 #include "player.h"

@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <pthread.h>
-#include <debug.h>
 #include <string.h>
 #include <time.h>
 
+#include "debug.h"
 #include "client_registry.h"
 #include "client.h"
 #include "invitation.h"

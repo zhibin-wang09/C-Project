@@ -1,8 +1,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <debug.h>
 
+#include "debug.h"
 #include "game.h"
 
 struct game{

@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
-#include <debug.h>
+
+#include "debug.h"
 #include "player_registry.h"
 #include "client_registry.h"
 #include "jeux_globals.h"

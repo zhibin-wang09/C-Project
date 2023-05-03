@@ -4,8 +4,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <debug.h>
 
+#include "debug.h"
 #include "jeux_globals.h"
 #include "server.h"
 #include "client_registry.h"

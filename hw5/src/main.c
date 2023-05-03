@@ -48,6 +48,13 @@ int main(int argc, char* argv[]){
     if(sigaction(SIGHUP, &terminal_closed,NULL) < 0){ // install handler
         return -1;
     }
+
+    // struct sigaction process_interrupted = {0};
+    // process_interrupted.sa_sigaction = terminal_is_closed; // SIGHUP handler
+    // sigemptyset(&process_interrupted.sa_mask);
+    // if(sigaction(SIGHUP, &process_interrupted,NULL) < 0){ // install handler
+    //     return -1;
+    // }
     // Perform required initializations of the client_registry and
     // player_registry.
     client_registry = creg_init();
