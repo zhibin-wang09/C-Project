@@ -17,9 +17,9 @@
 #include "game.h"
 
 void *jeux_client_service(void *arg){
+	pthread_detach(pthread_self());
 	int connfd = *(int *)arg;
 	free(arg); // free the arg because it is a heap space variable
-	pthread_detach(pthread_self());
 	CLIENT *client = creg_register(client_registry,connfd);
 	CLIENT *target;
 	int loggedin = 0;
@@ -28,27 +28,27 @@ void *jeux_client_service(void *arg){
 		JEUX_PACKET_HEADER header= {0}; // the packet header holder
 		void *payload = NULL; // the payload
 		if(proto_recv_packet(connfd,&header,&payload) == -1){ // unblock until packet arrive and update header and payload if any
-			debug("Ending client service...\n");
+			debug("Ending client service...");
 			client_logout(client); // remeber to decrease ref count in logout functions because provided function did not seem to do that
 			creg_unregister(client_registry,client);
 			break;
 		}
-		debug("<= %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s\n",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role,(char *)payload);
+		debug("<= %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role,(char *)payload);
 		switch(header.type){
 			case JEUX_LOGIN_PKT: // only login packet are allowed for the first iteration
 				if(!payload) continue;
 				if(loggedin){ // client is already logged in or there is some other user logged in
 					free(payload);
 					client_send_nack(client);
-					debug("Already loggedin\n");
+					debug("Already loggedin");
 					continue;
 				}
-				debug("[5] LOGIN packet received\n");
+				debug("[5] LOGIN packet received");
 				char *name = (char *) payload;
 				player = preg_register(player_registry,name);
 				if(client_login(client,player)){ // in case of error
-					debug("client login error\n");
-					player_unref(player,"login error\n");
+					debug("client login error");
+					player_unref(player,"login error");
 					client_send_nack(client);
 					free(payload);
 					continue;
@@ -75,7 +75,7 @@ void *jeux_client_service(void *arg){
 				for(int i =0; i< num_users;i++){
 					char user_info[528];
 					//construct a text string for one user
-					snprintf(user_info, 528, "%s\t%d\n",player_get_name(users[i]),player_get_rating(users[i]));
+					snprintf(user_info, 528, "%s\t%d",player_get_name(users[i]),player_get_rating(users[i]));
 					//concatnate all user text strings
 					size_t packet_payload_len = strlen(packet_payload);
 				    size_t user_info_len = strlen(user_info);
@@ -107,7 +107,7 @@ void *jeux_client_service(void *arg){
 				if(!(target = creg_lookup(client_registry,user_name)) || (target == client)){
 					// no user exist or source and target are the same.
 					client_send_nack(client);
-					client_unref(target,"same target\n");
+					client_unref(target,"same target");
 					free(payload);
 					continue;
 				}
@@ -121,7 +121,7 @@ void *jeux_client_service(void *arg){
 				JEUX_PACKET_HEADER ack = {0};
 				ack.type = JEUX_ACK_PKT;
 				ack.id =id;
-				client_unref(target,"done using target therefore discarded\n");
+				client_unref(target,"done using target therefore discarded");
 				client_send_packet(client,&ack,NULL); // send ack to the sender
 				free(payload);
 				break;

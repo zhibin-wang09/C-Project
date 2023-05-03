@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
     if((listenfd = open_listenfd(argv[2])) < 0){
         return -1;
     }
-
+    debug("server listening on port %d",port);
     int connfd;
     int *connfd_p;
     socklen_t clientaddr_len;

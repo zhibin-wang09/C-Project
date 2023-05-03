@@ -22,7 +22,7 @@ PLAYER_REGISTRY *preg_init(void){
 	preg_register -> registry_size = 2;
 	(preg_register->players)[preg_register->registry_size] = NULL; // last index is null
 	pthread_mutex_init(&preg_register->lock,NULL);
-	debug("player_registry is created\n");
+	debug("player_registry is created");
 	return preg_register;
 }
 
@@ -31,12 +31,12 @@ void preg_fini(PLAYER_REGISTRY *preg){
 	pthread_mutex_lock(&preg->lock);
 	for(int i=0;i<preg->num_players;i++){
 		if(preg->players[i] != NULL){ // free what ever players that are remaining.
-			player_unref(preg->players[i],"because player registry is being finalized\n");
+			player_unref(preg->players[i],"because player registry is being finalized");
 		}
 	}
 	pthread_mutex_unlock(&preg->lock);
 	pthread_mutex_destroy(&preg->lock);
-	debug("player registry finalized\n");
+	debug("player registry finalized");
 	free(preg->players);
 	free(preg);
 }
@@ -46,7 +46,7 @@ PLAYER *preg_register(PLAYER_REGISTRY *preg, char *name){
 	pthread_mutex_lock(&preg->lock);
 	for(int i=0;i<preg->num_players;i++){
 		if(preg->players[i] != NULL && strlen(name) == strlen(player_get_name(preg->players[i])) && !strncmp(player_get_name(preg->players[i]),name,strlen(name))){
-			player_ref(preg->players[i],"returned by player registry\n");
+			player_ref(preg->players[i],"returned by player registry");
 			pthread_mutex_unlock(&preg->lock);
 			return preg->players[i];
 		}
@@ -56,12 +56,12 @@ PLAYER *preg_register(PLAYER_REGISTRY *preg, char *name){
 		preg->players = realloc(preg->players,(preg->registry_size+5 )* sizeof(PLAYER*)); // increase registry size by 5
 		preg->registry_size += 4; // last index is null so the actual size is += 5 -1
 		preg->players[preg->registry_size] = NULL;
-		debug("new registry size = %d\n",preg->registry_size); // last index is null
+		debug("new registry size = %d",preg->registry_size); // last index is null
 	}
 	// not found then create a new one
 	PLAYER *player = player_create(name);
 	(preg->players)[preg->num_players] = player; // insert at the last position
-	player_ref(player,"reference retained by player registry\n");
+	player_ref(player,"reference retained by player registry");
 	preg->num_players++;
 	pthread_mutex_unlock(&preg->lock);
 	return player;
