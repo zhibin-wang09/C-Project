@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <pthread.h>
-#include <debug.h>
 #include <string.h>
 #include <time.h>
 
+#include "debug.h"
 #include "client_registry.h"
 #include "client.h"
 #include "invitation.h"
@@ -24,7 +24,7 @@ CLIENT *client_create(CLIENT_REGISTRY *creg, int fd){
     pthread_mutexattr_settype(&client->recursive_type,PTHREAD_MUTEX_RECURSIVE); // set the mutex to be recursive in order to do function calls of the same nested mutex
 	pthread_mutex_init(&client->lock,&client->recursive_type);
     client->reference_count=0;
-    client_ref(client,"newly created client\n");
+    client_ref(client,"newly created client");
     client->player = NULL;
 	return client;
 }
@@ -46,9 +46,9 @@ void client_unref(CLIENT *client, char *why){
 	if(client->reference_count == 0){ // client and its associated fields should be freed
 		client_logout(client);
 		for(int i =0; i<255;i++){
-			if(client->invitation_list[i] != NULL) inv_unref(client->invitation_list[i],"client is freed\n");
+			if(client->invitation_list[i] != NULL) inv_unref(client->invitation_list[i],"client is freed");
 		}
-        if(client->player != NULL) player_unref(client->player,"client is freed\n");
+        if(client->player != NULL) player_unref(client->player,"client is freed");
 		pthread_mutex_unlock(&client->lock);
 		pthread_mutex_destroy(&client->lock);
         pthread_mutexattr_destroy(&client->recursive_type);
@@ -59,11 +59,11 @@ void client_unref(CLIENT *client, char *why){
 }
 
 int client_login(CLIENT *client, PLAYER *player){
-	if(client == NULL || player == NULL){debug("argument not valid in login\n"); return -1;}
+	if(client == NULL || player == NULL){debug("argument not valid in login"); return -1;}
 	pthread_mutex_lock(&client->lock);
-	if(client->player){debug("already logged in\n"); return -1; }// already logged in
+	if(client->player){debug("already logged in"); return -1; }// already logged in
 	client->player = player;
-	player_ref(player,"logged in, reference retained by client\n");
+	player_ref(player,"logged in, reference retained by client");
 	pthread_mutex_unlock(&client->lock);
 	return 0;
 }
@@ -79,24 +79,14 @@ int client_logout(CLIENT *client){
         if(inv != NULL){
             //decline or revoke then remove from this client list and its opponent
             if(client_resign_game(client,i) == 0) continue; // resign if possible
-            CLIENT *opponent;
-            if(inv_get_source(inv) == client){ // find the role of the client
-                opponent = inv_get_target(inv);
-                client_ref(opponent,"client logout needs the opponent reference\n");
-            }else{
-                opponent = inv_get_source(inv);
-                client_ref(opponent,"client logout needs the opponent reference\n");
+            if(inv_get_source(inv) == client){ // find the role of the client, if source then revoke all outstanding invitiation
+                client_revoke_invitation(client,i);
+            }else{// if target then decline all outstanding invitation
+                client_decline_invitation(client,i);
             }
-            if(inv_close(inv,NULL_ROLE)){ // if not possible just close the invitation
-                debug("invitation close failed in client_logout()\n");
-                return -1;
-            }
-            client_remove_invitation(client,inv);
-            client_remove_invitation(opponent,inv);
-            client_unref(opponent,"reference released after removing invitation from opponent\n");
         }
     }
-	player_unref(client->player,"player logged out...\n");
+	player_unref(client->player,"player logged out...");
 	client->player = NULL;
 	pthread_mutex_unlock(&client->lock);
 	return 0;
@@ -124,7 +114,7 @@ int client_send_packet(CLIENT *player, JEUX_PACKET_HEADER *pkt, void *data){
         debug("failed to send packet");
         return -1;
     }
-    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s\n",ntohl(pkt->timestamp_sec),ntohl(pkt->timestamp_nsec),pkt->type,ntohs(pkt->size),pkt->id,pkt->role,(char *)data);
+    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s",ntohl(pkt->timestamp_sec),ntohl(pkt->timestamp_nsec),pkt->type,ntohs(pkt->size),pkt->id,pkt->role,(char *)data);
     debug("client sent packet");
 	pthread_mutex_unlock(&player->lock);
 	return 0;
@@ -145,7 +135,7 @@ int client_send_ack(CLIENT *client, void *data, size_t datalen){
         debug("failed to send ack");
         return -1;
     }
-    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s\n",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role,(char *)data);
+    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d paylopd=%s",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role,(char *)data);
     debug("client sent ack");
 	pthread_mutex_unlock(&client->lock);
 	return 0;
@@ -165,7 +155,7 @@ int client_send_nack(CLIENT *client){
         debug("failed to send nack");
         return -1;
     }
-    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d\n",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role);
+    debug("=> %u.%u: type=%d, size=%d, id=%d, role=%d",ntohl(header.timestamp_sec),ntohl(header.timestamp_nsec),header.type,ntohs(header.size),header.id,header.role);
     debug("send nack");
 	pthread_mutex_unlock(&client->lock);
 	return 0;
@@ -179,7 +169,7 @@ int client_add_invitation(CLIENT *client, INVITATION *inv){
 		if(client->invitation_list[i] == NULL)break;
 	}
 	client->invitation_list[i] = inv; // invitation id is the index of the invitation
-	inv_ref(inv,"reference retained by client's invitation list\n");
+	inv_ref(inv,"reference retained by client's invitation list");
 	pthread_mutex_unlock(&client->lock);
 
 	return i;
@@ -194,11 +184,11 @@ int client_remove_invitation(CLIENT *client, INVITATION *inv){
 	}
     if(i == 255){ // invitation not foudn in the list
         pthread_mutex_unlock(&client->lock);
-        debug("invitation was not found in the attempt to remove invitation\n");
+        debug("invitation was not found in the attempt to remove invitation");
         return -1;
     }
 	client->invitation_list[i] = NULL;
-	inv_unref(inv,"reference released by client after removing invitation\n");
+	inv_unref(inv,"reference released by client after removing invitation");
 	pthread_mutex_unlock(&client->lock);
 
 	return 0;
@@ -221,10 +211,10 @@ int client_make_invitation(CLIENT *source, CLIENT *target,
 	if(client_send_packet(target,&hdr,player_get_name(client_get_player(source)))){ // send INVITED PACKET to target
         pthread_mutex_unlock(&source->lock);
         pthread_mutex_unlock(&target->lock);
-        debug("client send INVITED packet failed\n");
+        debug("client send INVITED packet failed");
         return -1;
     }
-    debug("client send INVITED packet succeed\n");
+    debug("client send INVITED packet succeed");
     inv_unref(inv,"reference released after adding invitation to client's list");
 	pthread_mutex_unlock(&source->lock);
 	pthread_mutex_unlock(&target->lock);
@@ -270,7 +260,7 @@ int client_revoke_invitation(CLIENT *client, int id){
         pthread_mutex_unlock(&client->lock);
         return -1;
     }
-    debug("revoked packet sent\n");
+    debug("revoked packet sent");
     pthread_mutex_unlock(&client->lock);
 
     return 0;
@@ -315,7 +305,7 @@ int client_decline_invitation(CLIENT *client, int id){
         pthread_mutex_unlock(&client->lock);
         return -1;
     }
-    debug("declined packet sent\n");
+    debug("declined packet sent");
     pthread_mutex_unlock(&client->lock);
     return 0;
 }
@@ -331,7 +321,7 @@ int client_accept_invitation(CLIENT *client, int id, char **strp){
     }
     int source_id = -1;
     CLIENT *source = inv_get_source(inv);
-    client_ref(source,"reference obtained temporarily to search through invitation\n");
+    client_ref(source,"reference obtained temporarily to search through invitation");
     for(int i =0; i<255;i++){ // finding the id of the source
         if(source->invitation_list[i] == inv){
             source_id = i;
@@ -339,7 +329,7 @@ int client_accept_invitation(CLIENT *client, int id, char **strp){
         }
     }
     if(source_id == -1){ // invitation in source not found
-        client_unref(source,"reference released after failed in searching for source id\n");
+        client_unref(source,"reference released after failed in searching for source id");
         pthread_mutex_unlock(&client->lock);
         return -1;
     }
@@ -349,7 +339,7 @@ int client_accept_invitation(CLIENT *client, int id, char **strp){
         return -1;
     }
     GAME *game = inv_get_game(inv);
-    game_ref(game,"reference obtained by client_accept_invitation() temporarily\n");
+    game_ref(game,"reference obtained by client_accept_invitation() temporarily");
     int source_role = inv_get_source_role(inv);
     JEUX_PACKET_HEADER hdr= {0};
     hdr.type = JEUX_ACCEPTED_PKT;
@@ -360,7 +350,7 @@ int client_accept_invitation(CLIENT *client, int id, char **strp){
         char *initial_state = game_unparse_state(game);
         hdr.size = htons(strlen(initial_state)+1);
         client_send_packet(source,&hdr,initial_state);
-        client_unref(source,"reference released after searching for source id\n");
+        client_unref(source,"reference released after searching for source id");
         game_unref(game,"reference released after obtaining the initail game state");
         free(initial_state);
         *strp= NULL;
@@ -368,7 +358,7 @@ int client_accept_invitation(CLIENT *client, int id, char **strp){
     if(source_role == SECOND_PLAYER_ROLE){
         // send accept packet to source with no payload
         client_send_packet(source,&hdr,NULL);
-        client_unref(source,"reference released after searching for source id\n");
+        client_unref(source,"reference released after searching for source id");
         char *initial_state = game_unparse_state(game);
         *strp = initial_state;
         game_unref(game,"reference released after obtaining the initail game state");
@@ -394,7 +384,7 @@ int client_resign_game(CLIENT *client, int id){
             return -1;
         }
         opp = inv_get_target(inv);
-        client_ref(opp,"client_resign_game() get the oppponent's reference\n");
+        client_ref(opp,"client_resign_game() get the oppponent's reference");
         JEUX_PACKET_HEADER hdr = {0};
         hdr.type = JEUX_RESIGNED_PKT;
         int opp_id = -1;
@@ -408,12 +398,12 @@ int client_resign_game(CLIENT *client, int id){
     if(inv_get_target(inv) == client){ // client is target
         GAME_ROLE target_role = inv_get_target_role(inv);
         if(inv_close(inv,target_role)){ // closing resulted in error
-            debug("resign failed\n");
+            debug("resign failed");
             pthread_mutex_unlock(&client->lock);
             return -1;
         }
         opp = inv_get_source(inv);
-        client_ref(opp,"get the oppponent's reference\n");
+        client_ref(opp,"get the oppponent's reference");
         JEUX_PACKET_HEADER hdr = {0};
         hdr.type = JEUX_RESIGNED_PKT;
         int opp_id = -1;
@@ -425,13 +415,13 @@ int client_resign_game(CLIENT *client, int id){
     }
 
     GAME *game = inv_get_game(inv);
-    game_ref(game,"reference obtained by client_resign_game() temporarily to check for game state\n");
+    game_ref(game,"reference obtained by client_resign_game() temporarily to check for game state");
     if(game_is_over(game)){// game is resigned
        GAME_ROLE winner = game_get_winner(game);
        CLIENT *source = inv_get_source(inv);
        CLIENT *target = inv_get_target(inv);
-       client_ref(source,"reference obtained by client_resign_game() to get player and update rating\n");
-       client_ref(target,"reference obtained by client_resign_game() to get player and update rating\n");
+       client_ref(source,"reference obtained by client_resign_game() to get player and update rating");
+       client_ref(target,"reference obtained by client_resign_game() to get player and update rating");
        CLIENT *opp;
        if(inv_get_source(inv) == client){
             opp=inv_get_target(inv);
@@ -467,14 +457,14 @@ int client_resign_game(CLIENT *client, int id){
        }
        ended_packet_2.id = ended_packet_2_id;
        client_send_packet(target,&ended_packet_2,NULL);
-       client_unref(source,"source reference released after updating rating\n");
-       client_unref(target,"target reference released after updating rating\n");
+       client_unref(source,"source reference released after updating rating");
+       client_unref(target,"target reference released after updating rating");
     }
 
     client_remove_invitation(client,inv);
     client_remove_invitation(opp,inv); // remove the invitation from the opponent's list as well
-    client_unref(opp,"reference released because packet sent to opponent\n");
-    game_unref(game,"reference released by client_resign_game()\n");
+    client_unref(opp,"reference released because packet sent to opponent");
+    game_unref(game,"reference released by client_resign_game()");
     pthread_mutex_unlock(&client->lock);
     return 0;
 }
@@ -484,7 +474,7 @@ int client_make_move(CLIENT *client, int id, char *move){
     int opp_side=-1; // used to determine if the client is source or target
     pthread_mutex_lock(&client->lock);
     INVITATION *inv = client->invitation_list[id];
-    inv_ref(inv,"reference used to locate the invitation to make a move\n");
+    inv_ref(inv,"reference used to locate the invitation to make a move");
     if(inv == NULL){
         //invitation does not exist
         pthread_mutex_unlock(&client->lock);
@@ -500,20 +490,20 @@ int client_make_move(CLIENT *client, int id, char *move){
         opp_side = 0;
     }
     GAME *game = inv_get_game(inv);
-    game_ref(game,"reference used to make move on the game\n");
+    game_ref(game,"reference used to make move on the game");
     GAME_MOVE *game_move = game_parse_move(game,client_role,move);
     if(game_move == NULL){ // if parsing game move resulted in failure
-        debug("parsing game move failed\n");
-        inv_unref(inv,"done using the reference\n");
-        game_unref(game,"done using the reference\n");
+        debug("parsing game move failed");
+        inv_unref(inv,"done using the reference");
+        game_unref(game,"done using the reference");
         pthread_mutex_unlock(&client->lock);
         return -1;
     }
     if(game_apply_move(game,game_move)){
         // applying thr game move resulted in failure
-        debug("applying game move failed\n");
-        inv_unref(inv,"done using the reference\n");
-        game_unref(game,"done using the reference\n");
+        debug("applying game move failed");
+        inv_unref(inv,"done using the reference");
+        game_unref(game,"done using the reference");
         free(game_move);
         pthread_mutex_unlock(&client->lock);
         return -1;
@@ -548,8 +538,8 @@ int client_make_move(CLIENT *client, int id, char *move){
        GAME_ROLE winner = game_get_winner(game);
        CLIENT *source = inv_get_source(inv);
        CLIENT *target = inv_get_target(inv);
-       client_ref(source,"reference obtained by client_resign_game to get player and update rating\n");
-       client_ref(target,"reference obtained by client_resign_game to get player and update rating\n");
+       client_ref(source,"reference obtained by client_resign_game to get player and update rating");
+       client_ref(target,"reference obtained by client_resign_game to get player and update rating");
        if(winner == FIRST_PLAYER_ROLE){
             if(inv_get_source_role(inv) == FIRST_PLAYER_ROLE){
                 player_post_result(client_get_player(source),client_get_player(target),winner);
@@ -593,11 +583,11 @@ int client_make_move(CLIENT *client, int id, char *move){
        client_send_packet(target,&ended_packet_2,NULL);
        client_remove_invitation(source,inv);
        client_remove_invitation(target,inv);
-       client_unref(source,"source reference released after updating rating\n");
-       client_unref(target,"target reference released after updating rating\n");
+       client_unref(source,"source reference released after updating rating");
+       client_unref(target,"target reference released after updating rating");
     }
-    inv_unref(inv,"done using the reference\n");
-    game_unref(game,"done using the reference\n");
+    inv_unref(inv,"done using the reference");
+    game_unref(game,"done using the reference");
     pthread_mutex_unlock(&client->lock);
     return 0;
 }

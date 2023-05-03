@@ -3,7 +3,8 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <pthread.h>
-#include <debug.h>
+
+#include "debug.h"
 #include "client_registry.h"
 #include "client.h"
 #include "player.h"
@@ -22,7 +23,7 @@ CLIENT_REGISTRY *creg_init(){
 	pthread_mutex_init(&(registry -> lock), NULL);
 	registry->current_capacity = 0;
 	sem_init(&(registry->semaphore), 0 ,0);
-	debug("client registry created\n");
+	debug("client registry created");
 	return registry;
 }
 
@@ -46,7 +47,7 @@ CLIENT *creg_register(CLIENT_REGISTRY *cr, int fd){
 	}
 	(cr->list_of_clients)[i] = client;
 	cr->current_capacity = cr->current_capacity+1;
-	//client_ref(client, "client is registered and returned\n");
+	//client_ref(client, "client is registered and returned");
 	pthread_mutex_unlock(&(cr -> lock));
 
 	return client;
@@ -60,7 +61,7 @@ int creg_unregister(CLIENT_REGISTRY *cr, CLIENT *client){
 		if((cr->list_of_clients)[index] == client) break;
 	}
 	if((cr->list_of_clients)[index] == 0){ pthread_mutex_unlock(&(cr -> lock)); return -1;} // no corresponding client found
-	client_unref(client, "reference of client is unregistered\n");
+	client_unref(client, "reference of client is unregistered");
 	cr->current_capacity = cr->current_capacity-1;
 	if(!cr->current_capacity) sem_post(&cr->semaphore); // increase semaphore to allow wait_for_empty because no more clients
 	(cr->list_of_clients)[index] = 0;
@@ -77,7 +78,7 @@ CLIENT *creg_lookup(CLIENT_REGISTRY *cr, char *user){
 		PLAYER *p = client_get_player((cr->list_of_clients)[index]); // get the client's name
 		char *p_username = player_get_name(p); // get the name of the player
 		if(!strcmp(p_username, user)){ // if name is the same then return client
-			client_ref((cr->list_of_clients)[index], "reference increased by client lookup\n");
+			client_ref((cr->list_of_clients)[index], "reference increased by client lookup");
 			CLIENT *lookup  = (cr->list_of_clients)[index];
 			pthread_mutex_unlock(&(cr -> lock));
 			return lookup;
@@ -95,7 +96,7 @@ PLAYER **creg_all_players(CLIENT_REGISTRY *cr){
 	for(int i =0; i < MAX_CLIENTS; i++){
 		if(!(cr->list_of_clients)[i]) continue; // if the index does not contain client then skip
 		players[index] = client_get_player(( cr->list_of_clients)[i]);
-		player_ref(players[index],"reference being added to player list\n");
+		player_ref(players[index],"reference being added to player list");
 		index++;
 	}
 	pthread_mutex_unlock(&(cr->lock));

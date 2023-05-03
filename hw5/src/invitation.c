@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <pthread.h>
-#include <debug.h>
 
+#include "debug.h"
 #include "client_registry.h"
 #include "client.h"
 #include "invitation.h"
@@ -26,14 +26,14 @@ INVITATION *inv_create(CLIENT *source, CLIENT *target, GAME_ROLE source_role, GA
 	if(source == target) return NULL;
 	INVITATION *invite = calloc(1,sizeof(INVITATION)); // initial a zero heap space
 	invite -> source = source;
-	client_ref(source,"as source of invitation\n");
+	client_ref(source,"as source of invitation");
 	invite -> target = target;
-	client_ref(target, "as target of invitation\n");
+	client_ref(target, "as target of invitation");
 	invite -> state = INV_OPEN_STATE;
 	invite -> source_role = source_role;
 	invite -> target_role = target_role;
 	pthread_mutex_init(&(invite -> lock), NULL);
-	inv_ref(invite,"for newly created invite\n");
+	inv_ref(invite,"for newly created invite");
 	return invite;
 }
 
@@ -53,9 +53,9 @@ void inv_unref(INVITATION *inv, char *why){
 	inv->reference_count--; // increase the invitation count
 	debug("Decrease reference count on invitation (%d -> %d) %s",inv->reference_count+1, inv->reference_count,why);
 	if(inv->reference_count == 0){// if the reference count is zero then free the invitation
-		 if(inv->game) game_unref(inv->game,"invitation is freed\n");
-		 if(inv->source) client_unref(inv->source,"invitation is freed\n");
-		 if(inv->target) client_unref(inv->target,"invitation is freed\n");
+		 if(inv->game) game_unref(inv->game,"invitation is freed");
+		 if(inv->source) client_unref(inv->source,"invitation is freed");
+		 if(inv->target) client_unref(inv->target,"invitation is freed");
 		 pthread_mutex_unlock(&inv->lock);
 		 pthread_mutex_destroy(&inv->lock);
 		 free(inv);

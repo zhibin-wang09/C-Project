@@ -1,9 +1,9 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <debug.h>
 #include <math.h>
 
+#include "debug.h"
 #include "player.h"
 
 struct player{
