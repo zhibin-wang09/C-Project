@@ -79,21 +79,11 @@ int client_logout(CLIENT *client){
         if(inv != NULL){
             //decline or revoke then remove from this client list and its opponent
             if(client_resign_game(client,i) == 0) continue; // resign if possible
-            CLIENT *opponent;
-            if(inv_get_source(inv) == client){ // find the role of the client
-                opponent = inv_get_target(inv);
-                client_ref(opponent,"client logout needs the opponent reference\n");
-            }else{
-                opponent = inv_get_source(inv);
-                client_ref(opponent,"client logout needs the opponent reference\n");
+            if(inv_get_source(inv) == client){ // find the role of the client, if source then revoke all outstanding invitiation
+                client_revoke_invitation(client,i);
+            }else{// if target then decline all outstanding invitation
+                client_decline_invitation(client,i);
             }
-            if(inv_close(inv,NULL_ROLE)){ // if not possible just close the invitation
-                debug("invitation close failed in client_logout()\n");
-                return -1;
-            }
-            client_remove_invitation(client,inv);
-            client_remove_invitation(opponent,inv);
-            client_unref(opponent,"reference released after removing invitation from opponent\n");
         }
     }
 	player_unref(client->player,"player logged out...\n");
