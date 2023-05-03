@@ -75,7 +75,7 @@ void *jeux_client_service(void *arg){
 				for(int i =0; i< num_users;i++){
 					char user_info[528];
 					//construct a text string for one user
-					snprintf(user_info, 528, "%s\t%d",player_get_name(users[i]),player_get_rating(users[i]));
+					snprintf(user_info, 528, "%s\t%d\n",player_get_name(users[i]),player_get_rating(users[i]));
 					//concatnate all user text strings
 					size_t packet_payload_len = strlen(packet_payload);
 				    size_t user_info_len = strlen(user_info);
