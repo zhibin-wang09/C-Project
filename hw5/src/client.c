@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "debug.h"
+#include "jeux_globals.h"
 #include "client_registry.h"
 #include "client.h"
 #include "invitation.h"
@@ -61,7 +62,9 @@ void client_unref(CLIENT *client, char *why){
 int client_login(CLIENT *client, PLAYER *player){
 	if(client == NULL || player == NULL){debug("argument not valid in login"); return -1;}
 	pthread_mutex_lock(&client->lock);
-	if(client->player){debug("already logged in"); return -1; }// already logged in
+	if(client->player){debug("already logged in"); pthread_mutex_unlock(&client->lock); return -1; }// already logged in
+    CLIENT *exist = creg_lookup(client_registry,player_get_name(player)); // look up if the player with the specific user name exist already can not have repeated username
+    if(exist != NULL){client_unref(exist,"found client exist therefore discard reference"); pthread_mutex_unlock(&client->lock); return -1;}
 	client->player = player;
 	player_ref(player,"logged in, reference retained by client");
 	pthread_mutex_unlock(&client->lock);

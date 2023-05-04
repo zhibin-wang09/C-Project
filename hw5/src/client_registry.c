@@ -76,8 +76,13 @@ CLIENT *creg_lookup(CLIENT_REGISTRY *cr, char *user){
 	for(index = 0;index < MAX_CLIENTS; index++){ //loop through the registry array
 		if(!(cr->list_of_clients)[index]) continue; // if the index does not contain client then skip
 		PLAYER *p = client_get_player((cr->list_of_clients)[index]); // get the client's name
+		if(p == NULL){ // player does not currently exist
+			pthread_mutex_unlock(&(cr -> lock));
+			return NULL;
+		}
 		char *p_username = player_get_name(p); // get the name of the player
-		if(!strcmp(p_username, user)){ // if name is the same then return client
+		if(strlen(user) == strlen(p_username) &&!strncmp(p_username, user,strlen(user))){ // if name is the same then return client
+			debug("another client logged as the same username, try other usename");
 			client_ref((cr->list_of_clients)[index], "reference increased by client lookup");
 			CLIENT *lookup  = (cr->list_of_clients)[index];
 			pthread_mutex_unlock(&(cr -> lock));
