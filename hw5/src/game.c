@@ -99,10 +99,21 @@ int game_apply_move(GAME *game, GAME_MOVE *move){
 		connected = 0;
 		start =0;
 		//vertical
-		for(int i =0; i<2;i++){
-			if(state[start] == ' ')break;
-			if(state[start + 12] == state[start]) connected++;
-			start+=12;
+		start =0;
+		int row = 0;
+		//vertically
+		for(int j =0; j<3;j++){
+			for(int i =0; i<2;i++){
+				if(state[start] == ' ')break;
+				if(state[start + 12] == state[start]) connected++;
+				start+=12;
+			}
+			if(connected == 2){
+				break;
+			}
+			connected=0;
+			row+=2;
+			start = row;
 		}
 		if(connected == 2){
 			game->winner = move->move == 'X' ? FIRST_PLAYER_ROLE :SECOND_PLAYER_ROLE;
@@ -155,12 +166,21 @@ int game_apply_move(GAME *game, GAME_MOVE *move){
 			game->ended=1;
 		}
 		connected = 0;
-		start =2;
+		start =0;
+		int row = 0;
 		//vertically
-		for(int i =0; i<2;i++){
-			if(state[start] == ' ')break;
-			if(state[start + 12] == state[start]) connected++;
-			start+=12;
+		for(int j =0; j<3;j++){
+			for(int i =0; i<2;i++){
+				if(state[start] == ' ')break;
+				if(state[start + 12] == state[start]) connected++;
+				start+=12;
+			}
+			if(connected == 2){
+				break;
+			}
+			connected=0;
+			row+=2;
+			start = row;
 		}
 		if(connected == 2){
 			game->winner = move->move == 'X' ? FIRST_PLAYER_ROLE :SECOND_PLAYER_ROLE;
@@ -200,12 +220,22 @@ int game_apply_move(GAME *game, GAME_MOVE *move){
 		state[24 +relative_pos*2] = move->move;
 
 		int connected = 0;
-		int start = 4;
 		//vertical
-		for(int i =0; i<2;i++){
-			if(state[start] == ' ')break;
-			if(state[start +12] == state[start])connected++;
-			start+=12;
+		int start =0;
+		int row = 0;
+		//vertically
+		for(int j =0; j<3;j++){
+			for(int i =0; i<2;i++){
+				if(state[start] == ' ')break;
+				if(state[start + 12] == state[start]) connected++;
+				start+=12;
+			}
+			if(connected == 2){
+				break;
+			}
+			connected=0;
+			row+=2;
+			start = row;
 		}
 		if(connected == 2){
 			game->winner = move->move == 'X' ? FIRST_PLAYER_ROLE :SECOND_PLAYER_ROLE;

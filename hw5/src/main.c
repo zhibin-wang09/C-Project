@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
     if(argc != 3) return -1; // no -p <port>
     if(strcmp(argv[1],"-p")) return -1; // option is not -p
     port = (int)strtol(argv[2],NULL,10);
-    if(port < 1024) return -1; // port is declared int the range of reserved ports
+    if(port < 0) return -1; // port is declared int the range of reserved ports
 
     struct sigaction terminal_closed = {0};
     terminal_closed.sa_sigaction = terminal_is_closed; // SIGHUP handler
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
     // shutdown of the server.
 
     if((listenfd = open_listenfd(argv[2])) < 0){
-        return -1;
+        terminate(EXIT_FAILURE);
     }
     debug("server listening on port %d",port);
     int connfd;
