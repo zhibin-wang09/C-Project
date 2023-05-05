@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
     // shutdown of the server.
 
     if((listenfd = open_listenfd(argv[2])) < 0){
-        return -1;
+        terminate(EXIT_FAILURE);
     }
     debug("server listening on port %d",port);
     int connfd;
