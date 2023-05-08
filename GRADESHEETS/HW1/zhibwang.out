@@ -1,0 +1,135 @@
+--ascii is deprecated. Use LANG/LC_* variables to control encoding, and TERM/--color to control colors.
+[----] Criterion v2.4.1-13-g2f48d0f-dirty (bleeding)
+[====] Running 6 tests from basecode_suite:
+[RUN ] basecode_suite::fliki_basic_test
+[PASS] basecode_suite::fliki_basic_test: (0.01s)
+[RUN ] basecode_suite::help_system_test
+[PASS] basecode_suite::help_system_test: (0.00s)
+[RUN ] basecode_suite::validargs_error_test
+[PASS] basecode_suite::validargs_error_test: (0.00s)
+[RUN ] basecode_suite::validargs_help_test
+[PASS] basecode_suite::validargs_help_test: (0.00s)
+[RUN ] basecode_suite::validargs_no_flags_test
+[PASS] basecode_suite::validargs_no_flags_test: (0.00s)
+[RUN ] basecode_suite::validargs_no_patch_test
+[PASS] basecode_suite::validargs_no_patch_test: (0.00s)
+[====] Running 7 tests from blackbox_suite:
+[RUN ] blackbox_suite::ensure_errors_to_stderr
+[PASS] blackbox_suite::ensure_errors_to_stderr: (0.01s)
+[RUN ] blackbox_suite::ignore_after_help_test
+[PASS] blackbox_suite::ignore_after_help_test: (0.01s)
+[RUN ] blackbox_suite::invalid_diff_separator
+Error, hunk data section format is wrong
+1,2c1
+[PASS] blackbox_suite::invalid_diff_separator: (0.01s)
+[RUN ] blackbox_suite::invalid_dir_diff
+Error, hunk data section format is wrong
+1,2c1
+[PASS] blackbox_suite::invalid_dir_diff: (0.01s)
+[RUN ] blackbox_suite::large_json_test
+[PASS] blackbox_suite::large_json_test: (0.01s)
+[RUN ] blackbox_suite::test_no_out_mode
+[PASS] blackbox_suite::test_no_out_mode: (0.01s)
+[RUN ] blackbox_suite::test_quiet_mode
+[PASS] blackbox_suite::test_quiet_mode: (0.01s)
+[====] Running 3 tests from fliki_hunk_show_test:
+[RUN ] fliki_hunk_show_test::basic_test
+[----] tests/fliki_utils.h:67: Assertion Failed
+[----]   
+[----]   Test Failed: basic_test_first_hunk
+[----]   
+[FAIL] fliki_hunk_show_test::basic_test: (0.00s)
+[RUN ] fliki_hunk_show_test::elipsis_test
+[----] tests/fliki_utils.h:67: Assertion Failed
+[----]   
+[----]   Test Failed: elipsis_test
+[----]   
+[FAIL] fliki_hunk_show_test::elipsis_test: (0.00s)
+...
+[RUN ] fliki_hunk_show_test::print_middle_test
+[----] tests/fliki_utils.h:67: Assertion Failed
+[----]   
+[----]   Test Failed: print_middle_test_in_middle
+[----]   
+[FAIL] fliki_hunk_show_test::print_middle_test: (0.00s)
+[====] Running 6 tests from hunk_getc_suite:
+[RUN ] hunk_getc_suite::basic_change_return_test
+[----] tests/fliki_tests.c:621: Assertion Failed
+[----]   
+[----]   Invalid char received for hunk_getc. Got: -2 | Expected: 46 
+[----]   
+[FAIL] hunk_getc_suite::basic_change_return_test: (0.00s)
+[RUN ] hunk_getc_suite::basic_error_test
+[PASS] hunk_getc_suite::basic_error_test: (0.00s)
+[RUN ] hunk_getc_suite::basic_line_return_test
+[PASS] hunk_getc_suite::basic_line_return_test: (0.00s)
+[RUN ] hunk_getc_suite::eof_mid_hunk_test
+[PASS] hunk_getc_suite::eof_mid_hunk_test: (0.00s)
+[RUN ] hunk_getc_suite::mismatch_brackets_test
+[PASS] hunk_getc_suite::mismatch_brackets_test: (0.00s)
+[RUN ] hunk_getc_suite::multiple_line_return_test
+[PASS] hunk_getc_suite::multiple_line_return_test: (0.00s)
+[====] Running 6 tests from hunk_next_suite:
+[RUN ] hunk_next_suite::basic_pass_test
+[PASS] hunk_next_suite::basic_pass_test: (0.00s)
+[RUN ] hunk_next_suite::invalid_diff_command_test
+[PASS] hunk_next_suite::invalid_diff_command_test: (0.00s)
+[RUN ] hunk_next_suite::leading_zero_pass_test1
+[PASS] hunk_next_suite::leading_zero_pass_test1: (0.00s)
+[RUN ] hunk_next_suite::leading_zero_pass_test2
+[PASS] hunk_next_suite::leading_zero_pass_test2: (0.00s)
+[RUN ] hunk_next_suite::state_agnostic_hunk_test
+[PASS] hunk_next_suite::state_agnostic_hunk_test: (0.00s)
+[RUN ] hunk_next_suite::truncated_diff_test
+[----] tests/fliki_utils.h:18: Assertion Failed
+[----]   
+[----]   Invalid return for not returning ERR. Diff file had malformed hunk header!. Got: -1 | Expected: -2
+[----]   
+[FAIL] hunk_next_suite::truncated_diff_test: (0.00s)
+[====] Running 7 tests from patch_test_suite:
+[RUN ] patch_test_suite::basic_test
+[PASS] patch_test_suite::basic_test: (0.01s)
+[RUN ] patch_test_suite::empty_diff_test
+[PASS] patch_test_suite::empty_diff_test: (0.01s)
+[RUN ] patch_test_suite::invalid_diff_test
+Error, hunk data section format is wrong
+1,2c1
+[PASS] patch_test_suite::invalid_diff_test: (0.00s)
+[RUN ] patch_test_suite::no_sep_test
+Error, hunk data section format is wrong
+1,2c1
+[PASS] patch_test_suite::no_sep_test: (0.00s)
+[RUN ] patch_test_suite::wrong_delete_line_test
+Error, hunk deletion section don't match with input file
+6d4
+[PASS] patch_test_suite::wrong_delete_line_test: (0.00s)
+[RUN ] patch_test_suite::wrong_line_number_test
+Error, hunk deletion section don't match with input file
+2,3c1
+[PASS] patch_test_suite::wrong_line_number_test: (0.00s)
+[RUN ] patch_test_suite::wrong_line_range_test
+Error, lines don't match
+1,2c3,4
+> This is file2.
+[PASS] patch_test_suite::wrong_line_range_test: (0.00s)
+[====] Running 7 tests from validargs_suite:
+[RUN ] validargs_suite::diff_filename_no_flags
+[PASS] validargs_suite::diff_filename_no_flags: (0.00s)
+[RUN ] validargs_suite::first_least_significant_bit_if_h_set
+[PASS] validargs_suite::first_least_significant_bit_if_h_set: (0.00s)
+[RUN ] validargs_suite::incorrect_input_flag_order
+[PASS] validargs_suite::incorrect_input_flag_order: (0.00s)
+[RUN ] validargs_suite::no_diff_file_given
+[PASS] validargs_suite::no_diff_file_given: (0.00s)
+[RUN ] validargs_suite::no_diff_file_or_flag_given
+[PASS] validargs_suite::no_diff_file_or_flag_given: (0.00s)
+[RUN ] validargs_suite::options_modified_on_error
+[----] tests/fliki_utils.h:40: Assertion Failed
+[----]   
+[----]   Invalid options settings. Got: 0x2 | Expected: 0x0
+[----]   
+[FAIL] validargs_suite::options_modified_on_error: (0.00s)
+[RUN ] validargs_suite::too_many_flags
+[PASS] validargs_suite::too_many_flags: (0.00s)
+[----] Writing xml report in `crit.xml`.
+[====] Synthesis: Tested: 42 | Passing: 36 | Failing: 6 | Crashing: 0 

@@ -1,0 +1,45 @@
+Graded Commit:74edf32a103b1a33108757310e8ab69132d552a8
+
+TEST NAME, POINTS,OUT OF
+sf_memsuite_grading/free_block_too_small,1,1,
+sf_memsuite_grading/free_null,0,1,0 assertion(s) failed.: None
+sf_memsuite_grading/free_unallocated,1,1,
+sf_memsuite_grading/initialization,1,1,
+sf_memsuite_grading/malloc_free_coalesce_both,0,1,The test crashed.: None
+sf_memsuite_grading/malloc_free_coalesce_lower,1,1,
+sf_memsuite_grading/malloc_free_coalesce_upper,1,1,
+sf_memsuite_grading/malloc_free_first_block,1,1,
+sf_memsuite_grading/malloc_free_last_block,0,1,1 assertion(s) failed.: tests/__grading_helpers.c:99: block's footer does not match header for 0x5626613c6670
+sf_memsuite_grading/malloc_free_lifo,0,1,1 assertion(s) failed.: tests/grading_tests_p2.c:44: malloc/free does not follow LIFO discipline
+sf_memsuite_grading/malloc_free_no_coalesce,1,1,
+sf_memsuite_grading/malloc_to_exhaustion,1,1,
+sf_memsuite_grading/malloc_with_splinter,1,1,
+sf_memsuite_grading/multiple_quick_lists,1,1,
+sf_memsuite_grading/realloc_larger,1,1,
+sf_memsuite_grading/realloc_same,1,1,
+sf_memsuite_grading/realloc_size_0,1,1,
+sf_memsuite_grading/realloc_smaller,1,1,
+sf_memsuite_grading/realloc_splinter,1,1,
+sf_memsuite_grading/sf_memalign_test_1,1,1,
+sf_memsuite_grading/sf_memalign_test_2,1,1,
+sf_memsuite_grading/sf_memalign_test_3,1,1,
+sf_memsuite_grading/simple_quick_list,1,1,
+sf_memsuite_grading/single_malloc_1,1,1,
+sf_memsuite_grading/single_malloc_16,1,1,
+sf_memsuite_grading/single_malloc_32,1,1,
+sf_memsuite_grading/single_malloc_exactly_one_page_needed,1,1,
+sf_memsuite_grading/single_malloc_max,1,1,
+sf_memsuite_grading/single_malloc_more_than_one_page_needed,1,1,
+sf_memsuite_grading/single_malloc_three_pages_needed,1,1,
+sf_memsuite_grading/stress_test,0,1,The test crashed.: None
+sfmm_basecode_suite/free_coalesce,1,1,
+sfmm_basecode_suite/free_no_coalesce,1,1,
+sfmm_basecode_suite/free_quick,1,1,
+sfmm_basecode_suite/freelist,1,1,
+sfmm_basecode_suite/malloc_an_int,1,1,
+sfmm_basecode_suite/malloc_four_pages,1,1,
+sfmm_basecode_suite/malloc_too_large,1,1,
+sfmm_basecode_suite/realloc_larger_block,1,1,
+sfmm_basecode_suite/realloc_smaller_block_free_block,1,1,
+sfmm_basecode_suite/realloc_smaller_block_splinter,1,1,
+total,36,41
