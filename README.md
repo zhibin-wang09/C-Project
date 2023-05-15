@@ -1,42 +1,36 @@
-# Zhi Bin Wang
-## 114367750
-:zap:
-Stark - 01
+# C-Projects
+A bunch of different programs that I've worked on.
 
-ACADEMIC HONESTY STATEMENT
-================================================================================
-I certify the following:
+### Diff File Patcher
+A command line program that is able to apply a .diff file to a given file and producing an edited, target version.
 
-1. All files hosted in this repository at any time, including any written
-material and code, are entirely of my own work. The only exception permitted to
-this rule is if the Professor(s) give explicit, written permission, in the
-assignment handout, on the webpage/PIAZZA, or in E-mail, to use or adapt other
-source code into my work. In this case, the origins of all such code is clearly
-cited in my files.
+### Debug Legacy Patcher
+Debugged a legacy 1985 patch program written by Larry Wall in K&R C with the assist of gdb and valgrind.
 
-2. I have not shared, transmitted, or received source code written for this
-class (including in any semester) from anyone else except the Professor(s) and
-the TAs. This includes both electronic forms (E-mail or downloading), as well as
-written or printed source code.
+### Memory Allocator
+Created a custom memory allocator with the idea of segregated free lists and quicklists that allows for "cached" block sizes. In addition with a few unit testing.
+The memory allocator uses the following policies
+1. Free lists segregated by size class, using first-fit policy within each size class,
+augmented with a set of "quick lists" holding small blocks segregated by size.
+2. Immediate coalescing of large blocks on free with adjacent free blocks;
+delayed coalescing on free of small blocks.
+3. Boundary tags to support efficient coalescing, with footer optimization that allows
+footers to be omitted from allocated blocks.
+4. Block splitting without creating splinters.
+5. Allocated blocks aligned to "single memory row" (8-byte) boundaries.
+Free lists maintained using last in first out (LIFO) discipline.
+6. Use of a prologue and epilogue to achieve required alignment and avoid edge cases
+at the end of the heap.
 
-3. Except in the case of explicit written permission given by the Professor(s),
-I have not included in my repository any source code obtained from a textbook,
-downloaded from the Internet, extracted from a software package or source code
-library, or from any other similar source.
 
-I understand that the appearance of extremely similar code fragments in more
-than one homework submission will be treated as evidence that code has been
-shared and an academic dishonesty case will be filed against me.
+### Cryptocurrency Exchange Watcher
+Built a multi-process command line interface program that enables users to speculate multiple ongoing trades while processing and storing relevant information.
+Backboned with the following concepts
+1. Process execution such as forking, executing, and reaping
+2. Signal handling
+3. I/O redirectoin
 
-I understand that code fragments can be extremely similar even if they are
-formatted differently and use different identifiers/labels/variables. The
-appearance of extremely similar code fragments that differ in this way will be
-regarded as evidence of an attempt to conceal that sharing has taken place.
 
-When in doubt about whether or not I am permitted to use particular source
-materials, I will obtain written permission from the Professor(s), in advance of
-my submission. Such permission is best requested and obtained by E-mail to
-cse320@cs.stonybrook.edu
-================================================================================
-Signed:
-Wed Jan 25 02:01:17 AM UTC 2023 - Zhi Bin Wang
+### Game Server
+Designed and engineered a multi-threaded Tic-Tac-Toe game server that supports up to 65 users simultaneously with the use of network sockets.
+
