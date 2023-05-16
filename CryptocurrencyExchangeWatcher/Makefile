@@ -17,7 +17,7 @@ TEST_SRC := $(shell find $(TSTD) -type f -name *.c)
 
 INC := -I $(INCD) -I $(LIBD)
 
-CFLAGS := -Wall -Werror -Wno-unused-function -MMD -D_GNU_SOURCE
+CFLAGS := -D_POSIX_C_SOURCE=199309L -Wall -Werror -Wno-unused-function -MMD -D_GNU_SOURCE
 COLORF := -DCOLOR
 DFLAGS := -g -DDEBUG -DCOLOR
 PRINT_STAMENTS := -DERROR -DSUCCESS -DWARN -DINFO

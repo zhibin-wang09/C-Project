@@ -74,7 +74,6 @@ int ticker(void) {
     }
     int ret = 0;
     int ticker_print = 1;
-    int cur_bytes_read = 0;
     while(1){ // as long as the user did not quit the program keep listening for input
         if(ticker_print == 1){
             (*cli_watcher).send(NULL, "ticker> ");
@@ -91,7 +90,6 @@ int ticker(void) {
             exit(0);
         }
         while((ret = read(STDIN_FILENO,input,1)) > 0){
-            cur_bytes_read += ret;
             if(input[0] == '\n'){ fprintf(stream,"%s",input);break;}
             fprintf(stream,"%s",input);
         }
@@ -115,7 +113,6 @@ int ticker(void) {
             free(buf);
             exit(0);
         }
-        //cur_bytes_read = 0;
     }
     return 0;
 }
