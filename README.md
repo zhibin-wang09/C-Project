@@ -1,5 +1,6 @@
 # C-Projects
 A bunch of different programs that I've worked on.
+***NOTE*** The programs in this directory is only compatible with the Linux platform as it uses some of the MACROS, etc... that are only defined in the Linux system.
 
 ### Diff File Patcher
 A command line program that is able to apply a .diff file to a given file and producing an edited, target version.
