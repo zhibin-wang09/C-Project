@@ -19,7 +19,7 @@ TEST_SRC := $(shell find $(TSTD) -type f -name \*.c)
 
 INC := -I $(INCD)
 
-CFLAGS := -Wall -Werror -Wno-unused-function -MMD -fcommon
+CFLAGS := -Wall -Wno-unused-function -MMD -fcommon
 DFLAGS := -g -DDEBUG -DCOLOR
 PRINT_STAMENTS := -DERROR -DSUCCESS -DWARN -DINFO
 

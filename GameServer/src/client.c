@@ -242,7 +242,7 @@ int client_revoke_invitation(CLIENT *client, int id){
     CLIENT *target = inv_get_target(inv);
     JEUX_PACKET_HEADER hdr = {0}; // revoke packet
     hdr.type = JEUX_REVOKED_PKT;
-    int target_id;
+    int target_id = -1;
     for(int i =0;i<255;i++){
         if(target->invitation_list[i] == inv){
             target_id = i;
@@ -287,7 +287,7 @@ int client_decline_invitation(CLIENT *client, int id){
     CLIENT *source = inv_get_source(inv);
     JEUX_PACKET_HEADER hdr = {0}; // decline packet
     hdr.type = JEUX_DECLINED_PKT;
-    int source_id;
+    int source_id = -1;
     for(int i =0;i<255;i++){
         if(source->invitation_list[i] == inv){
             source_id = i;
@@ -437,7 +437,7 @@ int client_resign_game(CLIENT *client, int id){
        ended_packet_1.type = JEUX_ENDED_PKT;
        ended_packet_1.role = winner;
 
-       int ended_packet_1_id;
+       int ended_packet_1_id = -1;
        for(int i =0;i<255;i++){
             if(source->invitation_list[i] == inv){
                 ended_packet_1_id = i;
@@ -451,7 +451,7 @@ int client_resign_game(CLIENT *client, int id){
        ended_packet_2.type = JEUX_ENDED_PKT;
        ended_packet_2.role = winner;
 
-       int ended_packet_2_id;
+       int ended_packet_2_id = -1;
        for(int i =0;i<255;i++){
             if(target->invitation_list[i] == inv){
                 ended_packet_2_id = i;
@@ -517,7 +517,7 @@ int client_make_move(CLIENT *client, int id, char *move){
     hdr.type = JEUX_MOVED_PKT;
     char *current_state = game_unparse_state(game);
     hdr.size = htons(strlen(current_state)+1);
-    int client_id;
+    int client_id = -1;
     if(opp_side == 0){
         // send moved pkt to source
         CLIENT *source = inv_get_source(inv);
@@ -561,7 +561,7 @@ int client_make_move(CLIENT *client, int id, char *move){
        ended_packet_1.type = JEUX_ENDED_PKT;
        ended_packet_1.role = winner;
 
-       int ended_packet_1_id;
+       int ended_packet_1_id = -1;
        for(int i =0;i<255;i++){
             if(source->invitation_list[i] == inv){
                 ended_packet_1_id = i;
@@ -575,7 +575,7 @@ int client_make_move(CLIENT *client, int id, char *move){
        ended_packet_2.type = JEUX_ENDED_PKT;
        ended_packet_2.role = winner;
 
-       int ended_packet_2_id;
+       int ended_packet_2_id = -1;
        for(int i =0;i<255;i++){
             if(target->invitation_list[i] == inv){
                 ended_packet_2_id = i;
